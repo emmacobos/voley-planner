@@ -19,7 +19,7 @@ import type {
   Zone,
 } from '../domain/types';
 import { positionShort } from '../domain/types';
-import { TEAM_COLORS } from './boardTheme';
+import { LIBERO_COLORS, TEAM_COLORS } from './boardTheme';
 import type { Tool } from './boardTheme';
 
 
@@ -335,7 +335,12 @@ function PlayerMark({
   return (
     <g className="el" transform={`translate(${token.x} ${token.y})`} onPointerDown={onPointerDown}>
       {selected && <Halo r={0.6} />}
-      <circle r={0.42} fill={TEAM_COLORS[token.team]} stroke="#ffffff" strokeWidth={0.06} />
+      <circle
+        r={0.42}
+        fill={(player?.position ?? token.role) === 'libero' ? LIBERO_COLORS[token.team] : TEAM_COLORS[token.team]}
+        stroke="#ffffff"
+        strokeWidth={0.06}
+      />
       <text textAnchor="middle" dominantBaseline="central" fontSize={0.36} fontWeight={700} fill="#ffffff">
         {token.label}
       </text>

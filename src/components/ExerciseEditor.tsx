@@ -6,7 +6,8 @@ import { BoardEditor } from './BoardEditor';
 
 export function ExerciseEditor({ id }: { id: string }) {
   const exercise = useAppStore((s) => s.exercises.find((e) => e.id === id));
-  const roster = useAppStore((s) => s.players);
+  const allPlayers = useAppStore((s) => s.players);
+  const squads = useAppStore((s) => s.squads);
   const updateExercise = useAppStore((s) => s.updateExercise);
 
   if (!exercise) {
@@ -19,6 +20,7 @@ export function ExerciseEditor({ id }: { id: string }) {
   }
 
   const update = (patch: Parameters<typeof updateExercise>[1]) => updateExercise(id, patch);
+  const roster = allPlayers.filter((p) => p.squadId === exercise.squadId);
   const exercisePlayers = roster.filter((p) => exercise.playerIds.includes(p.id));
   const sortedRoster = [...roster].sort((a, b) => a.number - b.number);
 
@@ -93,11 +95,34 @@ export function ExerciseEditor({ id }: { id: string }) {
               onChange={(e) => update({ notes: e.target.value })}
             />
           </label>
+          <label className="field">
+            Plantel
+            <select
+              value={exercise.squadId ?? ''}
+              onChange={(e) => {
+                const squadId = e.target.value || null;
+                const inSquad = new Set(allPlayers.filter((p) => p.squadId === squadId).map((p) => p.id));
+                update({ squadId, playerIds: exercise.playerIds.filter((pid) => inSquad.has(pid)) });
+              }}
+            >
+              <option value="">— Sin plantel —</option>
+              {squads.map((q) => (
+                <option key={q.id} value={q.id}>
+                  {q.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="field span-3">
             Jugadores del ejercicio
-            {roster.length === 0 ? (
+            {squads.length === 0 ? (
               <p className="hint">
-                Todavía no cargaste jugadores. <a href="#/plantel">Cargar plantel</a>
+                Todavía no creaste planteles. <a href="#/plantel">Crear plantel</a>
+              </p>
+            ) : roster.length === 0 ? (
+              <p className="hint">
+                {exercise.squadId ? 'Este plantel no tiene jugadores todavía. ' : 'Elegí un plantel. '}
+                <a href="#/plantel">Ir a planteles</a>
               </p>
             ) : (
               <div className="player-picker">
@@ -117,6 +142,7 @@ export function ExerciseEditor({ id }: { id: string }) {
         key={exercise.id}
         frames={exercise.frames}
         onChange={(frames) => update({ frames })}
+        allPlayers={allPlayers}
         roster={roster}
         exercisePlayers={exercisePlayers}
         title={exercise.name}

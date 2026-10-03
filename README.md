@@ -10,16 +10,25 @@ La visión completa del producto y la hoja de ruta están en
 
 ## Cómo usarla
 
-1. **Plantel:** cargá a tus jugadores con nombre, número y posición.
-2. **Ejercicios → Nuevo ejercicio:** completá tipo, duración, intensidad,
-   objetivo, notas y elegí los jugadores que participan.
+1. **Planteles:** creá un plantel por equipo o categoría (por ejemplo
+   "Primera femenina" y "Sub 18") y cargá a sus jugadores con nombre, número y
+   posición.
+2. **Ejercicios → Nuevo ejercicio:** elegí el plantel, completá tipo,
+   duración, intensidad, objetivo y notas, y marcá los jugadores que
+   participan.
 3. **Pizarra:**
-   - *Rotación 5-1 → Colocar en posición base* ubica a los 6 jugadores de un
-     equipo (en el equipo A usa los jugadores del ejercicio según su posición).
+   - *Sistema 5-1*: elegí equipo y rotación y colocá una formación: zonas
+     (base), K1 recepción, K1 ataque, K2 saque, defensa perimetral o defensa
+     6 adelante (con el ataque rival por zona 4 o zona 2). En el equipo A usa
+     los jugadores del ejercicio según su posición, y el líbero entra por el
+     central zaguero.
    - *Agregar* suma jugadores, pelota, conos, entrenadores y carros.
    - *Mover* para arrastrar; *Flecha desplazamiento* / *Flecha pelota* para
      dibujar arrastrando sobre la cancha.
-   - El panel *Reglas de rotación* avisa si hay faltas de posición.
+   - El panel *Reglas de rotación* avisa si hay faltas de posición. Se
+     controla solo al momento del saque y solo al equipo que recibe; cada paso
+     tiene un *Momento* (saque de A, saque de B o pelota en juego) que se
+     ajusta solo al colocar una formación.
 4. **Animación:** *+ Paso* duplica la pizarra actual; mové los elementos y
    tocá *Reproducir*. Las flechas de un paso se ven mientras ocurre el
    movimiento hacia el siguiente.

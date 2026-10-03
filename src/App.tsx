@@ -1,5 +1,6 @@
 import { ExerciseEditor } from './components/ExerciseEditor';
 import { ExerciseList } from './components/ExerciseList';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { RosterPage } from './components/RosterPage';
 import { useHashRoute } from './hooks/useHashRoute';
 
@@ -17,14 +18,17 @@ export default function App() {
             Ejercicios
           </a>
           <a className={route.name === 'roster' ? 'active' : ''} href="#/plantel">
-            Plantel
+            Planteles
           </a>
         </nav>
       </header>
       <main>
-        {route.name === 'roster' && <RosterPage />}
-        {route.name === 'exercises' && <ExerciseList />}
-        {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
+        {/* La key reinicia el error al navegar a otra pantalla. */}
+        <ErrorBoundary key={window.location.hash}>
+          {route.name === 'roster' && <RosterPage />}
+          {route.name === 'exercises' && <ExerciseList />}
+          {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
+        </ErrorBoundary>
       </main>
     </div>
   );

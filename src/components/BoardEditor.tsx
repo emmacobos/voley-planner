@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { elementsAtProgress } from '../domain/animation';
 import { NET_X } from '../domain/court';
 import { newId } from '../domain/ids';
-import { checkRotation } from '../domain/rotationRules';
-import { assignLineup, rotationTokens } from '../domain/rotations';
+import { PHASES, formationTokenIds, formationTokens, phaseSituation } from '../domain/formations';
+import type { AttackSide, Phase } from '../domain/formations';
+import { frameRuleStatus } from '../domain/rotationRules';
+import { assignLineup } from '../domain/rotations';
 import type {
   ArrowElement,
   BoardElement,
@@ -11,10 +13,11 @@ import type {
   Player,
   PlayerToken,
   PointElement,
+  Situation,
   Team,
   Zone,
 } from '../domain/types';
-import { POSITIONS } from '../domain/types';
+import { POSITIONS, SITUATIONS } from '../domain/types';
 import { downloadSvgAsPng, slugify } from '../utils/exportPng';
 import { Board } from './Board';
 import { TEAM_COLORS } from './boardTheme';
@@ -23,9 +26,11 @@ import type { Tool } from './boardTheme';
 interface BoardEditorProps {
   frames: Frame[];
   onChange: (frames: Frame[]) => void;
-  /** Todo el plantel (para mostrar nombres). */
+  /** Todos los jugadores (para mostrar nombres en la pizarra). */
+  allPlayers: Player[];
+  /** Jugadores del plantel del ejercicio (para vincular fichas). */
   roster: Player[];
-  /** Jugadores asignados al ejercicio (para armar rotaciones). */
+  /** Jugadores asignados al ejercicio (para armar las formaciones). */
   exercisePlayers: Player[];
   title: string;
 }
@@ -51,13 +56,14 @@ const ADD_BUTTONS: { kind: AddKind; label: string }[] = [
   { kind: 'cart', label: '+ Carro' },
 ];
 
-export function BoardEditor({ frames, onChange, roster, exercisePlayers, title }: BoardEditorProps) {
+export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlayers, title }: BoardEditorProps) {
   const [current, setCurrent] = useState(0);
   const [tool, setTool] = useState<Tool>('select');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showZones, setShowZones] = useState(true);
   const [rotationTeam, setRotationTeam] = useState<Team>('A');
   const [rotation, setRotation] = useState<Zone>(1);
+  const [attackSide, setAttackSide] = useState<AttackSide>('zona4');
   const [past, setPast] = useState<Frame[][]>([]);
   const [future, setFuture] = useState<Frame[][]>([]);
   const [progress, setProgress] = useState<number | null>(null);
@@ -65,7 +71,7 @@ export function BoardEditor({ frames, onChange, roster, exercisePlayers, title }
   const svgRef = useRef<SVGSVGElement>(null);
   const progressRef = useRef(0);
 
-  const index = Math.min(current, frames.length - 1);
+  const index = Math.max(0, Math.min(current, frames.length - 1));
   const frame = frames[index];
   const playing = progress !== null;
   const elements = playing
@@ -137,17 +143,27 @@ export function BoardEditor({ frames, onChange, roster, exercisePlayers, title }
     setSelectedId(el.id);
   };
 
-  const placeRotation = () => {
+  /** Coloca al equipo en una formación del 5-1 y ajusta el momento del paso. */
+  const placeFormation = (phase: Phase) => {
     const lineup = rotationTeam === 'A' ? assignLineup(exercisePlayers.length ? exercisePlayers : roster) : {};
-    const tokens = rotationTokens(rotationTeam, rotation, lineup);
-    setElements((els) => [
-      ...els.filter((e) => !(e.kind === 'player' && e.team === rotationTeam && e.zone !== undefined)),
-      ...tokens,
-    ]);
+    const tokens = formationTokens(rotationTeam, rotation, phase, { lineup, attackSide });
+    const replaced = formationTokenIds(rotationTeam);
+    const keep = (e: BoardElement) =>
+      !(e.kind === 'player' && e.team === rotationTeam && (e.zone !== undefined || replaced.has(e.id)));
+    commit(
+      frames.map((f, i) =>
+        i === index
+          ? { ...f, situation: phaseSituation(phase, rotationTeam), elements: [...f.elements.filter(keep), ...tokens] }
+          : f,
+      ),
+    );
   };
 
+  const setSituation = (situation: Situation) =>
+    commit(frames.map((f, i) => (i === index ? { ...f, situation } : f)));
+
   const addFrame = () => {
-    const copy: Frame = { id: newId(), note: '', elements: structuredClone(frame.elements) };
+    const copy: Frame = { id: newId(), note: '', situation: 'juego', elements: structuredClone(frame.elements) };
     commit([...frames.slice(0, index + 1), copy, ...frames.slice(index + 1)]);
     setCurrent(index + 1);
   };
@@ -178,7 +194,8 @@ export function BoardEditor({ frames, onChange, roster, exercisePlayers, title }
     const start = performance.now();
     const from = progressRef.current;
     const tick = (time: number) => {
-      const p = from + ((time - start) * speed) / TRANSITION_MS;
+      // El tiempo del primer cuadro puede ser anterior a `start`: nunca retroceder.
+      const p = Math.max(from, from + ((time - start) * speed) / TRANSITION_MS);
       if (p >= last) {
         setProgress(null);
         setCurrent(last);
@@ -219,10 +236,10 @@ export function BoardEditor({ frames, onChange, roster, exercisePlayers, title }
   });
 
   const nameOf = (t: PlayerToken) => {
-    const p = t.playerId ? roster.find((x) => x.id === t.playerId) : undefined;
+    const p = t.playerId ? allPlayers.find((x) => x.id === t.playerId) : undefined;
     return p ? `${p.number} ${p.name}` : t.label;
   };
-  const checks = (['A', 'B'] as Team[]).map((team) => checkRotation(frame.elements, team, nameOf));
+  const checks = (['A', 'B'] as Team[]).map((team) => frameRuleStatus(frame, team, nameOf));
 
   return (
     <div className="board-editor">
@@ -254,7 +271,7 @@ export function BoardEditor({ frames, onChange, roster, exercisePlayers, title }
         <Board
           svgRef={svgRef}
           elements={elements}
-          players={roster}
+          players={allPlayers}
           selectedId={selectedId}
           tool={tool}
           readOnly={playing}
@@ -295,13 +312,29 @@ export function BoardEditor({ frames, onChange, roster, exercisePlayers, title }
             Eliminar paso
           </button>
         </div>
-        <input
-          className="frame-note"
-          placeholder={`Descripción del paso ${index + 1} (opcional)`}
-          value={frame.note}
-          onChange={(e) => setNote(e.target.value)}
-          disabled={playing}
-        />
+        <div className="frame-details">
+          <label className="check">
+            Momento del paso {index + 1}:
+            <select
+              value={frame.situation ?? 'juego'}
+              onChange={(e) => setSituation(e.target.value as Situation)}
+              disabled={playing}
+            >
+              {SITUATIONS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <input
+            className="frame-note"
+            placeholder="Descripción del paso (opcional)"
+            value={frame.note}
+            onChange={(e) => setNote(e.target.value)}
+            disabled={playing}
+          />
+        </div>
       </div>
 
       <aside className="board-side">
@@ -317,13 +350,13 @@ export function BoardEditor({ frames, onChange, roster, exercisePlayers, title }
         </section>
 
         <section>
-          <h3>Rotación 5-1</h3>
+          <h3>Sistema 5-1</h3>
           <div className="row">
-            <select value={rotationTeam} onChange={(e) => setRotationTeam(e.target.value as Team)}>
+            <select value={rotationTeam} onChange={(e) => setRotationTeam(e.target.value as Team)} aria-label="Equipo">
               <option value="A">Equipo A</option>
               <option value="B">Equipo B</option>
             </select>
-            <select value={rotation} onChange={(e) => setRotation(Number(e.target.value) as Zone)}>
+            <select value={rotation} onChange={(e) => setRotation(Number(e.target.value) as Zone)} aria-label="Rotación">
               {ZONES.map((z) => (
                 <option key={z} value={z}>
                   R{z} (armador en {z})
@@ -331,12 +364,23 @@ export function BoardEditor({ frames, onChange, roster, exercisePlayers, title }
               ))}
             </select>
           </div>
-          <button className="full" onClick={placeRotation} disabled={playing}>
-            Colocar en posición base
-          </button>
+          <div className="button-grid formation-buttons">
+            {PHASES.map((p) => (
+              <button key={p.value} onClick={() => placeFormation(p.value)} disabled={playing} title={p.description}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+          <label className="field">
+            En defensa, el rival ataca por
+            <select value={attackSide} onChange={(e) => setAttackSide(e.target.value as AttackSide)}>
+              <option value="zona4">su zona 4 (bloqueo a nuestra derecha)</option>
+              <option value="zona2">su zona 2 (bloqueo a nuestra izquierda)</option>
+            </select>
+          </label>
           <p className="hint">
-            En el equipo A se usan los jugadores del ejercicio según su posición. Colocá otra rotación en un paso nuevo
-            para animar el giro.
+            En el equipo A se usan los jugadores del ejercicio según su posición (incluido el líbero). Armá cada fase en
+            un paso nuevo para animar la jugada: por ejemplo K1 recepción → K1 ataque.
           </p>
         </section>
 
@@ -345,7 +389,9 @@ export function BoardEditor({ frames, onChange, roster, exercisePlayers, title }
           {checks.map((c) => (
             <div key={c.team} className="rule-check">
               <strong style={{ color: TEAM_COLORS[c.team] }}>Equipo {c.team}: </strong>
-              {!c.applicable ? (
+              {!c.checked ? (
+                <span className="muted">{c.reason}</span>
+              ) : !c.applicable ? (
                 <span className="muted">necesita 6 jugadores con zona asignada.</span>
               ) : c.faults.length === 0 ? (
                 <span className="ok">✓ sin faltas de posición</span>
@@ -358,7 +404,10 @@ export function BoardEditor({ frames, onChange, roster, exercisePlayers, title }
               )}
             </div>
           ))}
-          <p className="hint">Se controla la posición al momento del saque.</p>
+          <p className="hint">
+            Las zonas se controlan solo al momento del saque y solo al equipo que recibe. Cambialo en "Momento del
+            paso".
+          </p>
         </section>
 
         {selected && !playing && (

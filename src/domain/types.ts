@@ -16,8 +16,15 @@ export function positionShort(p: Position | undefined): string {
   return POSITIONS.find((x) => x.value === p)?.short ?? '';
 }
 
+/** Plantel: grupo de jugadores (por ejemplo "Primera femenina" o "Sub 18"). */
+export interface Squad {
+  id: string;
+  name: string;
+}
+
 export interface Player {
   id: string;
+  squadId: string;
   name: string;
   number: number;
   position: Position;
@@ -80,9 +87,23 @@ export type PointElement =
 
 export type BoardElement = PointElement | ArrowElement;
 
+/**
+ * Momento del juego que representa un paso. Solo al momento del saque se
+ * controlan las zonas, y únicamente al equipo que recibe.
+ */
+export type Situation = 'saque-A' | 'saque-B' | 'juego';
+
+export const SITUATIONS: { value: Situation; label: string }[] = [
+  { value: 'saque-A', label: 'Saque del equipo A' },
+  { value: 'saque-B', label: 'Saque del equipo B' },
+  { value: 'juego', label: 'Pelota en juego' },
+];
+
 export interface Frame {
   id: string;
   note: string;
+  /** Si falta (datos viejos) se toma como pelota en juego. */
+  situation?: Situation;
   elements: BoardElement[];
 }
 
@@ -122,6 +143,7 @@ export interface Exercise {
   durationMin: number;
   intensity: Intensity;
   notes: string;
+  squadId: string | null;
   playerIds: string[];
   frames: Frame[];
   createdAt: string;

@@ -1,11 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { newId } from './domain/ids';
-import type { Exercise, Frame, Player } from './domain/types';
+import type { Exercise, Frame, Player, Squad } from './domain/types';
 
 interface AppState {
+  squads: Squad[];
   players: Player[];
   exercises: Exercise[];
+  addSquad: (name: string) => string;
+  renameSquad: (id: string, name: string) => void;
+  /** Elimina el plantel y sus jugadores. */
+  removeSquad: (id: string) => void;
   addPlayer: (p: Omit<Player, 'id'>) => void;
   updatePlayer: (id: string, patch: Partial<Omit<Player, 'id'>>) => void;
   removePlayer: (id: string) => void;
@@ -16,7 +21,7 @@ interface AppState {
 }
 
 export function emptyFrame(): Frame {
-  return { id: newId(), note: '', elements: [] };
+  return { id: newId(), note: '', situation: 'juego', elements: [] };
 }
 
 const now = () => new Date().toISOString();
@@ -28,8 +33,32 @@ const now = () => new Date().toISOString();
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
+      squads: [],
       players: [],
       exercises: [],
+
+      addSquad: (name) => {
+        const id = newId();
+        set((s) => ({ squads: [...s.squads, { id, name }] }));
+        return id;
+      },
+
+      renameSquad: (id, name) =>
+        set((s) => ({ squads: s.squads.map((q) => (q.id === id ? { ...q, name } : q)) })),
+
+      removeSquad: (id) =>
+        set((s) => {
+          const removed = new Set(s.players.filter((p) => p.squadId === id).map((p) => p.id));
+          return {
+            squads: s.squads.filter((q) => q.id !== id),
+            players: s.players.filter((p) => p.squadId !== id),
+            exercises: s.exercises.map((e) =>
+              e.squadId === id
+                ? { ...e, squadId: null, playerIds: e.playerIds.filter((pid) => !removed.has(pid)) }
+                : e,
+            ),
+          };
+        }),
 
       addPlayer: (p) => set((s) => ({ players: [...s.players, { ...p, id: newId() }] })),
 
@@ -57,6 +86,7 @@ export const useAppStore = create<AppState>()(
           durationMin: 15,
           intensity: 'media',
           notes: '',
+          squadId: get().squads[0]?.id ?? null,
           playerIds: [],
           frames: [emptyFrame()],
           createdAt: now(),
@@ -90,6 +120,27 @@ export const useAppStore = create<AppState>()(
       removeExercise: (id) =>
         set((s) => ({ exercises: s.exercises.filter((e) => e.id !== id) })),
     }),
-    { name: 'voley-planner', version: 1 },
+    {
+      name: 'voley-planner',
+      version: 2,
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<AppState>;
+        if (version < 2) {
+          // v1 no tenía planteles: los jugadores existentes pasan a "Mi equipo".
+          const players = (state.players ?? []) as Player[];
+          const squad: Squad = { id: newId(), name: 'Mi equipo' };
+          return {
+            ...state,
+            squads: players.length ? [squad] : [],
+            players: players.map((p) => ({ ...p, squadId: squad.id })),
+            exercises: (state.exercises ?? []).map((e) => ({
+              ...e,
+              squadId: players.length ? squad.id : null,
+            })),
+          } as AppState;
+        }
+        return state as AppState;
+      },
+    },
   ),
 );

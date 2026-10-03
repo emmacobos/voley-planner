@@ -335,7 +335,50 @@ main {
   color: #166534;
 }
 
-/* Plantel */
+/* Planteles */
+
+.squad-bar {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.squad-tabs {
+  flex-wrap: wrap;
+}
+
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.inline-form input {
+  min-width: 260px;
+}
+
+.squad-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  max-width: 760px;
+}
+
+.error-box {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+}
+
+.error-box pre {
+  white-space: pre-wrap;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
 
 .add-player {
   display: flex;
@@ -529,8 +572,29 @@ main {
   color: #fff;
 }
 
+.frame-details {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.frame-details .check {
+  white-space: nowrap;
+}
+
 .frame-note {
-  width: 100%;
+  flex: 1;
+  min-width: 200px;
+}
+
+.formation-buttons {
+  margin: 0.5rem 0;
+}
+
+.formation-buttons button {
+  white-space: normal;
+  font-size: 0.88rem;
 }
 
 .board-side {

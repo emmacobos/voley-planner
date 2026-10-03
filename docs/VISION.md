@@ -21,9 +21,10 @@ de entrenamiento y, más adelante, ciclos de temporada.
 | Concepto | Qué es |
 |---|---|
 | **Jugador** | Integrante del plantel: nombre, número, posición (armador, opuesto, central, punta, líbero). |
-| **Plantel** | Lista de jugadores del equipo del entrenador. |
+| **Plantel** | Grupo de jugadores con nombre propio (por ejemplo "Primera femenina" o "Sub 18"). Un entrenador puede tener varios. |
 | **Pizarra** | Cancha completa vista desde arriba con jugadores de ambos equipos, pelota, conos, carros, entrenadores y flechas. |
-| **Paso (frame)** | Una "foto" de la pizarra. Varios pasos seguidos forman una animación. |
+| **Paso (frame)** | Una "foto" de la pizarra. Varios pasos seguidos forman una animación. Cada paso tiene un **momento**: saque de A, saque de B o pelota en juego. |
+| **Complejos** | **K1**: recepción, armado y ataque (side-out). **K2**: saque, bloqueo, defensa y contraataque. |
 | **Ejercicio** | Unidad reutilizable de la biblioteca. Tiene tipo, objetivo, duración, intensidad, jugadores asignados, notas y una pizarra animada. |
 | **Tipo de ejercicio** | **Analítico** (técnica aislada de un fundamento), **Sintético** (combina 2–3 fundamentos o una fase del juego) o **Global** (situación real de juego). |
 | **Sesión de entrenamiento** | Fecha, objetivo y una secuencia de **bloques**. |
@@ -40,9 +41,13 @@ de entrenamiento y, más adelante, ciclos de temporada.
 - Pelota, conos, carros de pelotas y entrenadores.
 - Flechas de desplazamiento y de trayectoria de la pelota.
 - **Rotaciones predefinidas** (sistema 5-1, las 6 rotaciones) para cada
-  equipo.
-- **Validación de reglas de rotación**: avisa si hay falta de posición al
-  momento del saque.
+  equipo, con formaciones de K1 (recepción y ataque), K2 (saque) y defensa
+  (perimetral y 6 adelante, según por dónde ataca el rival). El líbero entra
+  por el central zaguero.
+- **Validación de reglas de rotación**: avisa si hay falta de posición. Se
+  controla solo al equipo que recibe en el momento del saque (con las reglas
+  nuevas, el equipo que saca no tiene faltas de posición, y con la pelota en
+  juego no existen las zonas).
 - **Animaciones**: se encadenan pasos y la app interpola los movimientos.
 - Exportar la pizarra como imagen (PNG) y, más adelante, la sesión completa
   en PDF.
@@ -66,9 +71,11 @@ reales lo antes posible.
 
 ### Etapa 1 — MVP: pizarra + biblioteca de ejercicios ✅ (esta versión)
 - Pizarra de cancha completa con todos los elementos.
-- Rotaciones 5-1 predefinidas y validación de faltas de posición.
+- Rotaciones 5-1 con formaciones K1, K2 y defensas, y validación de faltas
+  de posición según el momento de cada paso.
 - Pasos y animación con reproducción, velocidad y deshacer.
-- Plantel (nombre, número, posición) y vinculación de jugadores a la pizarra.
+- Varios planteles con nombre (nombre, número y posición de cada jugador) y
+  vinculación de jugadores a la pizarra.
 - Biblioteca de ejercicios: tipo, objetivo, duración, intensidad,
   jugadores, notas.
 - Exportar PNG.
@@ -93,7 +100,10 @@ reales lo antes posible.
 - Estadísticas simples (minutos por tipo de ejercicio, carga por semana).
 
 ### Ideas a futuro
-- Más sistemas de juego (4-2, 6-2) y formaciones de recepción por rotación.
+- Más sistemas de juego (4-2, 6-2) y variantes de recepción (de 2, de 4).
+- Generar automáticamente la secuencia completa de una rotación (recepción →
+  ataque → cobertura) como pasos animados.
+- Defensa contra ataque por zona 3 y por zaguero.
 - Trayectorias curvas y zonas sombreadas.
 - Plantillas de ejercicios clásicos.
 - Compartir un ejercicio con un link de solo lectura.

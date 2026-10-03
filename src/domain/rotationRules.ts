@@ -1,5 +1,5 @@
 import { distanceToNet, lateralFromLeft } from './court';
-import type { BoardElement, PlayerToken, Team, Zone } from './types';
+import type { BoardElement, Frame, PlayerToken, Team, Zone } from './types';
 
 export interface RotationCheck {
   team: Team;
@@ -72,4 +72,24 @@ export function checkRotation(
 
 function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+export type FrameRuleStatus =
+  | { team: Team; checked: false; reason: string }
+  | ({ checked: true } & RotationCheck);
+
+/**
+ * Qué se controla en un paso según su momento: al saque solo se controla al
+ * equipo que recibe (el que saca no tiene faltas de posición); con la pelota
+ * en juego no existen las zonas.
+ */
+export function frameRuleStatus(
+  frame: Frame,
+  team: Team,
+  nameOf?: (t: PlayerToken) => string,
+): FrameRuleStatus {
+  const situation = frame.situation ?? 'juego';
+  if (situation === 'juego') return { team, checked: false, reason: 'pelota en juego, sin zonas.' };
+  if (situation === `saque-${team}`) return { team, checked: false, reason: 'saca, sin control de zonas.' };
+  return { checked: true, ...checkRotation(frame.elements, team, nameOf) };
 }
