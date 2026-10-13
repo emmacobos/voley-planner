@@ -2,6 +2,7 @@ import { navigate } from '../hooks/useHashRoute';
 import { useAppStore } from '../store';
 import { formatDate, formatMinutes, sessionDuration, todayISO } from '../domain/sessions';
 import type { TrainingSession } from '../domain/types';
+import { GettingStarted } from './GettingStarted';
 
 export function SessionList() {
   const sessions = useAppStore((s) => s.sessions);
@@ -58,13 +59,7 @@ export function SessionList() {
       </div>
 
       {sessions.length === 0 ? (
-        <div className="empty">
-          <p>Todavía no planificaste sesiones.</p>
-          <p className="muted">
-            Una sesión se arma con bloques (calentamiento, técnica, táctica, juego…) y los ejercicios de tu{' '}
-            <a href="#/ejercicios">biblioteca</a>.
-          </p>
-        </div>
+        <GettingStarted />
       ) : (
         <>
           <h3 className="list-title">Próximas</h3>

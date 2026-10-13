@@ -3,6 +3,7 @@ import { navigate } from '../hooks/useHashRoute';
 import { useAppStore } from '../store';
 import { EXERCISE_TYPES, INTENSITIES } from '../domain/types';
 import type { ExerciseType } from '../domain/types';
+import { GettingStarted } from './GettingStarted';
 
 export function ExerciseList() {
   const exercises = useAppStore((s) => s.exercises);
@@ -12,10 +13,16 @@ export function ExerciseList() {
   const [filter, setFilter] = useState<ExerciseType | 'todos'>('todos');
   const [query, setQuery] = useState('');
 
-  const q = query.trim().toLowerCase();
+  // Los filtros aparecen a medida que hay ejercicios: el buscador desde 2 y
+  // los tipos cuando hay ejercicios de más de un tipo.
+  const typesInUse = EXERCISE_TYPES.filter((t) => exercises.some((e) => e.type === t.value));
+  const showSearch = exercises.length >= 2;
+  const showTypes = typesInUse.length >= 2;
+  const activeFilter = showTypes && typesInUse.some((t) => t.value === filter) ? filter : 'todos';
+  const q = showSearch ? query.trim().toLowerCase() : '';
   const visible = exercises.filter(
     (e) =>
-      (filter === 'todos' || e.type === filter) &&
+      (activeFilter === 'todos' || e.type === activeFilter) &&
       (!q || e.name.toLowerCase().includes(q) || e.objective.toLowerCase().includes(q)),
   );
 
@@ -28,27 +35,38 @@ export function ExerciseList() {
         </button>
       </div>
 
-      <div className="filters">
-        <input type="search" placeholder="Buscar por nombre u objetivo" value={query} onChange={(e) => setQuery(e.target.value)} />
-        <div className="segmented">
-          <button className={filter === 'todos' ? 'active' : ''} onClick={() => setFilter('todos')}>
-            Todos
-          </button>
-          {EXERCISE_TYPES.map((t) => (
-            <button key={t.value} className={filter === t.value ? 'active' : ''} onClick={() => setFilter(t.value)} title={t.description}>
-              {t.label}
-            </button>
-          ))}
+      {(showSearch || showTypes) && (
+        <div className="filters">
+          {showSearch && (
+            <input
+              type="search"
+              placeholder="Buscar por nombre u objetivo"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          )}
+          {showTypes && (
+            <div className="segmented">
+              <button className={activeFilter === 'todos' ? 'active' : ''} onClick={() => setFilter('todos')}>
+                Todos ({exercises.length})
+              </button>
+              {typesInUse.map((t) => (
+                <button
+                  key={t.value}
+                  className={activeFilter === t.value ? 'active' : ''}
+                  onClick={() => setFilter(t.value)}
+                  title={t.description}
+                >
+                  {t.label} ({exercises.filter((e) => e.type === t.value).length})
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {exercises.length === 0 ? (
-        <div className="empty">
-          <p>Todavía no hay ejercicios.</p>
-          <p className="muted">
-            Empezá cargando tu <a href="#/plantel">plantel</a> y después creá tu primer ejercicio.
-          </p>
-        </div>
+        <GettingStarted />
       ) : visible.length === 0 ? (
         <p className="muted">No hay ejercicios que coincidan con el filtro.</p>
       ) : (
