@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { newId } from './domain/ids';
-import type { Exercise, Frame, Player, Squad } from './domain/types';
+import { defaultBlocks, todayISO } from './domain/sessions';
+import type { Exercise, Frame, Player, Squad, TrainingSession } from './domain/types';
 
 interface AppState {
   squads: Squad[];
   players: Player[];
   exercises: Exercise[];
+  sessions: TrainingSession[];
   addSquad: (name: string) => string;
   renameSquad: (id: string, name: string) => void;
   /** Elimina el plantel y sus jugadores. */
@@ -18,6 +20,20 @@ interface AppState {
   updateExercise: (id: string, patch: Partial<Omit<Exercise, 'id'>>) => void;
   duplicateExercise: (id: string) => string | undefined;
   removeExercise: (id: string) => void;
+  createSession: () => string;
+  updateSession: (id: string, patch: Partial<Omit<TrainingSession, 'id'>>) => void;
+  duplicateSession: (id: string) => string | undefined;
+  removeSession: (id: string) => void;
+}
+
+/** Quita jugadores de los convocados y de los bloques de una sesión. */
+function withoutPlayers(session: TrainingSession, ids: Set<string>): TrainingSession {
+  const keep = (pid: string) => !ids.has(pid);
+  return {
+    ...session,
+    playerIds: session.playerIds.filter(keep),
+    blocks: session.blocks.map((b) => ({ ...b, playerIds: b.playerIds.filter(keep) })),
+  };
 }
 
 export function emptyFrame(): Frame {
@@ -36,6 +52,7 @@ export const useAppStore = create<AppState>()(
       squads: [],
       players: [],
       exercises: [],
+      sessions: [],
 
       addSquad: (name) => {
         const id = newId();
@@ -57,6 +74,9 @@ export const useAppStore = create<AppState>()(
                 ? { ...e, squadId: null, playerIds: e.playerIds.filter((pid) => !removed.has(pid)) }
                 : e,
             ),
+            sessions: s.sessions.map((ses) =>
+              ses.squadId === id ? withoutPlayers({ ...ses, squadId: null }, removed) : ses,
+            ),
           };
         }),
 
@@ -74,6 +94,7 @@ export const useAppStore = create<AppState>()(
             ...e,
             playerIds: e.playerIds.filter((pid) => pid !== id),
           })),
+          sessions: s.sessions.map((ses) => withoutPlayers(ses, new Set([id]))),
         })),
 
       createExercise: () => {
@@ -118,18 +139,69 @@ export const useAppStore = create<AppState>()(
       },
 
       removeExercise: (id) =>
-        set((s) => ({ exercises: s.exercises.filter((e) => e.id !== id) })),
+        set((s) => ({
+          exercises: s.exercises.filter((e) => e.id !== id),
+          sessions: s.sessions.map((ses) => ({
+            ...ses,
+            blocks: ses.blocks.map((b) => ({ ...b, items: b.items.filter((it) => it.exerciseId !== id) })),
+          })),
+        })),
+
+      createSession: () => {
+        const id = newId();
+        const session: TrainingSession = {
+          id,
+          name: 'Nueva sesión',
+          date: todayISO(),
+          time: '',
+          squadId: get().squads[0]?.id ?? null,
+          objective: '',
+          notes: '',
+          playerIds: [],
+          blocks: defaultBlocks(),
+          createdAt: now(),
+          updatedAt: now(),
+        };
+        set((s) => ({ sessions: [session, ...s.sessions] }));
+        return id;
+      },
+
+      updateSession: (id, patch) =>
+        set((s) => ({
+          sessions: s.sessions.map((ses) => (ses.id === id ? { ...ses, ...patch, updatedAt: now() } : ses)),
+        })),
+
+      duplicateSession: (id) => {
+        const original = get().sessions.find((ses) => ses.id === id);
+        if (!original) return undefined;
+        const copy: TrainingSession = {
+          ...structuredClone(original),
+          id: newId(),
+          name: `${original.name} (copia)`,
+          blocks: original.blocks.map((b) => ({
+            ...structuredClone(b),
+            id: newId(),
+            items: b.items.map((it) => ({ ...it, id: newId() })),
+          })),
+          createdAt: now(),
+          updatedAt: now(),
+        };
+        set((s) => ({ sessions: [copy, ...s.sessions] }));
+        return copy.id;
+      },
+
+      removeSession: (id) => set((s) => ({ sessions: s.sessions.filter((ses) => ses.id !== id) })),
     }),
     {
       name: 'voley-planner',
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
-        const state = persisted as Partial<AppState>;
+        let state = persisted as Partial<AppState>;
         if (version < 2) {
           // v1 no tenía planteles: los jugadores existentes pasan a "Mi equipo".
           const players = (state.players ?? []) as Player[];
           const squad: Squad = { id: newId(), name: 'Mi equipo' };
-          return {
+          state = {
             ...state,
             squads: players.length ? [squad] : [],
             players: players.map((p) => ({ ...p, squadId: squad.id })),
@@ -137,7 +209,11 @@ export const useAppStore = create<AppState>()(
               ...e,
               squadId: players.length ? squad.id : null,
             })),
-          } as AppState;
+          };
+        }
+        if (version < 3) {
+          // v3 agrega las sesiones de entrenamiento.
+          state = { ...state, sessions: [] };
         }
         return state as AppState;
       },

@@ -69,7 +69,7 @@ de entrenamiento y, más adelante, ciclos de temporada.
 El proyecto avanza por etapas chicas para poder probarlo en entrenamientos
 reales lo antes posible.
 
-### Etapa 1 — MVP: pizarra + biblioteca de ejercicios ✅ (esta versión)
+### Etapa 1 — MVP: pizarra + biblioteca de ejercicios ✅
 - Pizarra de cancha completa con todos los elementos.
 - Rotaciones 5-1 con formaciones K1, K2 y defensas, y validación de faltas
   de posición según el momento de cada paso.
@@ -82,10 +82,12 @@ reales lo antes posible.
 - Guardado local en el navegador (sin cuenta todavía).
 - Publicación en GitHub Pages.
 
-### Etapa 2 — Sesiones de entrenamiento
-- Crear sesiones con fecha, objetivo y bloques.
-- Agregar ejercicios de la biblioteca a cada bloque y asignar jugadores.
-- Duración total e intensidad de la sesión.
+### Etapa 2 — Sesiones de entrenamiento ✅
+- Crear sesiones con fecha, hora, plantel, objetivo, notas y convocados.
+- Bloques (calentamiento, técnica, táctica, juego, vuelta a la calma, otro)
+  con ejercicios de la biblioteca, duración ajustable, jugadores y notas.
+- Resumen: duración total, intensidad promedio ponderada por minutos y
+  minutos por tipo de ejercicio.
 - Exportar la sesión a PDF (con las pizarras de cada ejercicio).
 
 ### Etapa 3 — Usuarios y nube

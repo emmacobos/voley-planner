@@ -2,8 +2,10 @@
 
 Pizarra táctica para planificar entrenamientos de voleibol: cancha completa con
 los dos equipos, rotaciones del 5-1 con control de faltas de posición, jugadas
-animadas paso a paso y una biblioteca de ejercicios (analíticos, sintéticos y
-globales) con tu plantel.
+animadas paso a paso, una biblioteca de ejercicios (analíticos, sintéticos y
+globales) y sesiones de entrenamiento por bloques que se exportan a PDF.
+
+Online: https://emmacobos.github.io/voley-planner/
 
 La visión completa del producto y la hoja de ruta están en
 [`docs/VISION.md`](docs/VISION.md).
@@ -33,6 +35,13 @@ La visión completa del producto y la hoja de ruta están en
    tocá *Reproducir*. Las flechas de un paso se ven mientras ocurre el
    movimiento hacia el siguiente.
 5. **Exportar PNG** descarga una imagen del paso actual.
+6. **Sesiones → Nueva sesión:** fecha, hora, plantel, objetivo y convocados.
+   La sesión arranca con 5 bloques (90 minutos) que podés cambiar, reordenar
+   o borrar. A cada bloque le agregás ejercicios de la biblioteca (con su
+   duración) y elegís qué jugadores participan. El resumen muestra la
+   duración total, la intensidad promedio y los minutos por tipo de ejercicio.
+7. **Exportar PDF:** abre una versión para imprimir con toda la sesión y las
+   pizarras; en el diálogo de impresión elegí "Guardar como PDF".
 
 Atajos: `Ctrl+Z` deshacer, `Ctrl+Shift+Z` rehacer, `Supr` eliminar el
 elemento seleccionado, `Esc` deseleccionar.

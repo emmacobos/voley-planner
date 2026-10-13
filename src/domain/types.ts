@@ -149,3 +149,50 @@ export interface Exercise {
   createdAt: string;
   updatedAt: string;
 }
+
+export type BlockKind = 'calentamiento' | 'tecnica' | 'tactica' | 'juego' | 'vuelta-calma' | 'otro';
+
+export const BLOCK_KINDS: { value: BlockKind; label: string }[] = [
+  { value: 'calentamiento', label: 'Calentamiento' },
+  { value: 'tecnica', label: 'Técnica' },
+  { value: 'tactica', label: 'Táctica' },
+  { value: 'juego', label: 'Juego' },
+  { value: 'vuelta-calma', label: 'Vuelta a la calma' },
+  { value: 'otro', label: 'Otro' },
+];
+
+/** Un ejercicio de la biblioteca dentro de un bloque, con su duración en la sesión. */
+export interface BlockItem {
+  id: string;
+  exerciseId: string;
+  durationMin: number;
+}
+
+export interface SessionBlock {
+  id: string;
+  kind: BlockKind;
+  title: string;
+  /** Duración del bloque cuando no tiene ejercicios (por ejemplo, un calentamiento libre). */
+  durationMin: number;
+  items: BlockItem[];
+  /** Jugadores que participan del bloque (entre los convocados). */
+  playerIds: string[];
+  notes: string;
+}
+
+export interface TrainingSession {
+  id: string;
+  name: string;
+  /** Fecha en formato AAAA-MM-DD. */
+  date: string;
+  /** Hora en formato HH:MM (opcional). */
+  time: string;
+  squadId: string | null;
+  objective: string;
+  notes: string;
+  /** Jugadores convocados a la sesión. */
+  playerIds: string[];
+  blocks: SessionBlock[];
+  createdAt: string;
+  updatedAt: string;
+}
