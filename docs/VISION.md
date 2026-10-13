@@ -20,7 +20,7 @@ de entrenamiento y, más adelante, ciclos de temporada.
 
 | Concepto | Qué es |
 |---|---|
-| **Jugador** | Integrante del plantel: nombre, número, posición (armador, opuesto, central, punta, líbero). |
+| **Jugador** | Integrante del plantel: nombre, número, posición (armador, opuesto, central, punta, líbero), fecha de nacimiento, teléfono y observaciones. |
 | **Plantel** | Grupo de jugadores con nombre propio (por ejemplo "Primera femenina" o "Sub 18"). Un entrenador puede tener varios. |
 | **Pizarra** | Cancha completa vista desde arriba con jugadores de ambos equipos, pelota, conos, carros, entrenadores y flechas. |
 | **Paso (frame)** | Una "foto" de la pizarra. Varios pasos seguidos forman una animación. Cada paso tiene un **momento**: saque de A, saque de B o pelota en juego. |
@@ -61,8 +61,12 @@ de entrenamiento y, más adelante, ciclos de temporada.
 - Exportar a PDF para imprimir o compartir.
 
 ### Usuarios
-- Cuentas de usuario (registro e inicio de sesión).
-- Datos guardados en la nube y sincronizados entre dispositivos.
+- Cuentas de usuario: cada entrenador tiene su cuenta y sus datos.
+- Entrar con Google o con email y contraseña.
+- La cuenta es opcional: se puede usar la app sin entrar (datos solo en ese
+  navegador) y entrar para guardar en la nube.
+- Datos guardados en la nube y sincronizados entre dispositivos, con
+  funcionamiento sin internet.
 
 ## Hoja de ruta
 
@@ -91,10 +95,29 @@ reales lo antes posible.
 - Exportar la sesión a PDF (con las pizarras de cada ejercicio).
 
 ### Etapa 3 — Usuarios y nube
-- Registro e inicio de sesión.
-- Base de datos en la nube (propuesta: Supabase — autenticación + Postgres,
-  con plan gratuito).
-- Migración de los datos guardados localmente a la cuenta.
+Decisiones tomadas:
+- **Servicio:** Firebase (Authentication + Firestore), plan gratuito. Se
+  eligió sobre Supabase porque no se pausa por inactividad (pretemporada,
+  vacaciones) y trae funcionamiento sin internet.
+- **Quién:** cada entrenador con su cuenta y sus datos, sin compartir por
+  ahora. El modelo de datos queda preparado para compartir más adelante.
+- **Cómo se entra:** Google y email + contraseña (con recuperación de
+  contraseña).
+- **Cuenta opcional:** sin entrar, la app funciona como hasta ahora (datos en
+  el navegador). Al entrar por primera vez, ofrece subir los datos locales a
+  la cuenta.
+- **Sincronización:** automática, con indicador de estado ("Guardado" /
+  "Sincronizando…"), funciona sin internet y sincroniza al volver la
+  conexión. Si se edita lo mismo en dos dispositivos, queda el último cambio.
+- **Seguridad:** reglas de Firestore para que cada cuenta solo pueda leer y
+  escribir sus propios datos.
+- **Datos de jugadores:** nombre, número, posición, fecha de nacimiento,
+  teléfono y observaciones. Los datos personales (teléfono, nacimiento,
+  observaciones) no se incluyen en el PDF de las sesiones.
+
+### Pendiente — Compartir con el cuerpo técnico
+- Invitar a asistentes a ver o editar planteles, ejercicios y sesiones.
+- Roles (dueño / editor / lector).
 
 ### Etapa 4 — Calendario y temporada
 - Vista de calendario semanal/mensual.
@@ -115,8 +138,8 @@ reales lo antes posible.
 - **Frontend:** React + TypeScript + Vite.
 - **Pizarra:** SVG con coordenadas en metros reales (la cancha mide 18 × 9),
   lo que simplifica las reglas y la exportación.
-- **Estado:** Zustand. En la Etapa 1 se persiste en `localStorage`; en la
-  Etapa 3 la misma capa pasa a sincronizar con el backend.
+- **Estado:** Zustand. Se persiste en `localStorage`; en la Etapa 3 la
+  misma capa se sincroniza con Firestore cuando hay una cuenta.
 - **Lógica de dominio** (rotaciones, reglas, animación) separada de la UI en
   `src/domain`, con tests (Vitest).
 - **Deploy:** GitHub Pages mediante GitHub Actions.

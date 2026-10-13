@@ -1101,3 +1101,20 @@ input.num {
   border-color: var(--ok);
   color: #fff;
 }
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.roster.roster-wide {
+  max-width: 1200px;
+}
+
+.roster td.age {
+  text-align: center;
+  color: var(--muted);
+}
+
+.roster .notes-input {
+  min-width: 220px;
+}

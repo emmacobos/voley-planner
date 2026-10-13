@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useAppStore } from '../store';
 import { POSITIONS } from '../domain/types';
 import type { Position } from '../domain/types';
+import { ageOn } from '../domain/players';
 
 export function RosterPage() {
   const squads = useAppStore((s) => s.squads);
@@ -122,54 +123,87 @@ export function RosterPage() {
           {sorted.length === 0 ? (
             <p className="muted">Cargá a los jugadores para usarlos en las formaciones y ver sus nombres en la pizarra.</p>
           ) : (
-            <table className="roster">
-              <thead>
-                <tr>
-                  <th>N°</th>
-                  <th>Nombre</th>
-                  <th>Posición</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((p) => (
-                  <tr key={p.id}>
-                    <td>
-                      <input
-                        type="number"
-                        className="num"
-                        min={0}
-                        max={99}
-                        value={p.number}
-                        onChange={(e) => updatePlayer(p.id, { number: Number(e.target.value) })}
-                      />
-                    </td>
-                    <td>
-                      <input value={p.name} onChange={(e) => updatePlayer(p.id, { name: e.target.value })} />
-                    </td>
-                    <td>
-                      <select value={p.position} onChange={(e) => updatePlayer(p.id, { position: e.target.value as Position })}>
-                        {POSITIONS.map((pos) => (
-                          <option key={pos.value} value={pos.value}>
-                            {pos.label}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <button
-                        className="danger"
-                        onClick={() => {
-                          if (confirm(`¿Eliminar a ${p.name}?`)) removePlayer(p.id);
-                        }}
-                      >
-                        Eliminar
-                      </button>
-                    </td>
+            <div className="table-scroll">
+              <table className="roster roster-wide">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Nombre</th>
+                    <th>Posición</th>
+                    <th>Nacimiento</th>
+                    <th>Edad</th>
+                    <th>Teléfono</th>
+                    <th>Observaciones</th>
+                    <th />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sorted.map((p) => (
+                    <tr key={p.id}>
+                      <td>
+                        <input
+                          type="number"
+                          className="num"
+                          min={0}
+                          max={99}
+                          value={p.number}
+                          onChange={(e) => updatePlayer(p.id, { number: Number(e.target.value) })}
+                        />
+                      </td>
+                      <td>
+                        <input value={p.name} onChange={(e) => updatePlayer(p.id, { name: e.target.value })} />
+                      </td>
+                      <td>
+                        <select value={p.position} onChange={(e) => updatePlayer(p.id, { position: e.target.value as Position })}>
+                          {POSITIONS.map((pos) => (
+                            <option key={pos.value} value={pos.value}>
+                              {pos.label}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <input
+                          type="date"
+                          value={p.birthDate ?? ''}
+                          onChange={(e) => updatePlayer(p.id, { birthDate: e.target.value || undefined })}
+                          aria-label={`Fecha de nacimiento de ${p.name}`}
+                        />
+                      </td>
+                      <td className="age">{ageOn(p.birthDate) ?? '—'}</td>
+                      <td>
+                        <input
+                          type="tel"
+                          value={p.phone ?? ''}
+                          placeholder="—"
+                          onChange={(e) => updatePlayer(p.id, { phone: e.target.value || undefined })}
+                          aria-label={`Teléfono de ${p.name}`}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="notes-input"
+                          value={p.notes ?? ''}
+                          placeholder="Lesiones, disponibilidad…"
+                          onChange={(e) => updatePlayer(p.id, { notes: e.target.value || undefined })}
+                          aria-label={`Observaciones de ${p.name}`}
+                        />
+                      </td>
+                      <td>
+                        <button
+                          className="danger"
+                          onClick={() => {
+                            if (confirm(`¿Eliminar a ${p.name}?`)) removePlayer(p.id);
+                          }}
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}

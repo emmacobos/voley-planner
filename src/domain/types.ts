@@ -28,6 +28,11 @@ export interface Player {
   name: string;
   number: number;
   position: Position;
+  /** Fecha de nacimiento AAAA-MM-DD (opcional). */
+  birthDate?: string;
+  phone?: string;
+  /** Observaciones del entrenador (lesiones, disponibilidad, etc.). */
+  notes?: string;
 }
 
 export type Team = 'A' | 'B';
