@@ -1,6 +1,8 @@
+import { AccountMenu } from './components/AccountMenu';
 import { ExerciseEditor } from './components/ExerciseEditor';
 import { ExerciseList } from './components/ExerciseList';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ImportDialog } from './components/ImportDialog';
 import { RosterPage } from './components/RosterPage';
 import { SessionEditor } from './components/SessionEditor';
 import { SessionList } from './components/SessionList';
@@ -27,7 +29,9 @@ export default function App() {
             Planteles
           </a>
         </nav>
+        <AccountMenu />
       </header>
+      <ImportDialog />
       <main>
         {/* La key reinicia el error al navegar a otra pantalla. */}
         <ErrorBoundary key={window.location.hash}>

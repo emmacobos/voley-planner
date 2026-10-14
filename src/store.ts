@@ -4,11 +4,31 @@ import { newId } from './domain/ids';
 import { defaultBlocks, todayISO } from './domain/sessions';
 import type { Exercise, Frame, Player, Squad, TrainingSession } from './domain/types';
 
-interface AppState {
+/** Datos del usuario (lo que se sincroniza con la nube). */
+export interface AppData {
   squads: Squad[];
   players: Player[];
   exercises: Exercise[];
   sessions: TrainingSession[];
+}
+
+export const DATA_KEYS = ['squads', 'players', 'exercises', 'sessions'] as const;
+export type DataKey = (typeof DATA_KEYS)[number];
+
+export const EMPTY_DATA: AppData = { squads: [], players: [], exercises: [], sessions: [] };
+
+export function hasData(data: AppData): boolean {
+  return DATA_KEYS.some((k) => data[k].length > 0);
+}
+
+interface AppState extends AppData {
+  /**
+   * Cuenta a la que pertenecen los datos guardados en este navegador, o null
+   * si son datos locales sin cuenta.
+   */
+  ownerUid: string | null;
+  /** Reemplaza todos los datos (por ejemplo al salir de la cuenta). */
+  resetData: (ownerUid: string | null) => void;
   addSquad: (name: string) => string;
   renameSquad: (id: string, name: string) => void;
   /** Elimina el plantel y sus jugadores. */
@@ -43,8 +63,8 @@ export function emptyFrame(): Frame {
 const now = () => new Date().toISOString();
 
 /**
- * Estado global de la app. En la Etapa 1 se guarda en el navegador
- * (localStorage); en la Etapa 3 se sincronizará con la cuenta del usuario.
+ * Estado global de la app. Se guarda en el navegador (localStorage) y, si hay
+ * una cuenta abierta, se sincroniza con Firestore (ver `src/cloud/sync.ts`).
  */
 export const useAppStore = create<AppState>()(
   persist(
@@ -53,6 +73,9 @@ export const useAppStore = create<AppState>()(
       players: [],
       exercises: [],
       sessions: [],
+      ownerUid: null,
+
+      resetData: (ownerUid) => set({ ...EMPTY_DATA, ownerUid }),
 
       addSquad: (name) => {
         const id = newId();

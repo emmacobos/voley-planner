@@ -1118,3 +1118,184 @@ input.num {
 .roster .notes-input {
   min-width: 220px;
 }
+
+/* Cuenta */
+
+.account {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.account-hint {
+  color: #fcd34d;
+  font-size: 0.82rem;
+}
+
+.account-login {
+  background: #fff;
+  color: #0f172a;
+  border-color: #fff;
+  font-weight: 600;
+}
+
+.account-button {
+  border: none;
+  background: none;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.account-button img,
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: block;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.sync-status {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+}
+
+.sync-saved {
+  color: #86efac;
+}
+
+.sync-offline {
+  color: #fcd34d;
+}
+
+.sync-error {
+  color: #fca5a5;
+}
+
+.account-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 260px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.15);
+  padding: 0.9rem;
+  z-index: 20;
+}
+
+.account-dropdown p {
+  margin: 0 0 0.25rem;
+  overflow-wrap: anywhere;
+}
+
+.account-name {
+  font-weight: 700;
+}
+
+/* Diálogos */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.modal {
+  position: relative;
+  color: var(--text);
+  text-align: left;
+  font-weight: 400;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.25);
+}
+
+.modal h2 {
+  font-size: 1.3rem;
+  margin: 0 0 0.5rem;
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.google-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.6rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 1rem 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--border);
+}
+
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.form-error {
+  color: var(--danger);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.form-info {
+  color: var(--ok);
+  margin: 0;
+  font-size: 0.9rem;
+}

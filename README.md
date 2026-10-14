@@ -46,8 +46,14 @@ La visión completa del producto y la hoja de ruta están en
 Atajos: `Ctrl+Z` deshacer, `Ctrl+Shift+Z` rehacer, `Supr` eliminar el
 elemento seleccionado, `Esc` deseleccionar.
 
-> Por ahora los datos se guardan en el navegador. Las cuentas de usuario
-> llegan en la Etapa 3 (ver hoja de ruta).
+### Tu cuenta
+
+La app se puede usar sin cuenta: los datos quedan solo en ese navegador. Con
+**Entrar** (arriba a la derecha) creás una cuenta con Google o con email y
+contraseña, y todo se guarda en la nube y se sincroniza entre dispositivos,
+incluso si trabajás sin internet. La primera vez que entrás en un navegador con
+datos cargados, la app pregunta si querés sumarlos a tu cuenta. Al salir de la
+cuenta, los datos se borran de ese navegador (siguen en la nube).
 
 ## Desarrollo
 
@@ -67,8 +73,10 @@ npm run build
 src/
   domain/       lógica pura: tipos, cancha, rotaciones, reglas, animación (+ tests)
   components/   pizarra (SVG), editor, biblioteca y plantel
+  cloud/        Firebase: cuentas (auth.ts) y sincronización con Firestore (sync.ts)
   store.ts      estado global (Zustand, guardado en localStorage)
 docs/VISION.md  visión del producto y hoja de ruta
+firestore.rules reglas de seguridad de Firestore (se publican a mano en la consola de Firebase)
 ```
 
 ### Publicación

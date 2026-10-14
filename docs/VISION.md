@@ -94,7 +94,7 @@ reales lo antes posible.
   minutos por tipo de ejercicio.
 - Exportar la sesión a PDF (con las pizarras de cada ejercicio).
 
-### Etapa 3 — Usuarios y nube
+### Etapa 3 — Usuarios y nube ✅
 Decisiones tomadas:
 - **Servicio:** Firebase (Authentication + Firestore), plan gratuito. Se
   eligió sobre Supabase porque no se pausa por inactividad (pretemporada,
