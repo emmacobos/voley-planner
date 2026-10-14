@@ -59,7 +59,8 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      tamaños (chico, mediano, grande) y cuatro colores.
    - Al tocar un elemento se abre su **tarjeta** al lado, sobre la pizarra,
      con todo lo que se puede cambiar (en el celular aparece debajo de la
-     pizarra). Se cierra con la ✕ o con Esc.
+     pizarra). Aparece debajo del elemento para no taparlo, se mueve arrastrando
+     su título y se cierra con la ✕ o con Esc.
    - Al seleccionar un jugador aparece, al lado del tachito, el **globito de
      comentario**: lo que escribas (por ejemplo "Se desplaza a 1") se ve
      debajo del jugador en la pizarra. Cada paso tiene su propio comentario.

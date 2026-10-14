@@ -1201,21 +1201,28 @@ main {
 .floating-panel::before {
   content: '';
   position: absolute;
-  top: calc(var(--pointer-y) - 8px);
+  left: calc(var(--pointer-x) - 8px);
   border: 8px solid transparent;
 }
 
-.floating-panel.side-right::before {
-  left: -16px;
-  border-right-color: var(--surface);
+.floating-panel.side-below::before {
+  top: -16px;
+  border-bottom-color: var(--surface);
 }
 
-.floating-panel.side-left::before {
-  right: -16px;
-  border-left-color: var(--surface);
+.floating-panel.side-above::before {
+  bottom: -16px;
+  border-top-color: var(--surface);
+}
+
+.floating-panel.moved::before {
+  display: none;
 }
 
 .floating-panel-head {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
