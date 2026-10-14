@@ -9,7 +9,7 @@ export type Tool =
   | 'shadow'
   | 'text';
 
-export const TEAM_COLORS: Record<Team, string> = { A: '#1F4FB8', B: '#C0262D' };
+export const TEAM_COLORS: Record<Team, string> = { A: '#23201B', B: '#7A1424' };
 
 /**
  * Cancha de estadio: madera clara con la zona de ataque más oscura, franja
@@ -19,11 +19,11 @@ export const COURT_COLORS = {
   court: '#E8D3AE',
   frontZone: '#C99A68',
   lines: '#FFFFFF',
-  bandColor: '#1F3C9C',
+  bandColor: '#1A1814',
   /** Ancho de la franja azul más allá de las líneas de fondo y laterales (m). */
   band: { ends: 2.3, sides: 2.1 },
   floor: '#E6D6B8',
-  boards: '#14204A',
+  boards: '#0B0A08',
   /** Profundidad de los carteles en el borde (m). */
   boardDepth: 0.3,
   zoneText: '#6B4A25',
@@ -36,4 +36,4 @@ export const SELECTION_COLOR = '#C99A4E';
 export const DISPLAY_FONT = "'Barlow Condensed', 'Arial Narrow', sans-serif";
 
 /** El líbero usa otra camiseta. */
-export const LIBERO_COLORS: Record<Team, string> = { A: '#0891b2', B: '#7e22ce' };
+export const LIBERO_COLORS: Record<Team, string> = { A: '#B07A3C', B: '#A0525F' };

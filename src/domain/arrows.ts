@@ -55,10 +55,10 @@ export type ArrowKind = 'desplazamiento' | 'pelota' | 'curva' | 'curva-punteada'
  * punteada (desplazamiento) o continua (pelota), recta o curva.
  */
 export const ARROW_KINDS: { value: ArrowKind; label: string; color: string; style: ArrowElement['style']; curved: boolean }[] = [
-  { value: 'desplazamiento', label: 'Desplazamiento', color: '#1F4FB8', style: 'move', curved: false },
-  { value: 'pelota', label: 'Pelota', color: '#0E1A2B', style: 'ball', curved: false },
-  { value: 'curva', label: 'Curva', color: '#C0262D', style: 'ball', curved: true },
-  { value: 'curva-punteada', label: 'Curva punteada', color: '#15935E', style: 'move', curved: true },
+  { value: 'desplazamiento', label: 'Desplazamiento', color: '#2F3A4A', style: 'move', curved: false },
+  { value: 'pelota', label: 'Pelota', color: '#1C1915', style: 'ball', curved: false },
+  { value: 'curva', label: 'Curva', color: '#7A1424', style: 'ball', curved: true },
+  { value: 'curva-punteada', label: 'Curva punteada', color: '#5F6B3F', style: 'move', curved: true },
 ];
 
 export function arrowKind(a: Pick<ArrowElement, 'style' | 'curve'>): ArrowKind {

@@ -42,8 +42,8 @@ describe('tipos de flecha', () => {
   it('cada tipo tiene un color distinto y su marcador', () => {
     const colors = ARROW_KINDS.map((k) => k.color);
     expect(new Set(colors).size).toBe(ARROW_KINDS.length);
-    expect(arrowColor({ style: 'ball', curve: 2 })).toBe('#C0262D');
-    expect(arrowColor({ style: 'move' })).toBe('#1F4FB8');
+    expect(arrowColor({ style: 'ball', curve: 2 })).toBe('#7A1424');
+    expect(arrowColor({ style: 'move' })).toBe('#2F3A4A');
     expect(new Set(colors.map(headMarkerId)).size).toBe(colors.length);
   });
 

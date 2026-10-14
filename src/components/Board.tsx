@@ -544,7 +544,7 @@ function DeleteButton({ element, onDelete }: { element: BoardElement; onDelete: 
       }}
     >
       <title>Eliminar (Supr)</title>
-      <circle r={0.34} fill="#C0262D" stroke="#ffffff" strokeWidth={0.05} />
+      <circle r={0.34} fill="#7A1424" stroke="#ffffff" strokeWidth={0.05} />
       <g transform="translate(-0.19 -0.2) scale(0.016)" fill="none" stroke="#ffffff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6" />
       </g>
@@ -672,7 +672,7 @@ function CommentButton({ element, onComment }: { element: PlayerToken; onComment
       }}
     >
       <title>Agregar un comentario debajo del jugador</title>
-      <circle r={0.34} fill="#1F4FB8" stroke="#ffffff" strokeWidth={0.05} />
+      <circle r={0.34} fill="#2F3A4A" stroke="#ffffff" strokeWidth={0.05} />
       <g transform="translate(-0.19 -0.19) scale(0.016)" fill="none" stroke="#ffffff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 5h16v11H9l-5 4zM8 9h8M8 12h5" />
       </g>

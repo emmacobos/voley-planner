@@ -35,7 +35,7 @@ export const TEXT_SIZES: Record<TextSize, number> = { S: 0.42, M: 0.6, L: 0.85 }
 export const TEXT_COLORS: { value: string; label: string }[] = [
   { value: '#0E1A2B', label: 'Azul marino' },
   { value: '#FFFFFF', label: 'Blanco' },
-  { value: '#C0262D', label: 'Rojo' },
+  { value: '#7A1424', label: 'Vino' },
   { value: '#DFB97D', label: 'Dorado' },
 ];
 

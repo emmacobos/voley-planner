@@ -71,13 +71,13 @@ function PlayPreview() {
 
 const FEATURES = [
   {
-    color: '#1F4FB8',
+    color: '#8A6A2F',
     icon: 'M4 18c4-1 7-5 9-9m0 0-4 .5M13 9l1 4',
     title: 'Pizarra animada',
     text: 'Cancha completa con los dos equipos, flechas, sombra del bloqueo y textos. Armá la jugada en pasos y reproducila.',
   },
   {
-    color: '#C0262D',
+    color: '#8A6A2F',
     icon: 'M12 3a9 9 0 1 0 9 9M12 3v9l6 3',
     title: 'Sistemas y rotaciones',
     text: 'Formaciones del 5-1, 4-2 y 6-0 para cada rotación, con control automático de faltas de posición.',

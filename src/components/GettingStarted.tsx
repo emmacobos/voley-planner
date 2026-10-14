@@ -13,18 +13,18 @@ const ART: ReactNode[] = [
   <svg key="ejercicio" width="200" height="110" viewBox="0 0 200 110" aria-hidden="true">
     <rect x="10" y="10" width="180" height="90" fill="#E8D3AE" stroke="#fff" strokeWidth="3" />
     <line x1="100" y1="6" x2="100" y2="104" stroke="#0E1A2B" strokeWidth="4" />
-    <circle cx="50" cy="40" r="9" fill="#1F4FB8" />
-    <circle cx="60" cy="75" r="9" fill="#1F4FB8" />
-    <circle cx="150" cy="55" r="9" fill="#C0262D" />
-    <path d="M58 40 Q80 20 92 48" fill="none" stroke="#C0262D" strokeWidth="3" />
-    <path d="M68 75 L92 62" stroke="#1F4FB8" strokeWidth="3" strokeDasharray="5 4" />
+    <circle cx="50" cy="40" r="9" fill="#23201B" />
+    <circle cx="60" cy="75" r="9" fill="#23201B" />
+    <circle cx="150" cy="55" r="9" fill="#7A1424" />
+    <path d="M58 40 Q80 20 92 48" fill="none" stroke="#7A1424" strokeWidth="3" />
+    <path d="M68 75 L92 62" stroke="#2F3A4A" strokeWidth="3" strokeDasharray="5 4" />
   </svg>,
   <svg key="sesion" width="120" height="110" viewBox="0 0 120 110" aria-hidden="true">
     <rect x="14" y="18" width="92" height="82" rx="12" fill="#fff" />
     <rect x="14" y="18" width="92" height="22" rx="10" fill="#DFB97D" />
-    <rect x="28" y="52" width="64" height="9" rx="4" fill="#d97706" />
-    <rect x="28" y="67" width="46" height="9" rx="4" fill="#7c3aed" />
-    <rect x="28" y="82" width="56" height="9" rx="4" fill="#15935e" />
+    <rect x="28" y="52" width="64" height="9" rx="4" fill="#b07a3c" />
+    <rect x="28" y="67" width="46" height="9" rx="4" fill="#7a2232" />
+    <rect x="28" y="82" width="56" height="9" rx="4" fill="#6d7b4e" />
     <rect x="34" y="8" width="8" height="20" rx="4" fill="#0E1A2B" />
     <rect x="78" y="8" width="8" height="20" rx="4" fill="#0E1A2B" />
   </svg>,
@@ -33,7 +33,7 @@ const ART: ReactNode[] = [
 const ART_BACKGROUND = [
   'linear-gradient(135deg, #3a2f1f, #0d0d0d)',
   'linear-gradient(135deg, #C99A68, #E8D3AE)',
-  'linear-gradient(135deg, #15935E, #0f6b41)',
+  'linear-gradient(135deg, #6d7b4e, #3f4a2c)',
 ];
 
 /**

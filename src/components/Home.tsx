@@ -11,12 +11,12 @@ import { backupIsDue } from '../utils/backupReminder';
 
 /** Colores de cada tipo de bloque (los mismos que en el editor de sesiones). */
 const BLOCK_COLORS: Record<BlockKind, string> = {
-  calentamiento: '#d97706',
-  tecnica: '#2f6fe0',
-  tactica: '#7c3aed',
-  juego: '#15935e',
-  'vuelta-calma': '#64748b',
-  otro: '#94a3b8',
+  calentamiento: '#b07a3c',
+  tecnica: '#3e4a5a',
+  tactica: '#7a2232',
+  juego: '#6d7b4e',
+  'vuelta-calma': '#8f8676',
+  otro: '#b5ab9b',
 };
 
 const TIPS = [

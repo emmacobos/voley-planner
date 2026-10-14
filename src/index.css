@@ -5,18 +5,18 @@
  */
 
 :root {
-  --navy: #111111;
-  --navy-2: #1c1c1c;
-  --navy-3: #262626;
-  --bg: #f3f5f8;
-  --surface: #ffffff;
-  --surface-2: #eef2f7;
-  --text: #142033;
-  --muted: #5b6678;
-  --border: #d5dce6;
-  --line: #e4e9f0;
+  --navy: #141210;
+  --navy-2: #1d1a16;
+  --navy-3: #28241e;
+  --bg: #f5f2ec;
+  --surface: #fffdf9;
+  --surface-2: #f1ece3;
+  --text: #1c1915;
+  --muted: #736b5f;
+  --border: #e4ddd0;
+  --line: #ece6db;
   --accent: #8a6a2f;
-  --accent-soft: #f4ead9;
+  --accent-soft: #f4ecdc;
   --primary: #dfb97d;
   --primary-hover: #cda466;
   --ball: #dfb97d;
@@ -32,25 +32,25 @@
   --ok-soft: #e3f6ec;
   --warn: #8a5300;
   --warn-soft: #fff4e5;
-  --track: #e4e9f0;
-  --text-2: #46526a;
-  --pill: #e9eef6;
-  --pill-text: #26344a;
-  --row-hover: #fafbfd;
-  --t-ana-bg: #e3eefc;
-  --t-ana-fg: #1d4e9e;
-  --t-sin-bg: #fdf0da;
-  --t-sin-fg: #8a5300;
-  --t-glo-bg: #e3f6ec;
-  --t-glo-fg: #0f6b41;
-  --dashed: #aeb9c9;
-  --team-a: #1f4fb8;
-  --team-b: #b42318;
+  --track: #ebe4d8;
+  --text-2: #4d463c;
+  --pill: #f0e9dd;
+  --pill-text: #3b342a;
+  --row-hover: #fbf8f2;
+  --t-ana-bg: #e6e9ee;
+  --t-ana-fg: #3e4a5a;
+  --t-sin-bg: #f5ecda;
+  --t-sin-fg: #8a6a2f;
+  --t-glo-bg: #e9ecdf;
+  --t-glo-fg: #55613a;
+  --dashed: #c9bfae;
+  --team-a: #1c1915;
+  --team-b: #7a1424;
   color-scheme: light;
   --radius: 12px;
   --radius-lg: 16px;
-  --shadow: 0 1px 2px rgb(14 26 43 / 0.06), 0 6px 20px rgb(14 26 43 / 0.04);
-  --shadow-lg: 0 2px 4px rgb(14 26 43 / 0.08), 0 12px 32px rgb(14 26 43 / 0.1);
+  --shadow: 0 1px 2px rgb(40 30 15 / 0.06), 0 8px 24px rgb(40 30 15 / 0.05);
+  --shadow-lg: 0 2px 4px rgb(40 30 15 / 0.08), 0 14px 34px rgb(40 30 15 / 0.1);
   --font: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   font-family: var(--font);
@@ -1519,12 +1519,12 @@ main {
 }
 
 .segmented.team-switch button.active.team-A {
-  background: #1f4fb8;
-  color: #fff;
+  background: #1c1915;
+  color: #e3c48b;
 }
 
 .segmented.team-switch button.active.team-B {
-  background: #c0262d;
+  background: #7a1424;
   color: #fff;
 }
 
@@ -1657,23 +1657,23 @@ main {
 }
 
 .block-calentamiento .block-number {
-  background: #d97706;
+  background: #b07a3c;
 }
 
 .block-tecnica .block-number {
-  background: #2f6fe0;
+  background: #3e4a5a;
 }
 
 .block-tactica .block-number {
-  background: #7c3aed;
+  background: #7a2232;
 }
 
 .block-juego .block-number {
-  background: #15935e;
+  background: #6d7b4e;
 }
 
 .block-vuelta-calma .block-number {
-  background: #64748b;
+  background: #8f8676;
 }
 
 .block-title {
@@ -1801,17 +1801,17 @@ input.num {
 
 .type-bar .type-analitico,
 .swatch.type-analitico {
-  background: #2f6fe0;
+  background: #3e4a5a;
 }
 
 .type-bar .type-sintetico,
 .swatch.type-sintetico {
-  background: #f0a023;
+  background: #c39a55;
 }
 
 .type-bar .type-global,
 .swatch.type-global {
-  background: #1fa971;
+  background: #6d7b4e;
 }
 
 .legend {
@@ -2015,7 +2015,7 @@ input.num {
   align-items: center;
   padding: 2.6rem;
   border-radius: 24px;
-  background: radial-gradient(120% 140% at 100% 0%, #3a2f1f 0%, #0d0d0d 55%);
+  background: radial-gradient(120% 140% at 100% 0%, #2c2418 0%, #0d0c0a 60%);
   color: #fff;
   box-shadow: var(--shadow-lg);
 }
@@ -3453,15 +3453,15 @@ input.num {
 :root[data-theme='dark'] {
   color-scheme: dark;
   --navy: #000000;
-  --navy-2: #141414;
-  --navy-3: #1f1f1f;
-  --bg: #0b0b0b;
-  --surface: #161616;
-  --surface-2: #1f1f1f;
-  --text: #ececec;
-  --muted: #a3a3a3;
-  --border: #2f2f2f;
-  --line: #262626;
+  --navy-2: #171410;
+  --navy-3: #221e18;
+  --bg: #0e0d0b;
+  --surface: #181613;
+  --surface-2: #211e1a;
+  --text: #ece6dc;
+  --muted: #a59d90;
+  --border: #322d26;
+  --line: #2a2621;
   --accent: #dfb97d;
   --accent-soft: #2a2318;
   --danger: #ff8f85;
@@ -3470,20 +3470,20 @@ input.num {
   --ok-soft: #14352a;
   --warn: #f5c46b;
   --warn-soft: #3a2c12;
-  --track: #2a2a2a;
-  --text-2: #c4c4c4;
-  --pill: #262626;
-  --pill-text: #e5e5e5;
-  --row-hover: #1c1c1c;
-  --t-ana-bg: #1b2f55;
-  --t-ana-fg: #a9c4ff;
-  --t-sin-bg: #3a2a10;
-  --t-sin-fg: #f5c46b;
-  --t-glo-bg: #14352a;
-  --t-glo-fg: #7fdcab;
-  --dashed: #555555;
-  --team-a: #9dbbff;
-  --team-b: #ffa39b;
+  --track: #2a2621;
+  --text-2: #c9c0b2;
+  --pill: #2a2621;
+  --pill-text: #e8e0d2;
+  --row-hover: #1d1a16;
+  --t-ana-bg: #232a33;
+  --t-ana-fg: #b9c3d1;
+  --t-sin-bg: #2e2618;
+  --t-sin-fg: #e3c48b;
+  --t-glo-bg: #262b1c;
+  --t-glo-fg: #b8c48f;
+  --dashed: #55504a;
+  --team-a: #e3c48b;
+  --team-b: #e08a95;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 20px rgb(0 0 0 / 0.2);
   --shadow-lg: 0 2px 4px rgb(0 0 0 / 0.35), 0 12px 32px rgb(0 0 0 / 0.35);
 }
@@ -3493,11 +3493,12 @@ input.num {
 }
 
 :root[data-theme='dark'] .segmented.team-switch button.active.team-A {
-  background: #1f4fb8;
+  background: #2b2620;
+  color: #e3c48b;
 }
 
 :root[data-theme='dark'] .segmented.team-switch button.active.team-B {
-  background: #c0262d;
+  background: #7a1424;
 }
 
 :root[data-theme='dark'] .date-tile {
@@ -3508,18 +3509,18 @@ input.num {
 .print-sheet {
   color-scheme: light;
   --surface: #ffffff;
-  --surface-2: #eef2f7;
-  --text: #142033;
-  --muted: #5b6678;
-  --border: #d5dce6;
-  --line: #e4e9f0;
-  --row-hover: #fafbfd;
-  --t-ana-bg: #e3eefc;
-  --t-ana-fg: #1d4e9e;
-  --t-sin-bg: #fdf0da;
-  --t-sin-fg: #8a5300;
-  --t-glo-bg: #e3f6ec;
-  --t-glo-fg: #0f6b41;
+  --surface-2: #f1ece3;
+  --text: #1c1915;
+  --muted: #736b5f;
+  --border: #e4ddd0;
+  --line: #ece6db;
+  --row-hover: #fbf8f2;
+  --t-ana-bg: #e6e9ee;
+  --t-ana-fg: #3e4a5a;
+  --t-sin-bg: #f5ecda;
+  --t-sin-fg: #8a6a2f;
+  --t-glo-bg: #e9ecdf;
+  --t-glo-fg: #55613a;
   color: var(--text);
 }
 
@@ -3714,12 +3715,27 @@ input.num {
   }
 }
 
-/* Paleta negro y dorado: lo activo y los números de las jugadoras en dorado metalizado. */
+/* Lo activo, en negro con letra dorada: el metal queda para lo importante. */
 .squad-tabs button.active,
-:root[data-theme='dark'] .squad-tabs button.active,
 .rotation-picker button.active,
 .frame-chip.active,
-.presentation-dots button.active,
+.presentation-dots button.active {
+  background: #1c1915;
+  border-color: #1c1915;
+  color: #e3c48b;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+:root[data-theme='dark'] .squad-tabs button.active,
+:root[data-theme='dark'] .rotation-picker button.active,
+:root[data-theme='dark'] .frame-chip.active {
+  background: #2b2620;
+  border-color: #5a4a2c;
+  color: #e3c48b;
+}
+
+/* Dorado metalizado: botón principal, números de las jugadoras y detalles clave. */
 .day-cell.today .day-number,
 .welcome-badge,
 .roster input.num,
@@ -3732,7 +3748,32 @@ input.num {
 }
 
 .squad-tabs button.active .muted {
-  color: #5a4524;
+  color: #b9a27a;
+}
+
+/* Avisos sobrios en crema y los íconos de la portada en dorado. */
+.demo-banner {
+  background: #f6efe1;
+  border-color: #e6d4ad;
+}
+
+:root[data-theme='dark'] .demo-banner {
+  background: #1f1b14;
+  border-color: #4a3d25;
+}
+
+.next-match,
+.home-tip {
+  background: color-mix(in srgb, var(--ball) 22%, var(--surface));
+}
+
+.welcome-features article {
+  border: 1px solid var(--line);
+}
+
+.welcome-icon {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
 }
 
 .account-login {
