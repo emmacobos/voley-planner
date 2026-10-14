@@ -33,11 +33,22 @@ describe('texto en el tablero', () => {
 
   it('con un ancho fijo corta las líneas para que entren en el cuadro', () => {
     const t = { text: 'Bloqueo doble por zona cuatro', size: 'M' as const, width: 3 };
-    // 3 m de ancho con letra de 0,6 m: entran 9 caracteres por línea.
-    expect(textLines(t)).toEqual(['Bloqueo', 'doble por', 'zona', 'cuatro']);
+    expect(textLines(t)).toEqual(['Bloqueo', 'doble', 'por zona', 'cuatro']);
     expect(textBox(t).width).toBe(3);
     expect(textBox(t).height).toBeCloseTo(4 * 0.6 * 1.2);
-    expect(textLines({ text: '', size: 'M', width: 3 })).toEqual(['']);
+  });
+
+  it('nunca se sale del cuadro: una palabra larga se corta y el cuadro envuelve al texto', () => {
+    const t = { text: 'Contraataque', size: 'M' as const, width: 2 };
+    const lines = textLines(t);
+    expect(lines.join('')).toBe('Contraataque');
+    expect(lines.length).toBeGreaterThan(1);
+    // Sin ancho fijo, el cuadro mide lo que mide el texto.
+    expect(textBox({ text: 'Contraataque', size: 'M' }).width).toBeGreaterThan(textBox({ text: 'Bloqueo', size: 'M' }).width);
+  });
+
+  it('vacío muestra el texto de ejemplo', () => {
+    expect(textLines({ text: '' })).toEqual(['Texto']);
   });
 });
 

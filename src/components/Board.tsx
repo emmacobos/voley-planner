@@ -14,11 +14,12 @@ import {
   DEFAULT_SHADOW,
   TEXT_COLORS,
   TEXT_FONT_RANGE,
-  TEXT_MIN_WIDTH,
+  setTextMeasurer,
   shadowPoints,
   textBox,
   textFontSize,
   textLines,
+  textMinWidth,
   wrapText,
 } from '../domain/shadows';
 import { isSegment } from '../domain/types';
@@ -38,6 +39,17 @@ import { positionShort } from '../domain/types';
 import { COURT_COLORS, DISPLAY_FONT, LIBERO_COLORS, SELECTION_COLOR, TEAM_COLORS } from './boardTheme';
 import type { Tool } from './boardTheme';
 
+
+// Medir los textos con la tipografía real (negrita de Barlow) para que el cuadro los envuelva justo.
+const measureCanvas = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;
+if (measureCanvas) {
+  measureCanvas.font = "700 100px Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif";
+  setTextMeasurer((text, size) => (measureCanvas.measureText(text).width / 100) * size);
+  // Cuando termina de cargar la tipografía, volver a fijarla (antes medía con la de reserva).
+  document.fonts?.ready.then(() => {
+    measureCanvas.font = "700 100px Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif";
+  });
+}
 
 interface BoardProps {
   elements: BoardElement[];
@@ -154,7 +166,7 @@ function resizeText(el: TextElement, ox: number, oy: number, dx: number, dy: num
   const box = textBox(el);
   if (part === 'width') {
     // El texto está centrado: el cuadro crece hacia los dos lados.
-    const width = Math.max(TEXT_MIN_WIDTH, box.width + 2 * dx);
+    const width = Math.max(textMinWidth(el), box.width + 2 * dx);
     return { ...el, width: round2(width) };
   }
   // Escala según cuánto se alejó la esquina del centro del texto.
@@ -164,7 +176,7 @@ function resizeText(el: TextElement, ox: number, oy: number, dx: number, dy: num
   const font = textFontSize(el);
   const fontSize = Math.min(TEXT_FONT_RANGE.max, Math.max(TEXT_FONT_RANGE.min, font * (to / from)));
   const k = fontSize / font;
-  return { ...el, fontSize: round2(fontSize), ...(el.width ? { width: round2(Math.max(TEXT_MIN_WIDTH, el.width * k)) } : {}) };
+  return { ...el, fontSize: round2(fontSize), ...(el.width ? { width: round2(el.width * k) } : {}) };
 }
 
 export function Board({
@@ -216,7 +228,7 @@ export function Board({
       // Que el clic no le saque el foco al campo donde se va a escribir.
       e.preventDefault();
       // Un toque en la cancha crea el texto ahí mismo.
-      onAddElement?.({ kind: 'text', x: p.x, y: p.y, text: 'Texto', size: 'M', color: TEXT_COLORS[0].value });
+      onAddElement?.({ kind: 'text', x: p.x, y: p.y, text: '', size: 'M', color: TEXT_COLORS[0].value });
       return;
     }
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -561,7 +573,8 @@ function deleteButtonSpot(el: BoardElement) {
   if (el.kind === 'text') {
     const box = textBox(el);
     // Arriba a la derecha, sin tapar los agarres del borde y la esquina.
-    return clampToView(el.x + box.width / 2 + 0.5, el.y - box.height / 2 - 0.4);
+    const pad = textPadding(textFontSize(el));
+    return clampToView(el.x + box.width / 2 + pad.x + 0.35, el.y - box.height / 2 - pad.y - 0.3);
   }
   const offset = el.kind === 'player' ? 0.62 : 0.5;
   return clampToView(el.x + offset, el.y - offset);
@@ -638,6 +651,11 @@ function Shadow({
 }
 
 /** Texto escrito en el tablero. */
+/** Margen del cuadro de selección alrededor del texto (crece con la letra). */
+function textPadding(size: number) {
+  return { x: 0.15 + size * 0.1, y: 0.1 + size * 0.06 };
+}
+
 function TextMark({
   element,
   selected,
@@ -653,27 +671,17 @@ function TextMark({
   const lines = textLines(element);
   const box = textBox(element);
   const top = -box.height / 2;
+  const pad = textPadding(size);
   // Contorno contrastante para que se lea sobre la madera o la franja azul.
   const halo = element.color.toUpperCase() === '#FFFFFF' ? '#0E1A2B' : '#FFFFFF';
   return (
     <g className="el" transform={`translate(${element.x} ${element.y})`} onPointerDown={onPointerDown}>
       {/* Área para tocarlo y arrastrarlo. */}
-      <rect x={-box.width / 2 - 0.15} y={top - 0.1} width={box.width + 0.3} height={box.height + 0.2} fill="transparent" />
-      {selected && (
-        <rect
-          className="ui-only"
-          x={-box.width / 2 - 0.15}
-          y={top - 0.1}
-          width={box.width + 0.3}
-          height={box.height + 0.2}
-          rx={0.1}
-          fill="none"
-          stroke={SELECTION_COLOR}
-          strokeWidth={0.07}
-          strokeDasharray="0.15 0.1"
-        />
-      )}
+      <rect x={-box.width / 2 - pad.x} y={top - pad.y} width={box.width + 2 * pad.x} height={box.height + 2 * pad.y} fill="transparent" />
       <text
+        // Vacío muestra "Texto" tenue como ayuda (no sale al exportar).
+        className={element.text ? undefined : 'ui-only'}
+        opacity={element.text ? undefined : 0.4}
         textAnchor="middle"
         fontSize={size}
         fontWeight={700}
@@ -689,11 +697,27 @@ function TextMark({
           </tspan>
         ))}
       </text>
+      {/* El cuadro de selección va encima del texto para que el contorno blanco no lo tape. */}
+      {selected && (
+        <rect
+          className="ui-only"
+          x={-box.width / 2 - pad.x}
+          y={top - pad.y}
+          width={box.width + 2 * pad.x}
+          height={box.height + 2 * pad.y}
+          rx={0.1}
+          fill="none"
+          stroke={SELECTION_COLOR}
+          strokeWidth={0.07}
+          strokeDasharray="0.15 0.1"
+          pointerEvents="none"
+        />
+      )}
       {selected && onHandleDown && (
         <>
           <rect
             className="handle handle-width ui-only"
-            x={box.width / 2 + 0.15 - 0.09}
+            x={box.width / 2 + pad.x - 0.09}
             y={-0.28}
             width={0.18}
             height={0.56}
@@ -704,8 +728,8 @@ function TextMark({
           </rect>
           <circle
             className="handle handle-scale ui-only"
-            cx={box.width / 2 + 0.15}
-            cy={-top + 0.1}
+            cx={box.width / 2 + pad.x}
+            cy={-top + pad.y}
             r={0.18}
             onPointerDown={(e) => onHandleDown(e, 'scale')}
           >

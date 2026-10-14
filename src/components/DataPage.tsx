@@ -6,7 +6,7 @@ import type { Backup, BackupData } from '../domain/backup';
 import { todayISO } from '../domain/sessions';
 import { DATA_KEYS, useAppStore } from '../store';
 import { lastBackupAt, rememberBackup } from '../utils/backupReminder';
-import { readSnapshots, removeSnapshot } from '../utils/localSnapshots';
+import { MAX_SNAPSHOTS, readSnapshots, removeSnapshot } from '../utils/localSnapshots';
 import type { LocalSnapshot } from '../utils/localSnapshots';
 import { TeamSharing } from './TeamSharing';
 import type { AppData } from '../store';
@@ -18,6 +18,15 @@ const currentData = (): BackupData => {
 
 const formatWhen = (iso: string) =>
   new Date(iso).toLocaleString('es-AR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+/** Fecha corta para la lista de copias: "14 oct 2026 · 18:28". */
+const formatShort = (iso: string) => {
+  const d = new Date(iso);
+  const month = d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '');
+  const day = `${d.getDate()} ${month} ${d.getFullYear()}`;
+  const time = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return `${day} · ${time}`;
+};
 
 /** Copia de seguridad: descargar todo en un archivo y restaurarlo. */
 export function DataPage() {
@@ -147,36 +156,41 @@ export function DataPage() {
           <section className="panel">
             <h2>Copias automáticas de este navegador</h2>
             <p>
-              Cada vez que abrís la app se guarda acá una copia de lo que había en este navegador (las últimas 5). Si algo
-              se borró, podés sumarlo de nuevo a tus datos.
+              Cada vez que abrís la app se guarda acá una copia de lo que había en este navegador (las últimas{' '}
+              {MAX_SNAPSHOTS}). Si algo se borró, podés sumarlo de nuevo a tus datos.
             </p>
-            <ul className="share-list">
+            <ul className="snapshot-list">
               {snapshots.map((snap) => (
                 <li key={snap.at}>
-                  <span className="share-email">
-                    <b>{formatWhen(snap.at)}</b>
-                    <br />
+                  <div className="snapshot-info">
+                    <b>{formatShort(snap.at)}</b>
                     <span className="muted small">
                       {describeBackup(snap.data)}
                       {snap.ownerUid && snap.ownerUid !== ownerUid && ' · de otra cuenta'}
                       {!snap.ownerUid && ' · sin cuenta'}
                     </span>
-                  </span>
-                  <button className="primary" onClick={() => recover(snap)}>
-                    Sumar a mis datos
-                  </button>
-                  <button onClick={() => downloadSnapshot(snap)}>Descargar</button>
-                  <button
-                    className="danger"
-                    onClick={() => {
-                      if (confirm('¿Borrar esta copia automática?')) {
-                        removeSnapshot(snap.at);
-                        setSnapshots(readSnapshots());
-                      }
-                    }}
-                  >
-                    Borrar
-                  </button>
+                  </div>
+                  <div className="snapshot-actions">
+                    <button className="primary" onClick={() => recover(snap)} title="Sumar lo que tiene esta copia a tus datos">
+                      Sumar
+                    </button>
+                    <button onClick={() => downloadSnapshot(snap)} title="Descargar esta copia como archivo">
+                      Descargar
+                    </button>
+                    <button
+                      className="danger icon-button"
+                      aria-label="Borrar esta copia"
+                      title="Borrar esta copia"
+                      onClick={() => {
+                        if (confirm('¿Borrar esta copia automática?')) {
+                          removeSnapshot(snap.at);
+                          setSnapshots(readSnapshots());
+                        }
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -43,8 +43,20 @@ export const TEXT_COLORS: { value: string; label: string }[] = [
 export const TEXT_FONT_RANGE = { min: 0.25, max: 2.5 };
 /** Ancho mínimo del cuadro de texto, en metros. */
 export const TEXT_MIN_WIDTH = 0.8;
-/** Ancho aproximado de cada letra en relación con su alto. */
-const CHAR_WIDTH = 0.55;
+/** Lo que se muestra en la pizarra mientras el texto está vacío. */
+export const TEXT_PLACEHOLDER = 'Texto';
+
+/**
+ * Ancho de un texto en metros para una letra de `size` metros de alto. Por
+ * defecto es una estimación; el navegador la reemplaza por la medida real de
+ * la tipografía (ver `setTextMeasurer`).
+ */
+type Measurer = (text: string, size: number) => number;
+let measure: Measurer = (text, size) => text.length * size * 0.6;
+
+export function setTextMeasurer(fn: Measurer) {
+  measure = fn;
+}
 
 type TextShape = Pick<TextElement, 'text' | 'size'> & Partial<Pick<TextElement, 'fontSize' | 'width'>>;
 
@@ -53,23 +65,60 @@ export function textFontSize(t: Pick<TextElement, 'size'> & Partial<Pick<TextEle
   return t.fontSize ?? TEXT_SIZES[t.size];
 }
 
-/** Líneas del texto (siempre al menos una). Si el cuadro tiene ancho, corta las líneas largas. */
-export function textLines(t: Pick<TextElement, 'text'> & Partial<TextShape>): string[] {
-  if (t.width && t.size) {
-    const maxChars = Math.max(1, Math.floor(t.width / (textFontSize(t as TextShape) * CHAR_WIDTH)));
-    const lines = wrapText(t.text, maxChars);
-    return lines.length ? lines : [''];
-  }
-  const lines = t.text.split('\n');
-  return lines.length ? lines : [''];
+/** Ancho de una línea, incluido el contorno blanco que la rodea. */
+function lineWidth(line: string, size: number): number {
+  return measure(line, size) + size * 0.16;
 }
 
-/** Medida aproximada del texto, en metros, para la selección y el tachito. */
+/**
+ * Líneas del texto (siempre al menos una). Si el cuadro tiene ancho, corta las
+ * líneas para que entren; una palabra sola más larga que el cuadro se corta
+ * por letras, así nunca se sale.
+ */
+export function textLines(t: Pick<TextElement, 'text'> & Partial<TextShape>): string[] {
+  const text = t.text || TEXT_PLACEHOLDER;
+  if (!t.width || !t.size) return text.split('\n');
+  const size = textFontSize(t as TextShape);
+  const max = t.width;
+  const out: string[] = [];
+  for (const paragraph of text.split('\n')) {
+    let line = '';
+    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (lineWidth(candidate, size) <= max) {
+        line = candidate;
+        continue;
+      }
+      if (line) out.push(line);
+      line = '';
+      // La palabra sola no entra: se parte en pedazos que entren.
+      let rest = word;
+      while (lineWidth(rest, size) > max && rest.length > 1) {
+        let n = rest.length - 1;
+        while (n > 1 && lineWidth(rest.slice(0, n), size) > max) n--;
+        out.push(rest.slice(0, n));
+        rest = rest.slice(n);
+      }
+      line = rest;
+    }
+    out.push(line);
+  }
+  return out.length ? out : [''];
+}
+
+/** Ancho mínimo del cuadro: el de la palabra más larga (así ninguna se corta). */
+export function textMinWidth(t: TextShape): number {
+  const size = textFontSize(t);
+  const words = (t.text || TEXT_PLACEHOLDER).split(/\s+/).filter(Boolean);
+  return Math.max(TEXT_MIN_WIDTH, ...words.map((w) => lineWidth(w, size)));
+}
+
+/** Medida del texto en metros (el cuadro de selección siempre lo envuelve). */
 export function textBox(t: TextShape): { width: number; height: number } {
   const h = textFontSize(t);
   const lines = textLines(t);
-  const longest = Math.max(1, ...lines.map((l) => l.length));
-  return { width: t.width ?? longest * h * CHAR_WIDTH, height: lines.length * h * 1.2 };
+  const longest = Math.max(h * 0.6, ...lines.map((l) => lineWidth(l, h)));
+  return { width: t.width ? Math.max(t.width, longest) : longest, height: lines.length * h * 1.2 };
 }
 
 /** Parte un texto en líneas de hasta `maxChars` caracteres, respetando los saltos de línea. */

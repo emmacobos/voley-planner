@@ -55,8 +55,9 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      cancha y aparece la zona que tapa el bloqueo (un cono translúcido). Desde
      el panel ajustás el ancho en el bloqueo y al final; en la animación
      acompaña al bloqueo.
-   - *Texto*: tocá la cancha para escribir. Se puede mover y tiene cuatro
-     colores. El tamaño de letra va de muy chico a muy grande (barra o
+   - *Texto*: tocá la cancha y escribí directo (arranca vacío; si lo dejás
+     vacío se borra solo). Se puede mover y tiene cuatro colores. El cuadro
+     siempre envuelve al texto. El tamaño de letra va de muy chico a muy grande (barra o
      tamaños rápidos chico, mediano y grande) y el cuadro se ensancha o se
      angosta a gusto: en la pizarra, arrastrá el borde derecho para el ancho
      y la esquina para agrandar la letra.
@@ -132,7 +133,7 @@ usás la app sin cuenta y hace más de un mes que no bajás una copia, el inicio
 te lo recuerda.
 
 Además, cada vez que abrís la app se guarda una **copia automática** de lo que
-tiene ese navegador (las últimas 5), antes de conectarse a la nube. Aparecen en
+tiene ese navegador (las últimas 10, en una lista con scroll), antes de conectarse a la nube. Aparecen en
 *Tus datos → Copias automáticas de este navegador* y se pueden sumar de nuevo a
 tus datos o descargar.
 

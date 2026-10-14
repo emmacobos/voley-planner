@@ -3,12 +3,13 @@ import type { BackupData } from '../domain/backup';
 
 /**
  * Copias automáticas en este navegador: al abrir la app, antes de conectarse a
- * la nube, se guarda lo que había guardado localmente (las últimas 5 distintas).
+ * la nube, se guarda lo que había guardado localmente (las últimas 10 distintas).
  * Sirven para recuperar datos si algo se borró en la nube.
  */
 const STORE_KEY = 'voley-planner';
 const SNAPSHOTS_KEY = 'voley-planner-copias';
-const MAX = 5;
+/** Cuántas copias se guardan como máximo. */
+export const MAX_SNAPSHOTS = 10;
 
 export interface LocalSnapshot {
   at: string;
@@ -49,7 +50,7 @@ export function takeStartupSnapshot(now: Date = new Date()) {
     if (!BACKUP_KEYS.some((k) => data[k].length > 0)) return;
     const list = readSnapshots();
     if (list[0] && JSON.stringify(list[0].data) === JSON.stringify(data)) return;
-    save([{ at: now.toISOString(), ownerUid: (state.ownerUid as string | null) ?? null, data }, ...list].slice(0, MAX));
+    save([{ at: now.toISOString(), ownerUid: (state.ownerUid as string | null) ?? null, data }, ...list].slice(0, MAX_SNAPSHOTS));
   } catch {
     // Sin almacenamiento disponible: no hay copia automática.
   }

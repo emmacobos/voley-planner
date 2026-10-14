@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { elementsAtProgress } from '../domain/animation';
 import { ARROW_KINDS, arrowColor, arrowKind } from '../domain/arrows';
 import type { ArrowKind } from '../domain/arrows';
-import { TEXT_COLORS, TEXT_FONT_RANGE, TEXT_MIN_WIDTH, TEXT_SIZES, textBox, textFontSize } from '../domain/shadows';
+import { TEXT_COLORS, TEXT_FONT_RANGE, TEXT_SIZES, textBox, textFontSize, textMinWidth } from '../domain/shadows';
 import { NET_X } from '../domain/court';
 import { newId } from '../domain/ids';
 import {
@@ -179,6 +179,17 @@ export function BoardEditor({
     setElements((els) => [...els, el]);
     setSelectedId(el.id);
   };
+
+  // Un texto que quedó vacío al dejar de seleccionarlo se borra solo.
+  const lastSelected = useRef<string | null>(null);
+  useEffect(() => {
+    const prev = lastSelected.current;
+    lastSelected.current = selectedId;
+    if (!prev || prev === selectedId) return;
+    const el = frame.elements.find((e) => e.id === prev);
+    if (el?.kind === 'text' && !el.text.trim()) setElements((els) => els.filter((e) => e.id !== prev));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
 
   /** Campo del panel que hay que enfocar (texto recién creado o comentario de un jugador). */
   const [focusField, setFocusField] = useState<{ id: string; field: 'text' | 'comment' } | null>(null);
@@ -706,6 +717,10 @@ function SelectedPanel({
             value={element.text}
             ref={fieldRef}
             onChange={(e) => onUpdate({ ...element, text: e.target.value })}
+            // Textos viejos que quedaron con "Texto": al tocarlos se marca todo para escribir encima.
+            onFocus={(e) => {
+              if (e.target.value === 'Texto') e.target.select();
+            }}
             placeholder="Escribí acá"
           />
         </label>
@@ -763,7 +778,7 @@ function SelectedPanel({
           </span>
           <input
             type="range"
-            min={TEXT_MIN_WIDTH}
+            min={Math.round(textMinWidth(element) * 10) / 10}
             max={16}
             step={0.1}
             value={textBox(element).width}
