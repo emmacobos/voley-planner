@@ -168,6 +168,7 @@ Requiere Node.js 20 o superior.
 npm install
 npm run dev      # servidor de desarrollo en http://localhost:5173
 npm test         # tests de la lógica (rotaciones, reglas, animación)
+npm run test:e2e # pruebas de la pizarra en el navegador (Playwright)
 npm run lint
 npm run build
 ```

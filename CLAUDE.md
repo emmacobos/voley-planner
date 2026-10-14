@@ -10,10 +10,12 @@ La visión y la hoja de ruta están en `docs/VISION.md`.
 ## Comandos
 - `npm run dev` — servidor de desarrollo
 - `npm test` — tests (Vitest) de la lógica en `src/domain`
+- `npm run test:e2e` — pruebas de la pizarra en el navegador (Playwright, carpeta `e2e/`). En el
+  entorno remoto: `CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome npm run test:e2e`
 - `npm run lint` — oxlint
 - `npm run build` — typecheck + build
 
-Correr lint, tests y build antes de cada commit.
+Correr lint, tests y build antes de cada commit (y `test:e2e` si se toca la pizarra).
 
 ## Publicación
 - La usuaria pidió que **cada cambio se publique siempre**: después de validar, subir la rama de
