@@ -38,6 +38,7 @@ import { Board, DEFAULT_BEND } from './Board';
 import { FloatingPanel } from './FloatingPanel';
 import { FloatingPanelReady } from './floatingPanelReady';
 import { Presentation } from './Presentation';
+import { ShareLinkDialog } from './ShareLinkDialog';
 import type { Tool } from './boardTheme';
 
 interface BoardEditorProps {
@@ -99,6 +100,7 @@ export function BoardEditor({
   const [progress, setProgress] = useState<number | null>(null);
   const [speed, setSpeed] = useState(1);
   const [presenting, setPresenting] = useState(false);
+  const [sharing, setSharing] = useState(false);
   /** Avance de la grabación del video (0 a 1) mientras se genera. */
   const [videoProgress, setVideoProgress] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -306,6 +308,7 @@ export function BoardEditor({
 
   return (
     <div className="board-editor">
+      {sharing && <ShareLinkDialog title={title} frames={frames} players={allPlayers} onClose={() => setSharing(false)} />}
       {presenting && (
         <Presentation title={title} frames={frames} players={allPlayers} startAt={index} onClose={() => setPresenting(false)} />
       )}
@@ -415,6 +418,10 @@ export function BoardEditor({
             >
               <Icon d="M4 6h11a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zM16 10l5-3v10l-5-3" />
               {videoProgress === null ? 'Exportar video' : `Grabando… ${Math.round(videoProgress * 100)}%`}
+            </button>
+            <button onClick={() => setSharing(true)} title="Link para ver la jugada animada, sin cuenta (por ejemplo, para el grupo de WhatsApp)">
+              <Icon d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+              Compartir link
             </button>
             <button
               className="present-button"

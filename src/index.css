@@ -4858,3 +4858,57 @@ input.num {
   font-weight: 800;
   border-top: 2px solid var(--border);
 }
+
+.presentation-credit {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #b8a888;
+}
+
+.presentation-credit a {
+  color: #e3c48b;
+}
+
+/* Compartir jugada por link */
+.modal.share-link {
+  width: 100%;
+  max-width: 560px;
+}
+
+.share-url {
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.share-actions {
+  flex-wrap: wrap;
+  margin-top: 0.8rem;
+}
+
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.button-link:hover {
+  border-color: var(--accent);
+}
+
+.button-link.disabled {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.page-loading {
+  padding: 2rem 0;
+}

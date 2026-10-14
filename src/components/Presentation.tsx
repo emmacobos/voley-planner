@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { elementsAtProgress } from '../domain/animation';
 import type { Frame, Player } from '../domain/types';
 import { Board } from './Board';
@@ -16,12 +17,18 @@ export function Presentation({
   players,
   startAt = 0,
   onClose,
+  fullscreen = true,
+  footer,
 }: {
   title: string;
   frames: Frame[];
   players: Player[];
   startAt?: number;
   onClose: () => void;
+  /** Pedir pantalla completa al abrir (necesita que se abra con un toque). */
+  fullscreen?: boolean;
+  /** Texto extra al pie (por ejemplo, en una jugada compartida). */
+  footer?: ReactNode;
 }) {
   const last = frames.length - 1;
   const [progress, setProgress] = useState(Math.min(startAt, last));
@@ -79,6 +86,7 @@ export function Presentation({
 
   // Pantalla completa del navegador (si se puede) mientras está abierta.
   useEffect(() => {
+    if (!fullscreen) return;
     const el = rootRef.current;
     el?.requestFullscreen?.().catch(() => {});
     const onChange = () => {
@@ -89,7 +97,7 @@ export function Presentation({
       document.removeEventListener('fullscreenchange', onChange);
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     };
-  }, []);
+  }, [fullscreen]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -171,6 +179,7 @@ export function Presentation({
         </select>
       </footer>
       <p className="presentation-hint">← → pasos · Espacio reproducir · Esc salir</p>
+      {footer}
     </div>
   );
 }

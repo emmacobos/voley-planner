@@ -12,10 +12,12 @@ export type Route =
   | { name: 'library' }
   | { name: 'data' }
   | { name: 'match'; id: string }
-  | { name: 'match-stats'; id: string };
+  | { name: 'match-stats'; id: string }
+  | { name: 'shared-play'; code: string };
 
 function parse(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+  if (parts[0] === 'ver' && parts[1]) return { name: 'shared-play', code: parts[1] };
   if (parts[0] === 'plantel') return parts[1] ? { name: 'player', id: parts[1] } : { name: 'roster' };
   if (parts[0] === 'calendario') return { name: 'calendar' };
   if (parts[0] === 'datos') return { name: 'data' };

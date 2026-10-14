@@ -89,7 +89,10 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    de cada paso; se maneja también con ← →, Espacio y Esc. **Exportar video**
    graba la jugada animada (con una pausa en cada paso y su descripción abajo)
    y la descarga en MP4 —o WebM si el navegador no graba MP4— para mandarla
-   por WhatsApp.
+   por WhatsApp. **Compartir link** arma un link de solo lectura: quien lo
+   abre ve la jugada animada paso a paso, sin cuenta (la jugada viaja
+   comprimida dentro del link, no se guarda en ningún lado). Se copia, se
+   manda por WhatsApp o se comparte desde el celular.
 6. **Sesiones → Nueva sesión:** fecha, hora, plantel, objetivo y convocados.
    La sesión arranca con 5 bloques (90 minutos) que podés cambiar, reordenar
    o borrar. A cada bloque le agregás ejercicios de la biblioteca (con su

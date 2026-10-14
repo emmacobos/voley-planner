@@ -21,10 +21,20 @@ const RosterPage = lazy(() => import('./components/RosterPage').then((m) => ({ d
 const SessionEditor = lazy(() => import('./components/SessionEditor').then((m) => ({ default: m.SessionEditor })));
 const MatchStatsPage = lazy(() => import('./components/MatchStatsPage').then((m) => ({ default: m.MatchStatsPage })));
 const PlayerPage = lazy(() => import('./components/PlayerPage').then((m) => ({ default: m.PlayerPage })));
+const SharedPlayPage = lazy(() => import('./components/SharedPlayPage').then((m) => ({ default: m.SharedPlayPage })));
 const SessionPrint = lazy(() => import('./components/SessionPrint').then((m) => ({ default: m.SessionPrint })));
 
 export default function App() {
   const route = useHashRoute();
+
+  // Jugada compartida por link: se muestra sola, sin el resto de la app.
+  if (route.name === 'shared-play') {
+    return (
+      <Suspense fallback={<p className="muted page-loading">Cargando la jugada…</p>}>
+        <SharedPlayPage code={route.code} />
+      </Suspense>
+    );
+  }
 
   return (
     <div className={`app route-${route.name}`}>
