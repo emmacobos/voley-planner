@@ -33,6 +33,14 @@ export interface Player {
   phone?: string;
   /** Observaciones del entrenador (lesiones, disponibilidad, etc.). */
   notes?: string;
+  /** Objetivos personales para trabajar con la jugadora. */
+  goals?: PlayerGoal[];
+}
+
+export interface PlayerGoal {
+  id: string;
+  text: string;
+  done: boolean;
 }
 
 export type Team = 'A' | 'B';

@@ -20,6 +20,7 @@ const MatchPlanPage = lazy(() => import('./components/MatchPlanPage').then((m) =
 const RosterPage = lazy(() => import('./components/RosterPage').then((m) => ({ default: m.RosterPage })));
 const SessionEditor = lazy(() => import('./components/SessionEditor').then((m) => ({ default: m.SessionEditor })));
 const MatchStatsPage = lazy(() => import('./components/MatchStatsPage').then((m) => ({ default: m.MatchStatsPage })));
+const PlayerPage = lazy(() => import('./components/PlayerPage').then((m) => ({ default: m.PlayerPage })));
 const SessionPrint = lazy(() => import('./components/SessionPrint').then((m) => ({ default: m.SessionPrint })));
 
 export default function App() {
@@ -48,7 +49,7 @@ export default function App() {
             <NavIcon d="M3 5h18v14H3zM12 5v14M7 5v14M17 5v14" />
             Ejercicios
           </a>
-          <a className={route.name === 'roster' ? 'active' : ''} href="#/plantel">
+          <a className={route.name === 'roster' || route.name === 'player' ? 'active' : ''} href="#/plantel">
             <NavIcon d="M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M17.5 11.5a2.5 2.5 0 1 0 0-5M17 14.6c2.3.3 3.9 2 4.5 4.9" />
             Planteles
           </a>
@@ -77,6 +78,7 @@ export default function App() {
               {route.name === 'session' && <SessionEditor id={route.id} />}
               {route.name === 'session-print' && <SessionPrint id={route.id} />}
               {route.name === 'roster' && <RosterPage />}
+              {route.name === 'player' && <PlayerPage id={route.id} />}
               {route.name === 'calendar' && <CalendarPage />}
               {route.name === 'library' && <LibraryPage />}
               {route.name === 'data' && <DataPage />}

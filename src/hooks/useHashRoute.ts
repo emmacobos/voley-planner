@@ -7,6 +7,7 @@ export type Route =
   | { name: 'exercises' }
   | { name: 'exercise'; id: string }
   | { name: 'roster' }
+  | { name: 'player'; id: string }
   | { name: 'calendar' }
   | { name: 'library' }
   | { name: 'data' }
@@ -15,7 +16,7 @@ export type Route =
 
 function parse(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
-  if (parts[0] === 'plantel') return { name: 'roster' };
+  if (parts[0] === 'plantel') return parts[1] ? { name: 'player', id: parts[1] } : { name: 'roster' };
   if (parts[0] === 'calendario') return { name: 'calendar' };
   if (parts[0] === 'datos') return { name: 'data' };
   if (parts[0] === 'partidos' && parts[1]) {

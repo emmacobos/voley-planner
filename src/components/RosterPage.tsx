@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { navigate } from '../hooks/useHashRoute';
 import { useAppStore } from '../store';
 import { POSITIONS } from '../domain/types';
 import type { Position } from '../domain/types';
@@ -191,7 +192,10 @@ export function RosterPage() {
                           aria-label={`Observaciones de ${p.name}`}
                         />
                       </td>
-                      <td>
+                      <td className="row-actions">
+                        <button onClick={() => navigate(`/plantel/${p.id}`)} title="Asistencia, carga, estadísticas y objetivos">
+                          Ficha
+                        </button>
                         <button
                           className="danger"
                           onClick={() => {

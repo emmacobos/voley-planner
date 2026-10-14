@@ -104,6 +104,10 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    *Planteles* ves la asistencia de las últimas 4 semanas y la carga semanal de
    cada jugadora contra su promedio, con avisos si la carga sube más de 30 %,
    si faltó a las últimas 2 sesiones o si su asistencia es baja.
+   **Ficha de cada jugadora** (botón *Ficha* en el plantel): asistencia de las
+   últimas 4 semanas y de la temporada, carga de las últimas 8 semanas en un
+   gráfico, avisos, objetivos personales (se tildan al cumplirlos), notas del
+   cuerpo técnico y sus estadísticas en cada partido, con el total.
 8. **Calendario:** el mes con las sesiones y los partidos de cada día (con el
    + de cada día agregás una sesión o un partido). Cada semana muestra cuántas
    sesiones y minutos tiene y su **objetivo** (microciclo), por plantel. Cada
