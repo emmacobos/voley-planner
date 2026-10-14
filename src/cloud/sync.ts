@@ -9,7 +9,7 @@ import { diffCollection, mergeRemote } from './diff';
 /**
  * Sincronización entre el store local y Firestore.
  *
- * Estructura en Firestore: `users/{uid}/{squads|players|exercises|sessions}/{id}`,
+ * Estructura en Firestore: `users/{uid}/{squads|players|exercises|sessions|matches|weeks}/{id}`,
  * un documento por entidad.
  *
  * - Bajada: un listener por colección reemplaza los datos del store.
@@ -68,6 +68,8 @@ const SORTERS: Record<DataKey, (a: Item, b: Item) => number> = {
   players: (a, b) => Number(a.number) - Number(b.number),
   exercises: (a, b) => byText('createdAt')(b, a),
   sessions: (a, b) => byText('date')(b, a),
+  matches: byText('date'),
+  weeks: byText('weekStart'),
 };
 
 function applyRemote(key: DataKey, remote: Item[]) {

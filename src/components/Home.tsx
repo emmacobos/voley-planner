@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { daysUntil } from '../domain/calendar';
 import { useAuth } from '../cloud/auth';
 import { blockDuration, formatMinutes, sessionDuration, sessionIntensity, todayISO, weekSummary } from '../domain/sessions';
 import { BLOCK_KINDS, INTENSITIES } from '../domain/types';
@@ -31,10 +32,15 @@ const parseDate = (date: string) => new Date(`${date}T00:00:00`);
 export function HomeGreeting({ sessions, exercisesById }: { sessions: TrainingSession[]; exercisesById: Map<string, Exercise> }) {
   const user = useAuth((s) => s.user);
   const createSession = useAppStore((s) => s.createSession);
+  const matches = useAppStore((s) => s.matches);
   const firstName = user?.name?.trim().split(/\s+/)[0];
   const [now] = useState(() => new Date());
   const today = now.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
   const week = weekSummary(sessions, exercisesById).sessions.length;
+  const nextMatch = matches
+    .filter((m) => m.date >= todayISO(now))
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
+  const inDays = nextMatch ? daysUntil(nextMatch.date, now) : null;
 
   return (
     <div className="hello">
@@ -46,6 +52,13 @@ export function HomeGreeting({ sessions, exercisesById }: { sessions: TrainingSe
             ? 'No tenés sesiones esta semana.'
             : `Esta semana tenés ${week} ${week === 1 ? 'sesión planificada' : 'sesiones planificadas'}.`}
         </p>
+        {nextMatch && inDays !== null && inDays <= 14 && (
+          <a className="next-match" href="#/calendario">
+            🏐 Próximo partido vs <b>{nextMatch.opponent || 'rival'}</b>{' '}
+            {inDays === 0 ? 'hoy' : inDays === 1 ? 'mañana' : `en ${inDays} días`}
+            {nextMatch.time && ` · ${nextMatch.time} h`} · {nextMatch.home ? 'Local' : 'Visitante'}
+          </a>
+        )}
       </div>
       <button className="primary" onClick={() => navigate(`/sesiones/${createSession()}`)}>
         + Nueva sesión

@@ -6,11 +6,13 @@ export type Route =
   | { name: 'session-print'; id: string }
   | { name: 'exercises' }
   | { name: 'exercise'; id: string }
-  | { name: 'roster' };
+  | { name: 'roster' }
+  | { name: 'calendar' };
 
 function parse(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   if (parts[0] === 'plantel') return { name: 'roster' };
+  if (parts[0] === 'calendario') return { name: 'calendar' };
   if (parts[0] === 'ejercicios') return parts[1] ? { name: 'exercise', id: parts[1] } : { name: 'exercises' };
   if (parts[0] === 'sesiones' && parts[1]) {
     return parts[2] === 'imprimir' ? { name: 'session-print', id: parts[1] } : { name: 'session', id: parts[1] };

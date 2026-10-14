@@ -251,3 +251,33 @@ export interface TrainingSession {
   createdAt: string;
   updatedAt: string;
 }
+
+/** Partido del calendario. */
+export interface Match {
+  id: string;
+  squadId: string | null;
+  /** Fecha AAAA-MM-DD y hora HH:MM (opcional). */
+  date: string;
+  time: string;
+  opponent: string;
+  /** true si somos locales. */
+  home: boolean;
+  venue: string;
+  /** Torneo o liga. */
+  competition: string;
+  notes: string;
+  /** Resultado en sets, por ejemplo "3-1" (se carga después). */
+  result: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Objetivo de una semana (microciclo) para un plantel o para todos. */
+export interface WeekPlan {
+  /** `${weekStart}_${squadId ?? 'todos'}` */
+  id: string;
+  /** Lunes de la semana (AAAA-MM-DD). */
+  weekStart: string;
+  squadId: string | null;
+  objective: string;
+}

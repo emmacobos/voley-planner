@@ -76,7 +76,7 @@ export async function resolveImport(upload: boolean) {
   useAuth.setState({ busy: true });
   try {
     if (upload) {
-      const data: AppData = { squads: store.squads, players: store.players, exercises: store.exercises, sessions: store.sessions };
+      const data = Object.fromEntries(DATA_KEYS.map((k) => [k, store[k]])) as unknown as AppData;
       await uploadAll(user.uid, data);
       useAppStore.setState({ ownerUid: user.uid });
     } else {

@@ -5,11 +5,13 @@ import type {
   BoardElement,
   Exercise,
   Frame,
+  Match,
   Player,
   Position,
   SessionBlock,
   Squad,
   TrainingSession,
+  WeekPlan,
 } from './types';
 
 /**
@@ -25,6 +27,8 @@ export interface DemoData {
   players: Player[];
   exercises: Exercise[];
   sessions: TrainingSession[];
+  matches: Match[];
+  weeks: WeekPlan[];
 }
 
 const PLAYERS: [string, number, Position][] = [
@@ -224,7 +228,34 @@ export function buildDemoData(today: Date = new Date()): DemoData {
     };
   };
 
+  // Partido el sábado siguiente a la sesión y objetivo de la semana.
+  const sessionDay = new Date(`${session.date}T00:00:00`);
+  const saturday = new Date(sessionDay.getFullYear(), sessionDay.getMonth(), sessionDay.getDate() + ((6 - sessionDay.getDay() + 7) % 7 || 7));
+  const match: Match = {
+    id: id('partido'),
+    squadId: squad.id,
+    date: todayISO(saturday),
+    time: '18:00',
+    opponent: 'Club Atlético Ejemplo',
+    home: true,
+    venue: 'Gimnasio del club',
+    competition: 'Liga metropolitana',
+    notes: 'Sacan fuerte desde zona 1: trabajar la recepción en R1.',
+    result: '',
+    createdAt: now,
+    updatedAt: now,
+  };
+  const monday = new Date(sessionDay.getFullYear(), sessionDay.getMonth(), sessionDay.getDate() - ((sessionDay.getDay() + 6) % 7));
+  const week: WeekPlan = {
+    id: `${todayISO(monday)}_${squad.id}`,
+    weekStart: todayISO(monday),
+    squadId: squad.id,
+    objective: 'Recepción y K1 antes del partido del sábado',
+  };
+
   return {
+    matches: [match],
+    weeks: [week],
     squads: [squad],
     players,
     exercises: [play, warmup, game],

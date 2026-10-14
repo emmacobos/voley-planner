@@ -1,5 +1,6 @@
 import { AccountMenu } from './components/AccountMenu';
 import { BallLogo } from './components/BallLogo';
+import { CalendarPage } from './components/CalendarPage';
 import { DemoBanner } from './components/DemoBanner';
 import { ExerciseEditor } from './components/ExerciseEditor';
 import { ExerciseList } from './components/ExerciseList';
@@ -27,8 +28,12 @@ export default function App() {
         </a>
         <nav aria-label="Principal">
           <a className={route.name.startsWith('session') ? 'active' : ''} href="#/sesiones">
-            <NavIcon d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 2v4M16 2v4M3 10h18" />
+            <NavIcon d="M9 3h6v3H9zM7 4.5H5.5A1.5 1.5 0 0 0 4 6v14a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 20V6a1.5 1.5 0 0 0-1.5-1.5H17M8 11h8M8 15h5" />
             Sesiones
+          </a>
+          <a className={route.name === 'calendar' ? 'active' : ''} href="#/calendario">
+            <NavIcon d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 2v4M16 2v4M3 10h18M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2" />
+            Calendario
           </a>
           <a className={route.name.startsWith('exercise') ? 'active' : ''} href="#/ejercicios">
             <NavIcon d="M3 5h18v14H3zM12 5v14M7 5v14M17 5v14" />
@@ -56,6 +61,7 @@ export default function App() {
             {route.name === 'session' && <SessionEditor id={route.id} />}
             {route.name === 'session-print' && <SessionPrint id={route.id} />}
             {route.name === 'roster' && <RosterPage />}
+            {route.name === 'calendar' && <CalendarPage />}
             {route.name === 'exercises' && <ExerciseList />}
             {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
           </ErrorBoundary>

@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { buildDemoData, isDemoId } from './domain/demo';
 import { newId } from './domain/ids';
 import { defaultBlocks, todayISO } from './domain/sessions';
-import type { Exercise, Frame, Player, Squad, TrainingSession } from './domain/types';
+import type { Exercise, Frame, Match, Player, Squad, TrainingSession, WeekPlan } from './domain/types';
 
 /** Datos del usuario (lo que se sincroniza con la nube). */
 export interface AppData {
@@ -11,12 +11,14 @@ export interface AppData {
   players: Player[];
   exercises: Exercise[];
   sessions: TrainingSession[];
+  matches: Match[];
+  weeks: WeekPlan[];
 }
 
-export const DATA_KEYS = ['squads', 'players', 'exercises', 'sessions'] as const;
+export const DATA_KEYS = ['squads', 'players', 'exercises', 'sessions', 'matches', 'weeks'] as const;
 export type DataKey = (typeof DATA_KEYS)[number];
 
-export const EMPTY_DATA: AppData = { squads: [], players: [], exercises: [], sessions: [] };
+export const EMPTY_DATA: AppData = { squads: [], players: [], exercises: [], sessions: [], matches: [], weeks: [] };
 
 export function hasData(data: AppData): boolean {
   return DATA_KEYS.some((k) => data[k].length > 0);
@@ -45,6 +47,12 @@ interface AppState extends AppData {
   updateSession: (id: string, patch: Partial<Omit<TrainingSession, 'id'>>) => void;
   duplicateSession: (id: string) => string | undefined;
   removeSession: (id: string) => void;
+  /** Crea un partido para esa fecha y devuelve su id. */
+  createMatch: (date: string, squadId: string | null) => string;
+  updateMatch: (id: string, patch: Partial<Omit<Match, 'id'>>) => void;
+  removeMatch: (id: string) => void;
+  /** Objetivo de la semana (vacío lo borra). */
+  setWeekObjective: (weekStart: string, squadId: string | null, objective: string) => void;
   /** Suma el plantel, los ejercicios y la sesión de ejemplo. */
   loadDemo: () => void;
   /** Borra todo lo que vino con el ejemplo. */
@@ -53,7 +61,7 @@ interface AppState extends AppData {
 
 /** ¿Hay datos de ejemplo cargados? */
 export function hasDemo(data: AppData): boolean {
-  return DATA_KEYS.some((k) => data[k].some((item) => isDemoId(item.id)));
+  return DATA_KEYS.some((k) => data[k].some((item) => isDemoId(item.id) || ('squadId' in item && isDemoId(item.squadId ?? ''))));
 }
 
 /** Quita jugadores de los convocados y de los bloques de una sesión. */
@@ -83,6 +91,8 @@ export const useAppStore = create<AppState>()(
       players: [],
       exercises: [],
       sessions: [],
+      matches: [],
+      weeks: [],
       ownerUid: null,
 
       resetData: (ownerUid) => set({ ...EMPTY_DATA, ownerUid }),
@@ -225,6 +235,36 @@ export const useAppStore = create<AppState>()(
 
       removeSession: (id) => set((s) => ({ sessions: s.sessions.filter((ses) => ses.id !== id) })),
 
+      createMatch: (date, squadId) => {
+        const id = newId();
+        const match: Match = {
+          id,
+          squadId,
+          date,
+          time: '',
+          opponent: '',
+          home: true,
+          venue: '',
+          competition: '',
+          notes: '',
+          result: '',
+          createdAt: now(),
+          updatedAt: now(),
+        };
+        set((s) => ({ matches: [...s.matches, match] }));
+        return id;
+      },
+      updateMatch: (id, patch) =>
+        set((s) => ({ matches: s.matches.map((m) => (m.id === id ? { ...m, ...patch, updatedAt: now() } : m)) })),
+      removeMatch: (id) => set((s) => ({ matches: s.matches.filter((m) => m.id !== id) })),
+
+      setWeekObjective: (weekStart, squadId, objective) =>
+        set((s) => {
+          const id = `${weekStart}_${squadId ?? 'todos'}`;
+          const rest = s.weeks.filter((w) => w.id !== id);
+          return { weeks: objective.trim() ? [...rest, { id, weekStart, squadId, objective }] : rest };
+        }),
+
       loadDemo: () => {
         if (hasDemo(get())) return;
         const demo = buildDemoData();
@@ -233,6 +273,8 @@ export const useAppStore = create<AppState>()(
           players: [...s.players, ...demo.players],
           exercises: [...demo.exercises, ...s.exercises],
           sessions: [...demo.sessions, ...s.sessions],
+          matches: [...s.matches, ...demo.matches],
+          weeks: [...s.weeks, ...demo.weeks],
         }));
       },
 
@@ -241,6 +283,8 @@ export const useAppStore = create<AppState>()(
           const demoPlayers = new Set(s.players.filter((p) => isDemoId(p.id)).map((p) => p.id));
           return {
             squads: s.squads.filter((x) => !isDemoId(x.id)),
+            matches: s.matches.filter((x) => !isDemoId(x.id)),
+            weeks: s.weeks.filter((x) => !isDemoId(x.squadId ?? '')),
             players: s.players.filter((x) => !isDemoId(x.id)),
             exercises: s.exercises
               .filter((x) => !isDemoId(x.id))
@@ -257,7 +301,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'voley-planner',
-      version: 3,
+      version: 4,
       migrate: (persisted, version) => {
         let state = persisted as Partial<AppState>;
         if (version < 2) {
@@ -277,6 +321,10 @@ export const useAppStore = create<AppState>()(
         if (version < 3) {
           // v3 agrega las sesiones de entrenamiento.
           state = { ...state, sessions: [] };
+        }
+        if (version < 4) {
+          // v4 agrega el calendario: partidos y objetivos de cada semana.
+          state = { ...state, matches: [], weeks: [] };
         }
         return state as AppState;
       },
