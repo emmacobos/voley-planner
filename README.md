@@ -27,6 +27,9 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
 2. **Ejercicios → Nuevo ejercicio:** elegí el plantel, completá tipo,
    duración, intensidad, objetivo y notas, y marcá los jugadores que
    participan.
+   **Ejercicios modelo** (en la biblioteca) trae 16 ejercicios clásicos
+   —analíticos, sintéticos y globales— con su pizarra, consignas y variantes:
+   se ven animados y se copian a tu biblioteca para adaptarlos.
 3. **Pizarra:**
    - *Sistema de juego*: elegí el sistema (**5-1**, **4-2** o **6-0**, se
      guarda en el ejercicio), el equipo y la rotación, y colocá una formación:

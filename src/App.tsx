@@ -6,6 +6,7 @@ import { ExerciseEditor } from './components/ExerciseEditor';
 import { ExerciseList } from './components/ExerciseList';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ImportDialog } from './components/ImportDialog';
+import { LibraryPage } from './components/LibraryPage';
 import { RosterPage } from './components/RosterPage';
 import { SessionEditor } from './components/SessionEditor';
 import { SessionList } from './components/SessionList';
@@ -35,7 +36,7 @@ export default function App() {
             <NavIcon d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 2v4M16 2v4M3 10h18M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2" />
             Calendario
           </a>
-          <a className={route.name.startsWith('exercise') ? 'active' : ''} href="#/ejercicios">
+          <a className={route.name.startsWith('exercise') || route.name === 'library' ? 'active' : ''} href="#/ejercicios">
             <NavIcon d="M3 5h18v14H3zM12 5v14M7 5v14M17 5v14" />
             Ejercicios
           </a>
@@ -62,6 +63,7 @@ export default function App() {
             {route.name === 'session-print' && <SessionPrint id={route.id} />}
             {route.name === 'roster' && <RosterPage />}
             {route.name === 'calendar' && <CalendarPage />}
+            {route.name === 'library' && <LibraryPage />}
             {route.name === 'exercises' && <ExerciseList />}
             {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
           </ErrorBoundary>

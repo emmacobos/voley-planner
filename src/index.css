@@ -2605,6 +2605,47 @@ input.num {
   font-size: 0.95rem;
 }
 
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Ejercicios modelo */
+
+.library-cards {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.library-card {
+  cursor: default;
+}
+
+.library-board {
+  margin: -0.3rem -0.3rem 0.4rem;
+  cursor: pointer;
+}
+
+.library-board .board {
+  max-height: none;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.library-notes summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--accent);
+}
+
+.library-notes p {
+  margin: 0.5rem 0 0;
+  white-space: pre-line;
+  font-size: 0.88rem;
+  color: var(--text-2);
+}
+
 /* Calendario */
 
 .calendar-actions {

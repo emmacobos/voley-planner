@@ -30,12 +30,17 @@ export function ExerciseList() {
     <div className="page">
       <div className="page-header">
         <h1>Biblioteca de ejercicios</h1>
-        {/* Sin ejercicios, la guía de primeros pasos indica qué hacer primero. */}
-        {exercises.length > 0 && (
-          <button className="primary" onClick={() => navigate(`/ejercicios/${createExercise()}`)}>
-            + Nuevo ejercicio
+        <div className="header-actions">
+          <button onClick={() => navigate('/ejercicios/modelos')} title="Ejercicios clásicos listos para copiar y adaptar">
+            Ejercicios modelo
           </button>
-        )}
+          {/* Sin ejercicios, la guía de primeros pasos indica qué hacer primero. */}
+          {exercises.length > 0 && (
+            <button className="primary" onClick={() => navigate(`/ejercicios/${createExercise()}`)}>
+              + Nuevo ejercicio
+            </button>
+          )}
+        </div>
       </div>
 
       {(showSearch || showTypes) && (

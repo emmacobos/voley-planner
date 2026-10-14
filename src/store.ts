@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { buildDemoData, isDemoId } from './domain/demo';
+import type { LibraryExercise } from './domain/library';
 import { newId } from './domain/ids';
 import { defaultBlocks, todayISO } from './domain/sessions';
 import type { Exercise, Frame, Match, Player, Squad, TrainingSession, WeekPlan } from './domain/types';
@@ -40,6 +41,8 @@ interface AppState extends AppData {
   updatePlayer: (id: string, patch: Partial<Omit<Player, 'id'>>) => void;
   removePlayer: (id: string) => void;
   createExercise: () => string;
+  /** Copia un ejercicio modelo a la biblioteca y devuelve su id. */
+  copyLibraryExercise: (model: LibraryExercise) => string;
   updateExercise: (id: string, patch: Partial<Omit<Exercise, 'id'>>) => void;
   duplicateExercise: (id: string) => string | undefined;
   removeExercise: (id: string) => void;
@@ -153,6 +156,21 @@ export const useAppStore = create<AppState>()(
           squadId: get().squads[0]?.id ?? null,
           playerIds: [],
           frames: [emptyFrame()],
+          createdAt: now(),
+          updatedAt: now(),
+        };
+        set((s) => ({ exercises: [exercise, ...s.exercises] }));
+        return id;
+      },
+
+      copyLibraryExercise: ({ key: _key, ...model }) => {
+        const id = newId();
+        const exercise: Exercise = {
+          ...structuredClone(model),
+          id,
+          frames: structuredClone(model.frames).map((f) => ({ ...f, id: newId() })),
+          squadId: get().squads[0]?.id ?? null,
+          playerIds: [],
           createdAt: now(),
           updatedAt: now(),
         };
