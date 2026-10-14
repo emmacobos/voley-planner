@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { arrowPath, curveThrough, midPoint } from './arrows';
+import { ARROW_COLORS, arrowColor, arrowDashed, arrowPath, curveThrough, headMarkerId, midPoint } from './arrows';
 
 const straight = { x1: 0, y1: 0, x2: 4, y2: 0 };
 
@@ -28,5 +28,26 @@ describe('flechas curvas', () => {
 
   it('cerca de la recta vuelve a quedar recta', () => {
     expect(curveThrough(straight, { x: 2, y: 0.05 })).toBe(0);
+  });
+});
+
+describe('estilo de las flechas', () => {
+  it('sin elección, el color y el trazo dependen del tipo', () => {
+    expect(arrowColor({ style: 'move' })).toBe('#FFFFFF');
+    expect(arrowColor({ style: 'ball' })).toBe('#0E1A2B');
+    expect(arrowDashed({ style: 'move' })).toBe(true);
+    expect(arrowDashed({ style: 'ball' })).toBe(false);
+  });
+
+  it('respeta el color y el trazo elegidos', () => {
+    expect(arrowColor({ style: 'move', color: '#C0262D' })).toBe('#C0262D');
+    expect(arrowDashed({ style: 'ball', dashed: true })).toBe(true);
+    expect(arrowDashed({ style: 'move', dashed: false })).toBe(false);
+  });
+
+  it('cada color de la paleta tiene su marcador', () => {
+    const ids = ARROW_COLORS.map((c) => headMarkerId(c.value));
+    expect(new Set(ids).size).toBe(ARROW_COLORS.length);
+    expect(headMarkerId('#F5B82E')).toBe('head-f5b82e');
   });
 });

@@ -9,7 +9,7 @@ import {
   clampToView,
   toCourt,
 } from '../domain/court';
-import { arrowPath, curveThrough, midPoint } from '../domain/arrows';
+import { ARROW_COLORS, arrowColor, arrowDashed, arrowPath, curveThrough, headMarkerId, midPoint } from '../domain/arrows';
 import type {
   ArrowElement,
   ArrowStyle,
@@ -42,7 +42,41 @@ type ArrowPart = 'whole' | 'start' | 'end' | 'mid';
 
 type Drag =
   | { type: 'element'; id: string; part: ArrowPart; ox: number; oy: number; dx: number; dy: number }
-  | { type: 'arrow'; style: ArrowStyle; x1: number; y1: number; x2: number; y2: number };
+  | {
+      type: 'arrow';
+      style: ArrowStyle;
+      /** Curvatura como fracción del largo (0: recta). */
+      bend: number;
+      dashed?: boolean;
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+    };
+
+/** Qué flecha dibuja cada herramienta. */
+const ARROW_TOOLS: Record<Exclude<Tool, 'select'>, { style: ArrowStyle; bend: number; dashed?: boolean }> = {
+  'arrow-move': { style: 'move', bend: 0 },
+  'arrow-ball': { style: 'ball', bend: 0 },
+  'arrow-curve': { style: 'ball', bend: 0.22, dashed: false },
+  'arrow-curve-dashed': { style: 'move', bend: 0.22, dashed: true },
+};
+
+/** Flecha que resulta de lo dibujado hasta ahora. */
+function drawnArrow(d: Extract<Drag, { type: 'arrow' }>): Omit<ArrowElement, 'id'> {
+  const len = Math.hypot(d.x2 - d.x1, d.y2 - d.y1);
+  const curve = Math.round(d.bend * len * 100) / 100;
+  return {
+    kind: 'arrow',
+    style: d.style,
+    x1: d.x1,
+    y1: d.y1,
+    x2: d.x2,
+    y2: d.y2,
+    ...(curve ? { curve } : {}),
+    ...(d.dashed !== undefined ? { dashed: d.dashed } : {}),
+  };
+}
 
 const ZONES: Zone[] = [1, 2, 3, 4, 5, 6];
 /** Dónde se dibuja el número de cada zona (detrás de la posición base, para que no lo tape la ficha). */
@@ -122,7 +156,7 @@ export function Board({
     const p = point(e);
     setDrag({
       type: 'arrow',
-      style: tool === 'arrow-move' ? 'move' : 'ball',
+      ...ARROW_TOOLS[tool],
       x1: p.x,
       y1: p.y,
       x2: p.x,
@@ -146,14 +180,7 @@ export function Board({
       const el = elements.find((x) => x.id === drag.id);
       if (el && (drag.dx !== 0 || drag.dy !== 0)) onUpdate(applyDrag(el, drag));
     } else if (Math.hypot(drag.x2 - drag.x1, drag.y2 - drag.y1) > 0.3) {
-      onAddArrow({
-        kind: 'arrow',
-        style: drag.style,
-        x1: drag.x1,
-        y1: drag.y1,
-        x2: drag.x2,
-        y2: drag.y2,
-      });
+      onAddArrow(drawnArrow(drag));
     }
     setDrag(null);
   };
@@ -176,12 +203,20 @@ export function Board({
       onPointerCancel={() => setDrag(null)}
     >
       <defs>
-        <marker id="head-move" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="#ffffff" />
-        </marker>
-        <marker id="head-ball" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="#0E1A2B" />
-        </marker>
+        {ARROW_COLORS.map((c) => (
+          <marker
+            key={c.value}
+            id={headMarkerId(c.value)}
+            viewBox="0 0 10 10"
+            refX="8"
+            refY="5"
+            markerWidth="4"
+            markerHeight="4"
+            orient="auto-start-reverse"
+          >
+            <path d="M0,0 L10,5 L0,10 z" fill={c.value} />
+          </marker>
+        ))}
       </defs>
 
       <Court showZones={showZones} />
@@ -195,7 +230,7 @@ export function Board({
         />
       ))}
       {drag?.type === 'arrow' && (
-        <Arrow arrow={{ id: 'preview', kind: 'arrow', ...drag }} selected={false} />
+        <Arrow arrow={{ id: 'preview', ...drawnArrow(drag) }} selected={false} />
       )}
 
       {points.map((el) => {
@@ -298,20 +333,23 @@ function Arrow({
   selected: boolean;
   onPointerDown?: (e: ReactPointerEvent<SVGElement>, part: ArrowPart) => void;
 }) {
-  const isMove = arrow.style === 'move';
   const { x1, y1, x2, y2 } = arrow;
   const d = arrowPath(arrow);
   const mid = midPoint(arrow);
+  const color = arrowColor(arrow);
   return (
     <g className={onPointerDown ? 'el' : undefined}>
+      {selected && (
+        <path d={d} fill="none" stroke={SELECTION_COLOR} strokeOpacity={0.45} strokeWidth={0.3} strokeLinecap="round" pointerEvents="none" />
+      )}
       <path
         d={d}
         fill="none"
-        stroke={selected ? SELECTION_COLOR : isMove ? '#ffffff' : '#0E1A2B'}
+        stroke={color}
         strokeWidth={0.08}
         strokeLinecap="round"
-        strokeDasharray={isMove ? '0.25 0.15' : undefined}
-        markerEnd={`url(#head-${arrow.style})`}
+        strokeDasharray={arrowDashed(arrow) ? '0.25 0.15' : undefined}
+        markerEnd={`url(#${headMarkerId(color)})`}
         pointerEvents="none"
       />
       {onPointerDown && (

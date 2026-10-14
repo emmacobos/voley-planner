@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { elementsAtProgress } from '../domain/animation';
+import { ARROW_COLORS, arrowColor, arrowDashed } from '../domain/arrows';
 import { NET_X } from '../domain/court';
 import { newId } from '../domain/ids';
 import { PHASES, formationTokenIds, formationTokens, phaseSituation } from '../domain/formations';
@@ -265,6 +266,22 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
               <Icon d="M4 18c4-1 7-5 9-9m0 0-4 .5M13 9l1 4" />
               Flecha pelota
             </button>
+            <button
+              className={tool === 'arrow-curve' ? 'active' : ''}
+              onClick={() => setTool('arrow-curve')}
+              title="Arrastrá sobre la cancha para dibujar una flecha curva. Ajustá la curva con su punto del medio."
+            >
+              <Icon d="M4 19C5 9 13 5 19 7m0 0-3.5-2.5M19 7l-2.5 3.2" />
+              Flecha curva
+            </button>
+            <button
+              className={tool === 'arrow-curve-dashed' ? 'active' : ''}
+              onClick={() => setTool('arrow-curve-dashed')}
+              title="Arrastrá sobre la cancha para dibujar una flecha curva punteada. Ajustá la curva con su punto del medio."
+            >
+              <Icon d="M4 19C5 9 13 5 19 7m0 0-3.5-2.5M19 7l-2.5 3.2" dashed />
+              Curva punteada
+            </button>
           </div>
           <div className="toolbar-group">
             <button className="icon-button" onClick={undo} disabled={!past.length || playing} title="Deshacer (Ctrl+Z)" aria-label="Deshacer">
@@ -466,6 +483,7 @@ function SelectedPanel({
 }) {
   if (element.kind === 'arrow') {
     const curve = element.curve ?? 0;
+    const color = arrowColor(element);
     return (
       <div className="stack">
         <label className="field">
@@ -475,6 +493,41 @@ function SelectedPanel({
             <option value="ball">Trayectoria de pelota</option>
           </select>
         </label>
+        <div className="field">
+          Trazo
+          <div className="segmented" role="group" aria-label="Trazo">
+            <button
+              className={!arrowDashed(element) ? 'active' : ''}
+              aria-pressed={!arrowDashed(element)}
+              onClick={() => onUpdate({ ...element, dashed: false })}
+            >
+              Continuo
+            </button>
+            <button
+              className={arrowDashed(element) ? 'active' : ''}
+              aria-pressed={arrowDashed(element)}
+              onClick={() => onUpdate({ ...element, dashed: true })}
+            >
+              Punteado
+            </button>
+          </div>
+        </div>
+        <div className="field">
+          Color
+          <div className="swatches" role="group" aria-label="Color de la flecha">
+            {ARROW_COLORS.map((c) => (
+              <button
+                key={c.value}
+                className={`color-swatch${color === c.value ? ' active' : ''}`}
+                style={{ background: c.value }}
+                onClick={() => onUpdate({ ...element, color: c.value })}
+                aria-label={c.label}
+                aria-pressed={color === c.value}
+                title={c.label}
+              />
+            ))}
+          </div>
+        </div>
         <label className="field">
           Curva
           <input

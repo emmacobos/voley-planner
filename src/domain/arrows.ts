@@ -47,3 +47,29 @@ export function arrowPath(a: ArrowGeom): string {
   const c = controlPoint(a);
   return `M${a.x1},${a.y1} Q${c.x},${c.y} ${a.x2},${a.y2}`;
 }
+
+/** Colores disponibles para las flechas. */
+export const ARROW_COLORS: { value: string; label: string }[] = [
+  { value: '#FFFFFF', label: 'Blanco' },
+  { value: '#0E1A2B', label: 'Azul marino' },
+  { value: '#F5B82E', label: 'Amarillo' },
+  { value: '#C0262D', label: 'Rojo' },
+  { value: '#1F4FB8', label: 'Azul' },
+  { value: '#15935E', label: 'Verde' },
+  { value: '#7E22CE', label: 'Violeta' },
+];
+
+/** Color de una flecha: el elegido o, si no, el de su tipo. */
+export function arrowColor(a: Pick<ArrowElement, 'style' | 'color'>): string {
+  return a.color ?? (a.style === 'move' ? '#FFFFFF' : '#0E1A2B');
+}
+
+/** Si la flecha es punteada: la elección o, si no, punteada solo para desplazamientos. */
+export function arrowDashed(a: Pick<ArrowElement, 'style' | 'dashed'>): boolean {
+  return a.dashed ?? a.style === 'move';
+}
+
+/** Id del marcador SVG de la punta para un color. */
+export function headMarkerId(color: string): string {
+  return `head-${color.replace('#', '').toLowerCase()}`;
+}

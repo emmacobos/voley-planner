@@ -25,10 +25,11 @@ La visión completa del producto y la hoja de ruta están en
      los jugadores del ejercicio según su posición, y el líbero entra por el
      central zaguero.
    - *Agregar* suma jugadores, pelota, conos, entrenadores y carros.
-   - *Mover* para arrastrar; *Flecha desplazamiento* / *Flecha pelota* para
-     dibujar arrastrando sobre la cancha. Para **curvar una flecha**,
-     seleccionala y arrastrá el punto amarillo del medio (o usá el control
-     *Curva*).
+   - *Mover* para arrastrar; *Flecha desplazamiento*, *Flecha pelota*,
+     *Flecha curva* y *Curva punteada* para dibujar arrastrando sobre la
+     cancha. Para **curvar cualquier flecha**, seleccionala y arrastrá el punto
+     amarillo del medio (o usá el control *Curva*). Al seleccionarla también
+     podés elegir su **color** y si el trazo es **continuo o punteado**.
    - El panel *Reglas de rotación* avisa si hay faltas de posición. Se
      controla solo al momento del saque y solo al equipo que recibe; cada paso
      tiene un *Momento* (saque de A, saque de B o pelota en juego) que se

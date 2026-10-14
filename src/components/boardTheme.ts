@@ -1,6 +1,6 @@
 import type { Team } from '../domain/types';
 
-export type Tool = 'select' | 'arrow-move' | 'arrow-ball';
+export type Tool = 'select' | 'arrow-move' | 'arrow-ball' | 'arrow-curve' | 'arrow-curve-dashed';
 
 export const TEAM_COLORS: Record<Team, string> = { A: '#1F4FB8', B: '#C0262D' };
 
