@@ -1,6 +1,8 @@
 /** Descarga un SVG como imagen PNG. */
 export async function downloadSvgAsPng(svg: SVGSVGElement, fileName: string, width = 2400) {
   const clone = svg.cloneNode(true) as SVGSVGElement;
+  // Sin selección, puntos de control ni tachito: solo la jugada.
+  clone.querySelectorAll('.ui-only').forEach((el) => el.remove());
   const { width: vw, height: vh } = svg.viewBox.baseVal;
   const height = Math.round((width * vh) / vw);
   clone.setAttribute('width', String(width));

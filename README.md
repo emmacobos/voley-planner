@@ -38,7 +38,10 @@ La visión completa del producto y la hoja de ruta están en
      ajusta solo al colocar una formación.
 4. **Animación:** *+ Paso* duplica la pizarra actual; mové los elementos y
    tocá *Reproducir*. Las flechas de un paso se ven mientras ocurre el
-   movimiento hacia el siguiente.
+   movimiento hacia el siguiente. Debajo de la pizarra está la guía
+   *¿Cómo se arma y se reproduce una jugada?* con el paso a paso.
+   Para borrar un elemento, tocalo y usá el **tachito** rojo que aparece al
+   lado.
 5. **Exportar PNG** descarga una imagen del paso actual.
 6. **Sesiones → Nueva sesión:** fecha, hora, plantel, objetivo y convocados.
    La sesión arranca con 5 bloques (90 minutos) que podés cambiar, reordenar

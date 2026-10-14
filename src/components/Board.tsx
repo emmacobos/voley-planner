@@ -35,6 +35,8 @@ interface BoardProps {
   onSelect: (id: string | null) => void;
   onUpdate: (element: BoardElement) => void;
   onAddArrow: (arrow: Omit<ArrowElement, 'id'>) => void;
+  /** Si está, el elemento seleccionado muestra un tachito para borrarlo. */
+  onDelete?: (id: string) => void;
 }
 
 /** Qué parte de una flecha se arrastra: entera, un extremo o el punto medio (curva). */
@@ -126,6 +128,7 @@ export function Board({
   onSelect,
   onUpdate,
   onAddArrow,
+  onDelete,
 }: BoardProps) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const playersById = new Map(players.map((p) => [p.id, p]));
@@ -190,6 +193,7 @@ export function Board({
   // Las flechas se dibujan debajo del resto de los elementos.
   const arrows = shown.filter((e): e is ArrowElement => e.kind === 'arrow');
   const points = shown.filter((e) => e.kind !== 'arrow');
+  const selectedEl = shown.find((e) => e.id === selectedId) ?? null;
 
   return (
     <svg
@@ -283,12 +287,15 @@ export function Board({
             );
         }
       })}
+      {onDelete && !readOnly && !drag && selectedEl && (
+        <DeleteButton element={selectedEl} onDelete={() => onDelete(selectedEl.id)} />
+      )}
     </svg>
   );
 }
 
 function Halo({ r }: { r: number }) {
-  return <circle r={r} fill="none" stroke={SELECTION_COLOR} strokeWidth={0.09} strokeDasharray="0.15 0.1" />;
+  return <circle className="ui-only" r={r} fill="none" stroke={SELECTION_COLOR} strokeWidth={0.09} strokeDasharray="0.15 0.1" />;
 }
 
 function Court({ showZones }: { showZones: boolean }) {
@@ -370,7 +377,7 @@ function Arrow({
   return (
     <g className={onPointerDown ? 'el' : undefined}>
       {selected && (
-        <path d={d} fill="none" stroke={SELECTION_COLOR} strokeOpacity={0.45} strokeWidth={0.3} strokeLinecap="round" pointerEvents="none" />
+        <path className="ui-only" d={d} fill="none" stroke={SELECTION_COLOR} strokeOpacity={0.45} strokeWidth={0.3} strokeLinecap="round" pointerEvents="none" />
       )}
       <path
         d={d}
@@ -387,9 +394,9 @@ function Arrow({
       )}
       {selected && onPointerDown && (
         <>
-          <circle className="handle" cx={x1} cy={y1} r={0.18} onPointerDown={(e) => onPointerDown(e, 'start')} />
-          <circle className="handle" cx={x2} cy={y2} r={0.18} onPointerDown={(e) => onPointerDown(e, 'end')} />
-          <circle className="handle handle-curve" cx={mid.x} cy={mid.y} r={0.2} onPointerDown={(e) => onPointerDown(e, 'mid')}>
+          <circle className="handle ui-only" cx={x1} cy={y1} r={0.18} onPointerDown={(e) => onPointerDown(e, 'start')} />
+          <circle className="handle ui-only" cx={x2} cy={y2} r={0.18} onPointerDown={(e) => onPointerDown(e, 'end')} />
+          <circle className="handle handle-curve ui-only" cx={mid.x} cy={mid.y} r={0.2} onPointerDown={(e) => onPointerDown(e, 'mid')}>
             <title>Arrastrá para curvar la flecha</title>
           </circle>
         </>
@@ -427,6 +434,47 @@ function PlayerMark({
           {caption}
         </text>
       )}
+    </g>
+  );
+}
+
+/** Dónde va el tachito: arriba a la derecha del elemento (o del medio de la flecha). */
+function deleteButtonSpot(el: BoardElement) {
+  if (el.kind === 'arrow') {
+    const m = midPoint(el);
+    return clampToView(m.x + 0.6, m.y - 0.6);
+  }
+  const offset = el.kind === 'player' ? 0.62 : 0.5;
+  return clampToView(el.x + offset, el.y - offset);
+}
+
+/** Botón redondo con un tachito de basura que borra el elemento seleccionado. */
+function DeleteButton({ element, onDelete }: { element: BoardElement; onDelete: () => void }) {
+  const p = deleteButtonSpot(element);
+  return (
+    <g
+      className="delete-button ui-only"
+      transform={`translate(${p.x} ${p.y})`}
+      role="button"
+      aria-label="Eliminar elemento"
+      tabIndex={0}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onDelete();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onDelete();
+        }
+      }}
+    >
+      <title>Eliminar (Supr)</title>
+      <circle r={0.34} fill="#C0262D" stroke="#ffffff" strokeWidth={0.05} />
+      <g transform="translate(-0.19 -0.2) scale(0.016)" fill="none" stroke="#ffffff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6" />
+      </g>
     </g>
   );
 }

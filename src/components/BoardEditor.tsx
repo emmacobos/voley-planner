@@ -92,10 +92,13 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
   const updateElement = (el: BoardElement) =>
     setElements((els) => els.map((e) => (e.id === el.id ? el : e)));
 
-  const removeSelected = () => {
-    if (!selectedId) return;
-    setElements((els) => els.filter((e) => e.id !== selectedId));
+  const removeElement = (id: string) => {
+    setElements((els) => els.filter((e) => e.id !== id));
     setSelectedId(null);
+  };
+
+  const removeSelected = () => {
+    if (selectedId) removeElement(selectedId);
   };
 
   const undo = () => {
@@ -311,6 +314,7 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
           onSelect={setSelectedId}
           onUpdate={updateElement}
           onAddArrow={addArrow}
+          onDelete={removeElement}
         />
 
         <div className="frames">
@@ -368,6 +372,41 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
             disabled={playing}
           />
         </div>
+
+        <details className="help-box" open={frames.length < 2}>
+          <summary>¿Cómo se arma y se reproduce una jugada?</summary>
+          <ol>
+            <li>
+              <b>El paso 1 es la posición inicial.</b> Ubicá jugadores, pelota y elementos (o usá una formación del
+              sistema 5-1).
+            </li>
+            <li>
+              <b>Tocá "+ Paso"</b> para copiar el paso actual en uno nuevo, y en ese paso <b>mové</b> lo que cambia: los
+              jugadores que se desplazan, la pelota, etc. Repetilo por cada momento de la jugada (saque, recepción,
+              armado, ataque…).
+            </li>
+            <li>
+              <b>Las flechas se dibujan en el paso de origen:</b> durante la animación se ven mientras los jugadores se
+              mueven hacia el paso siguiente, y desaparecen al llegar.
+            </li>
+            <li>
+              <b>Tocá "Reproducir"</b> para ver la jugada animada desde el paso en el que estás hasta el último (si estás
+              en el último, arranca desde el 1). Elegí la velocidad (0.5×, 1× o 2×) y usá "Detener" para cortarla.
+            </li>
+            <li>
+              Tocá un <b>número de paso</b> para ir a él; "Eliminar paso" borra el actual. A cada paso le podés poner su{' '}
+              <b>momento</b> (saque o pelota en juego) y una <b>descripción</b>.
+            </li>
+            <li>
+              Para <b>borrar</b> un elemento, tocalo y usá el <b>tachito</b> rojo que aparece al lado (o la tecla Supr).
+              Para <b>corregir</b>, arrastralo a su lugar; Ctrl+Z deshace el último cambio.
+            </li>
+          </ol>
+          <p className="hint">
+            Truco: colocá cada fase del sistema en un paso nuevo (por ejemplo K1 recepción → K1 ataque) y la app anima
+            el cambio de posiciones sola.
+          </p>
+        </details>
       </div>
 
       <aside className="board-side">
