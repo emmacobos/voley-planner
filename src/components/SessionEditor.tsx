@@ -13,6 +13,7 @@ export function SessionEditor({ id }: { id: string }) {
   const allPlayers = useAppStore((s) => s.players);
   const exercises = useAppStore((s) => s.exercises);
   const updateSession = useAppStore((s) => s.updateSession);
+  const saveTemplate = useAppStore((s) => s.saveTemplate);
 
   if (!session) {
     return (
@@ -78,6 +79,17 @@ export function SessionEditor({ id }: { id: string }) {
           onChange={(e) => update({ name: e.target.value })}
           aria-label="Nombre de la sesión"
         />
+        <button
+          onClick={() => {
+            const name = prompt('Nombre de la plantilla (por ejemplo "Martes técnico"):', session.name);
+            if (name !== null && saveTemplate(id, name)) {
+              alert('Plantilla guardada. La vas a encontrar en "Desde plantilla" al crear una sesión.');
+            }
+          }}
+          title="Guardar los bloques y ejercicios de esta sesión para reusarlos"
+        >
+          Guardar como plantilla
+        </button>
         <button className="primary" onClick={() => navigate(`/sesiones/${id}/imprimir`)}>
           Exportar PDF
         </button>

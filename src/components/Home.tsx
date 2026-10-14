@@ -6,6 +6,7 @@ import { BLOCK_KINDS, INTENSITIES } from '../domain/types';
 import type { BlockKind, Exercise, TrainingSession } from '../domain/types';
 import { navigate } from '../hooks/useHashRoute';
 import { useAppStore } from '../store';
+import { NewSessionButton } from './NewSessionButton';
 
 /** Colores de cada tipo de bloque (los mismos que en el editor de sesiones). */
 const BLOCK_COLORS: Record<BlockKind, string> = {
@@ -31,7 +32,6 @@ const parseDate = (date: string) => new Date(`${date}T00:00:00`);
 /** "Hola, Emma 👋" con la fecha de hoy y cuántas sesiones hay en la semana. */
 export function HomeGreeting({ sessions, exercisesById }: { sessions: TrainingSession[]; exercisesById: Map<string, Exercise> }) {
   const user = useAuth((s) => s.user);
-  const createSession = useAppStore((s) => s.createSession);
   const matches = useAppStore((s) => s.matches);
   const firstName = user?.name?.trim().split(/\s+/)[0];
   const [now] = useState(() => new Date());
@@ -60,9 +60,7 @@ export function HomeGreeting({ sessions, exercisesById }: { sessions: TrainingSe
           </a>
         )}
       </div>
-      <button className="primary" onClick={() => navigate(`/sesiones/${createSession()}`)}>
-        + Nueva sesión
-      </button>
+      <NewSessionButton />
     </div>
   );
 }

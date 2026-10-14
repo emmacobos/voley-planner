@@ -2611,6 +2611,69 @@ input.num {
   gap: 0.5rem;
 }
 
+/* Nueva sesión y plantillas */
+
+.new-session {
+  position: relative;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.new-session-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.4rem;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.new-session-menu button {
+  justify-content: flex-start;
+  border: none;
+  border-radius: 8px;
+}
+
+.template-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.8rem;
+}
+
+.template-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--accent);
+}
+
+.template-name {
+  font-weight: 700;
+  border-color: transparent;
+  background: transparent;
+  padding-left: 0.3rem;
+}
+
+.template-name:hover,
+.template-name:focus {
+  border-color: var(--border);
+}
+
+.template-card p {
+  margin: 0;
+}
+
 /* Ejercicios modelo */
 
 .library-cards {

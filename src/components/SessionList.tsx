@@ -5,6 +5,7 @@ import { EXERCISE_TYPES } from '../domain/types';
 import type { Exercise, ExerciseType, TrainingSession } from '../domain/types';
 import { GettingStarted } from './GettingStarted';
 import { HomeGreeting, HomeOverview } from './Home';
+import { TemplateList } from './TemplateList';
 import { Welcome } from './Welcome';
 
 const parseDate = (date: string) => new Date(`${date}T00:00:00`);
@@ -202,6 +203,7 @@ export function SessionList() {
               <div className="session-list">{past.map(card)}</div>
             </>
           )}
+          <TemplateList />
         </>
       )}
     </div>

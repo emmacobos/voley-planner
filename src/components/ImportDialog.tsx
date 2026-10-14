@@ -15,6 +15,7 @@ export function ImportDialog() {
     [counts.exercises, 'ejercicio', 'ejercicios'],
     [counts.sessions, 'sesión', 'sesiones'],
     [counts.matches, 'partido', 'partidos'],
+    [counts.templates, 'plantilla', 'plantillas'],
   ]
     .filter(([n]) => (n as number) > 0)
     .map(([n, one, many]) => `${n} ${n === 1 ? one : many}`);

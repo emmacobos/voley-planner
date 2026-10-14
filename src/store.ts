@@ -4,7 +4,7 @@ import { buildDemoData, isDemoId } from './domain/demo';
 import type { LibraryExercise } from './domain/library';
 import { newId } from './domain/ids';
 import { defaultBlocks, todayISO } from './domain/sessions';
-import type { Exercise, Frame, Match, Player, Squad, TrainingSession, WeekPlan } from './domain/types';
+import type { Exercise, Frame, Match, Player, SessionBlock, SessionTemplate, Squad, TrainingSession, WeekPlan } from './domain/types';
 
 /** Datos del usuario (lo que se sincroniza con la nube). */
 export interface AppData {
@@ -14,12 +14,21 @@ export interface AppData {
   sessions: TrainingSession[];
   matches: Match[];
   weeks: WeekPlan[];
+  templates: SessionTemplate[];
 }
 
-export const DATA_KEYS = ['squads', 'players', 'exercises', 'sessions', 'matches', 'weeks'] as const;
+export const DATA_KEYS = ['squads', 'players', 'exercises', 'sessions', 'matches', 'weeks', 'templates'] as const;
 export type DataKey = (typeof DATA_KEYS)[number];
 
-export const EMPTY_DATA: AppData = { squads: [], players: [], exercises: [], sessions: [], matches: [], weeks: [] };
+export const EMPTY_DATA: AppData = {
+  squads: [],
+  players: [],
+  exercises: [],
+  sessions: [],
+  matches: [],
+  weeks: [],
+  templates: [],
+};
 
 export function hasData(data: AppData): boolean {
   return DATA_KEYS.some((k) => data[k].length > 0);
@@ -50,6 +59,12 @@ interface AppState extends AppData {
   updateSession: (id: string, patch: Partial<Omit<TrainingSession, 'id'>>) => void;
   duplicateSession: (id: string) => string | undefined;
   removeSession: (id: string) => void;
+  /** Guarda la sesión como plantilla y devuelve su id. */
+  saveTemplate: (sessionId: string, name: string) => string | undefined;
+  /** Crea una sesión a partir de una plantilla (en esa fecha, o hoy) y devuelve su id. */
+  createSessionFromTemplate: (templateId: string, date?: string) => string | undefined;
+  renameTemplate: (id: string, name: string) => void;
+  removeTemplate: (id: string) => void;
   /** Crea un partido para esa fecha y devuelve su id. */
   createMatch: (date: string, squadId: string | null) => string;
   updateMatch: (id: string, patch: Partial<Omit<Match, 'id'>>) => void;
@@ -77,6 +92,16 @@ function withoutPlayers(session: TrainingSession, ids: Set<string>): TrainingSes
   };
 }
 
+/** Copia los bloques con ids nuevos (y, si se pide, sin jugadores). */
+function cloneBlocks(blocks: SessionBlock[], withoutPlayers = false): SessionBlock[] {
+  return blocks.map((b) => ({
+    ...structuredClone(b),
+    id: newId(),
+    items: b.items.map((it) => ({ ...it, id: newId() })),
+    ...(withoutPlayers ? { playerIds: [] } : {}),
+  }));
+}
+
 export function emptyFrame(): Frame {
   return { id: newId(), note: '', situation: 'juego', elements: [] };
 }
@@ -96,6 +121,7 @@ export const useAppStore = create<AppState>()(
       sessions: [],
       matches: [],
       weeks: [],
+      templates: [],
       ownerUid: null,
 
       resetData: (ownerUid) => set({ ...EMPTY_DATA, ownerUid }),
@@ -235,15 +261,13 @@ export const useAppStore = create<AppState>()(
       duplicateSession: (id) => {
         const original = get().sessions.find((ses) => ses.id === id);
         if (!original) return undefined;
+        // La copia es una sesión nueva: sin la asistencia de la original.
+        const { attendance: _attendance, ...rest } = structuredClone(original);
         const copy: TrainingSession = {
-          ...structuredClone(original),
+          ...rest,
           id: newId(),
           name: `${original.name} (copia)`,
-          blocks: original.blocks.map((b) => ({
-            ...structuredClone(b),
-            id: newId(),
-            items: b.items.map((it) => ({ ...it, id: newId() })),
-          })),
+          blocks: cloneBlocks(original.blocks),
           createdAt: now(),
           updatedAt: now(),
         };
@@ -252,6 +276,48 @@ export const useAppStore = create<AppState>()(
       },
 
       removeSession: (id) => set((s) => ({ sessions: s.sessions.filter((ses) => ses.id !== id) })),
+
+      saveTemplate: (sessionId, name) => {
+        const session = get().sessions.find((x) => x.id === sessionId);
+        if (!session) return undefined;
+        const template: SessionTemplate = {
+          id: newId(),
+          name: name.trim() || session.name,
+          objective: session.objective,
+          notes: session.notes,
+          squadId: session.squadId,
+          blocks: cloneBlocks(session.blocks, true),
+          createdAt: now(),
+          updatedAt: now(),
+        };
+        set((s) => ({ templates: [...s.templates, template] }));
+        return template.id;
+      },
+
+      createSessionFromTemplate: (templateId, date) => {
+        const template = get().templates.find((t) => t.id === templateId);
+        if (!template) return undefined;
+        const squadExists = get().squads.some((q) => q.id === template.squadId);
+        const session: TrainingSession = {
+          id: newId(),
+          name: template.name,
+          date: date ?? todayISO(),
+          time: '',
+          squadId: squadExists ? template.squadId : (get().squads[0]?.id ?? null),
+          objective: template.objective,
+          notes: template.notes,
+          playerIds: [],
+          blocks: cloneBlocks(template.blocks, true),
+          createdAt: now(),
+          updatedAt: now(),
+        };
+        set((s) => ({ sessions: [session, ...s.sessions] }));
+        return session.id;
+      },
+
+      renameTemplate: (id, name) =>
+        set((s) => ({ templates: s.templates.map((t) => (t.id === id ? { ...t, name, updatedAt: now() } : t)) })),
+      removeTemplate: (id) => set((s) => ({ templates: s.templates.filter((t) => t.id !== id) })),
 
       createMatch: (date, squadId) => {
         const id = newId();
@@ -299,27 +365,51 @@ export const useAppStore = create<AppState>()(
       removeDemo: () =>
         set((s) => {
           const demoPlayers = new Set(s.players.filter((p) => isDemoId(p.id)).map((p) => p.id));
+          const keep = (x: { id: string }) => !isDemoId(x.id);
+          // Lo propio que quedó asociado al plantel, las jugadoras o los ejercicios de ejemplo se desvincula.
+          // Solo se tocan los objetos afectados, para que la nube suba únicamente lo que cambió.
+          const unSquad = <T extends { squadId: string | null }>(x: T): T =>
+            isDemoId(x.squadId ?? '') ? { ...x, squadId: null } : x;
+          const touches = (blocks: SessionBlock[]) =>
+            blocks.some((b) => b.playerIds.some((p) => demoPlayers.has(p)) || b.items.some((i) => isDemoId(i.exerciseId)));
+          const cleanBlocks = (blocks: SessionBlock[]) =>
+            blocks.map((b) => ({
+              ...b,
+              playerIds: b.playerIds.filter((p) => !demoPlayers.has(p)),
+              items: b.items.filter((i) => !isDemoId(i.exerciseId)),
+            }));
           return {
-            squads: s.squads.filter((x) => !isDemoId(x.id)),
-            matches: s.matches.filter((x) => !isDemoId(x.id)),
+            squads: s.squads.filter(keep),
+            players: s.players.filter(keep),
+            matches: s.matches.filter(keep).map(unSquad),
             weeks: s.weeks.filter((x) => !isDemoId(x.squadId ?? '')),
-            players: s.players.filter((x) => !isDemoId(x.id)),
             exercises: s.exercises
-              .filter((x) => !isDemoId(x.id))
-              .map((x) => (x.playerIds.some((p) => demoPlayers.has(p)) ? { ...x, playerIds: x.playerIds.filter((p) => !demoPlayers.has(p)) } : x)),
-            // Lo propio que usaba jugadoras o ejercicios de ejemplo los pierde.
+              .filter(keep)
+              .map(unSquad)
+              .map((x) =>
+                x.playerIds.some((p) => demoPlayers.has(p)) ? { ...x, playerIds: x.playerIds.filter((p) => !demoPlayers.has(p)) } : x,
+              ),
             sessions: s.sessions
-              .filter((x) => !isDemoId(x.id))
+              .filter(keep)
+              .map(unSquad)
               .map((x) => {
-                const clean = withoutPlayers(x, demoPlayers);
-                return { ...clean, blocks: clean.blocks.map((b) => ({ ...b, items: b.items.filter((i) => !isDemoId(i.exerciseId)) })) };
+                const attendance = x.attendance && Object.keys(x.attendance).some((p) => demoPlayers.has(p));
+                if (!x.playerIds.some((p) => demoPlayers.has(p)) && !touches(x.blocks) && !attendance) return x;
+                return {
+                  ...withoutPlayers(x, demoPlayers),
+                  blocks: cleanBlocks(x.blocks),
+                  ...(x.attendance
+                    ? { attendance: Object.fromEntries(Object.entries(x.attendance).filter(([p]) => !demoPlayers.has(p))) }
+                    : {}),
+                };
               }),
+            templates: s.templates.map(unSquad).map((t) => (touches(t.blocks) ? { ...t, blocks: cleanBlocks(t.blocks) } : t)),
           };
         }),
     }),
     {
       name: 'voley-planner',
-      version: 4,
+      version: 5,
       migrate: (persisted, version) => {
         let state = persisted as Partial<AppState>;
         if (version < 2) {
@@ -343,6 +433,10 @@ export const useAppStore = create<AppState>()(
         if (version < 4) {
           // v4 agrega el calendario: partidos y objetivos de cada semana.
           state = { ...state, matches: [], weeks: [] };
+        }
+        if (version < 5) {
+          // v5 agrega las plantillas de sesión.
+          state = { ...state, templates: [] };
         }
         return state as AppState;
       },

@@ -5,6 +5,7 @@ import type { Match, TrainingSession } from '../domain/types';
 import { navigate } from '../hooks/useHashRoute';
 import { useAppStore } from '../store';
 import { MatchDialog } from './MatchDialog';
+import { NewSessionButton } from './NewSessionButton';
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
@@ -20,6 +21,8 @@ export function CalendarPage() {
   const updateMatch = useAppStore((s) => s.updateMatch);
   const removeMatch = useAppStore((s) => s.removeMatch);
   const setWeekObjective = useAppStore((s) => s.setWeekObjective);
+  const templates = useAppStore((s) => s.templates);
+  const createFromTemplate = useAppStore((s) => s.createSessionFromTemplate);
 
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
@@ -50,6 +53,10 @@ export function CalendarPage() {
     updateSession(id, { date, ...(squadId ? { squadId } : {}) });
     navigate(`/sesiones/${id}`);
   };
+  const fromTemplate = (templateId: string, date: string) => {
+    const id = createFromTemplate(templateId, date);
+    if (id) navigate(`/sesiones/${id}`);
+  };
   const addMatch = (date: string) => {
     setAddingOn(null);
     setOpenMatch(createMatch(date, squadId ?? squads[0]?.id ?? null));
@@ -79,9 +86,7 @@ export function CalendarPage() {
             </select>
           )}
           <button onClick={() => addMatch(today)}>+ Partido</button>
-          <button className="primary" onClick={() => addSession(today)}>
-            + Sesión
-          </button>
+          <NewSessionButton squadId={squadId} />
         </div>
       </div>
 
@@ -160,6 +165,11 @@ export function CalendarPage() {
                     {addingOn === day && (
                       <div className="day-menu">
                         <button onClick={() => addSession(day)}>+ Sesión</button>
+                        {templates.map((t) => (
+                          <button key={t.id} onClick={() => fromTemplate(t.id, day)} title="Sesión desde la plantilla">
+                            + {t.name}
+                          </button>
+                        ))}
                         <button onClick={() => addMatch(day)}>+ Partido</button>
                       </div>
                     )}

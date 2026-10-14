@@ -281,3 +281,15 @@ export interface WeekPlan {
   squadId: string | null;
   objective: string;
 }
+
+/** Plantilla de sesión: bloques y ejercicios para reusar (sin fecha ni convocados). */
+export interface SessionTemplate {
+  id: string;
+  name: string;
+  objective: string;
+  notes: string;
+  squadId: string | null;
+  blocks: SessionBlock[];
+  createdAt: string;
+  updatedAt: string;
+}

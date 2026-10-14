@@ -85,6 +85,10 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    o borrar. A cada bloque le agregás ejercicios de la biblioteca (con su
    duración) y elegís qué jugadores participan. El resumen muestra la
    duración total, la intensidad promedio y los minutos por tipo de ejercicio.
+   **Guardar como plantilla** guarda los bloques y ejercicios de una sesión
+   (por ejemplo "Martes técnico") para crear sesiones nuevas con
+   **Desde plantilla** (en el inicio, en el calendario o en el + de cada día);
+   las plantillas se administran al final de la lista de sesiones.
 7. **Asistencia y carga:** al final de cada sesión marcás quién vino y el
    esfuerzo de cada jugadora (1 a 10). La carga es esfuerzo × minutos (UA). En
    *Planteles* ves la asistencia de las últimas 4 semanas y la carga semanal de
