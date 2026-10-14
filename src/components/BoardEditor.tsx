@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { elementsAtProgress } from '../domain/animation';
 import { ARROW_KINDS, arrowColor, arrowKind } from '../domain/arrows';
 import type { ArrowKind } from '../domain/arrows';
+import { TEXT_COLORS } from '../domain/shadows';
 import { NET_X } from '../domain/court';
 import { newId } from '../domain/ids';
 import { PHASES, formationTokenIds, formationTokens, phaseSituation } from '../domain/formations';
@@ -10,7 +11,10 @@ import { frameRuleStatus } from '../domain/rotationRules';
 import { assignLineup } from '../domain/rotations';
 import type {
   ArrowElement,
+  BlockShadowElement,
   BoardElement,
+  TextElement,
+  TextSize,
   Frame,
   Player,
   PlayerToken,
@@ -145,6 +149,19 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
     const el = { ...arrow, id: newId() };
     setElements((els) => [...els, el]);
     setSelectedId(el.id);
+  };
+
+  /** Campo del panel que hay que enfocar (texto recién creado o comentario de un jugador). */
+  const [focusField, setFocusField] = useState<{ id: string; field: 'text' | 'comment' } | null>(null);
+
+  const addDrawn = (element: Omit<BlockShadowElement, 'id'> | Omit<TextElement, 'id'>) => {
+    const el = { ...element, id: newId() } as BoardElement;
+    setElements((els) => [...els, el]);
+    setSelectedId(el.id);
+    if (el.kind === 'text') {
+      setFocusField({ id: el.id, field: 'text' });
+      setTool('select');
+    }
   };
 
   /** Coloca al equipo en una formación del 5-1 y ajusta el momento del paso. */
@@ -286,6 +303,22 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
               <Icon d="M4 19C5 9 13 5 19 7m0 0-3.5-2.5M19 7l-2.5 3.2" dashed color={kindColor('curva-punteada')} />
               Curva punteada
             </button>
+            <button
+              className={tool === 'shadow' ? 'active' : ''}
+              onClick={() => setTool('shadow')}
+              title="Arrastrá desde el bloqueo hacia el fondo de la cancha para marcar la zona que tapa."
+            >
+              <Icon d="M4 10.5h3v3H4zM7 10.5 20 4v16L7 13.5" />
+              Sombra de bloqueo
+            </button>
+            <button
+              className={tool === 'text' ? 'active' : ''}
+              onClick={() => setTool('text')}
+              title="Tocá la cancha donde quieras escribir."
+            >
+              <Icon d="M5 5h14M12 5v14M9 19h6" />
+              Texto
+            </button>
           </div>
           <div className="toolbar-group">
             <button className="icon-button" onClick={undo} disabled={!past.length || playing} title="Deshacer (Ctrl+Z)" aria-label="Deshacer">
@@ -314,7 +347,12 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
           onSelect={setSelectedId}
           onUpdate={updateElement}
           onAddArrow={addArrow}
+          onAddElement={addDrawn}
           onDelete={removeElement}
+          onComment={(id) => {
+            setSelectedId(id);
+            setFocusField({ id, field: 'comment' });
+          }}
         />
 
         <div className="frames">
@@ -396,6 +434,14 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
             <li>
               Tocá un <b>número de paso</b> para ir a él; "Eliminar paso" borra el actual. A cada paso le podés poner su{' '}
               <b>momento</b> (saque o pelota en juego) y una <b>descripción</b>.
+            </li>
+            <li>
+              Al tocar un <b>jugador</b> aparece también un <b>globito</b> azul para escribirle un <b>comentario</b> (por
+              ejemplo "Se desplaza a 1"), que se ve debajo de él en ese paso.
+            </li>
+            <li>
+              Con <b>Texto</b> tocás la cancha y escribís donde quieras. Con <b>Sombra de bloqueo</b> arrastrás desde el
+              bloqueo hacia el fondo para marcar la zona que tapa; en la animación acompaña al bloqueo.
             </li>
             <li>
               Para <b>borrar</b> un elemento, tocalo y usá el <b>tachito</b> rojo que aparece al lado (o la tecla Supr).
@@ -501,7 +547,13 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
         {selected && !playing && (
           <section>
             <h3>Elemento seleccionado</h3>
-            <SelectedPanel element={selected} roster={roster} onUpdate={updateElement} />
+            <SelectedPanel
+              element={selected}
+              roster={roster}
+              onUpdate={updateElement}
+              focusField={focusField?.id === selected.id ? focusField.field : null}
+              onFocused={() => setFocusField(null)}
+            />
             <button className="danger full" onClick={removeSelected}>
               Eliminar (Supr)
             </button>
@@ -516,11 +568,113 @@ function SelectedPanel({
   element,
   roster,
   onUpdate,
+  focusField = null,
+  onFocused,
 }: {
   element: BoardElement;
   roster: Player[];
   onUpdate: (el: BoardElement) => void;
+  /** Campo a enfocar al mostrarse (para escribir directamente). */
+  focusField?: 'text' | 'comment' | null;
+  onFocused?: () => void;
 }) {
+  const fieldRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const field = fieldRef.current;
+    if (!focusField || !field) return;
+    field.focus({ preventScroll: true });
+    // Solo desplazar la página si el campo no se ve (por ejemplo en el celular).
+    const r = field.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > window.innerHeight) field.scrollIntoView({ block: 'nearest' });
+    if (focusField === 'text') field.select();
+    onFocused?.();
+  }, [focusField, element.id, onFocused]);
+
+  if (element.kind === 'text') {
+    return (
+      <div className="stack">
+        <label className="field">
+          Texto
+          <textarea
+            rows={2}
+            value={element.text}
+            ref={fieldRef}
+            onChange={(e) => onUpdate({ ...element, text: e.target.value })}
+            placeholder="Escribí acá"
+          />
+        </label>
+        <div className="field">
+          Tamaño
+          <div className="segmented" role="group" aria-label="Tamaño del texto">
+            {(
+              [
+                ['S', 'Chico'],
+                ['M', 'Mediano'],
+                ['L', 'Grande'],
+              ] as [TextSize, string][]
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                className={element.size === value ? 'active' : ''}
+                aria-pressed={element.size === value}
+                onClick={() => onUpdate({ ...element, size: value })}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="field">
+          Color
+          <div className="swatches" role="group" aria-label="Color del texto">
+            {TEXT_COLORS.map((c) => (
+              <button
+                key={c.value}
+                className={`color-swatch${element.color === c.value ? ' active' : ''}`}
+                style={{ background: c.value }}
+                onClick={() => onUpdate({ ...element, color: c.value })}
+                aria-label={c.label}
+                aria-pressed={element.color === c.value}
+                title={c.label}
+              />
+            ))}
+          </div>
+        </div>
+        <p className="hint">Arrastralo para moverlo. Enter hace una línea nueva.</p>
+      </div>
+    );
+  }
+  if (element.kind === 'shadow') {
+    return (
+      <div className="stack">
+        <p className="hint" style={{ marginTop: 0 }}>
+          Sombra del bloqueo: arrastrá el punto del bloqueo y el del fondo para orientarla.
+        </p>
+        <label className="field">
+          Ancho en el bloqueo ({element.startWidth.toFixed(1)} m)
+          <input
+            type="range"
+            min={0.4}
+            max={3}
+            step={0.1}
+            value={element.startWidth}
+            onChange={(e) => onUpdate({ ...element, startWidth: Number(e.target.value) })}
+          />
+        </label>
+        <label className="field">
+          Ancho al final ({element.endWidth.toFixed(1)} m)
+          <input
+            type="range"
+            min={0.5}
+            max={8}
+            step={0.1}
+            value={element.endWidth}
+            onChange={(e) => onUpdate({ ...element, endWidth: Number(e.target.value) })}
+          />
+        </label>
+      </div>
+    );
+  }
   if (element.kind === 'arrow') {
     const curve = element.curve ?? 0;
     return (
@@ -576,6 +730,16 @@ function SelectedPanel({
   const t = element;
   return (
     <div className="stack">
+      <label className="field">
+        Comentario (se ve debajo del jugador)
+        <textarea
+          ref={fieldRef}
+          rows={2}
+          value={t.comment ?? ''}
+          placeholder="Ej.: Se desplaza a 1"
+          onChange={(e) => onUpdate({ ...t, comment: e.target.value || undefined })}
+        />
+      </label>
       <label className="field">
         Jugador del plantel
         <select

@@ -42,3 +42,18 @@ describe('elementsAtProgress', () => {
     expect(elementsAtProgress(frames, 1)[0]).toMatchObject({ x: 2 });
   });
 });
+
+describe('sombra del bloqueo y texto', () => {
+  const shadow = (x1: number, w: number): BoardElement => ({ id: 's', kind: 'shadow', x1, y1: 4, x2: 3, y2: 4, startWidth: w, endWidth: 3 });
+  const text = (x: number): BoardElement => ({ id: 't', kind: 'text', x, y: 1, text: 'Hola', size: 'M', color: '#0E1A2B' });
+
+  it('interpola los extremos y el ancho de la sombra', () => {
+    const [s] = interpolateFrames([shadow(8, 1)], [shadow(10, 2)], 0.5);
+    expect(s).toMatchObject({ x1: 9, startWidth: 1.5, x2: 3 });
+  });
+
+  it('mueve el texto como cualquier elemento', () => {
+    const [t] = interpolateFrames([text(0)], [text(4)], 0.25);
+    expect(t).toMatchObject({ x: 1, text: 'Hola' });
+  });
+});

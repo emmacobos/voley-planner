@@ -53,6 +53,8 @@ export interface PlayerToken extends Positioned {
   role?: Position;
   playerId?: string;
   zone?: Zone;
+  /** Comentario que se ve debajo del jugador en este paso (por ejemplo "Se desplaza a 1"). */
+  comment?: string;
 }
 
 export interface BallElement extends Positioned {
@@ -85,14 +87,47 @@ export interface ArrowElement {
   curve?: number;
 }
 
+export type TextSize = 'S' | 'M' | 'L';
+
+/** Texto escrito en el tablero (puede tener varias líneas). */
+export interface TextElement extends Positioned {
+  kind: 'text';
+  text: string;
+  size: TextSize;
+  color: string;
+}
+
+/**
+ * Sombra del bloqueo: zona que tapa el bloqueo, desde el bloqueo (x1, y1)
+ * hacia el fondo (x2, y2). Se abre de `startWidth` a `endWidth` metros.
+ */
+export interface BlockShadowElement {
+  id: string;
+  kind: 'shadow';
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  startWidth: number;
+  endWidth: number;
+}
+
 export type PointElement =
   | PlayerToken
   | BallElement
   | ConeElement
   | CoachElement
-  | CartElement;
+  | CartElement
+  | TextElement;
 
-export type BoardElement = PointElement | ArrowElement;
+/** Elementos definidos por dos extremos (se arrastran por sus puntas). */
+export type SegmentElement = ArrowElement | BlockShadowElement;
+
+export type BoardElement = PointElement | SegmentElement;
+
+export function isSegment(e: BoardElement): e is SegmentElement {
+  return e.kind === 'arrow' || e.kind === 'shadow';
+}
 
 /**
  * Momento del juego que representa un paso. Solo al momento del saque se

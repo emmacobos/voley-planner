@@ -25,7 +25,18 @@ export function interpolateFrames(
   for (const b of to) {
     if (b.kind === 'arrow') continue;
     const a = fromById.get(b.id);
-    if (a && a.kind !== 'arrow') {
+    if (a && a.kind === 'shadow' && b.kind === 'shadow') {
+      // La sombra del bloqueo acompaña el movimiento del bloqueo.
+      result.push({
+        ...b,
+        x1: lerp(a.x1, b.x1, t),
+        y1: lerp(a.y1, b.y1, t),
+        x2: lerp(a.x2, b.x2, t),
+        y2: lerp(a.y2, b.y2, t),
+        startWidth: lerp(a.startWidth, b.startWidth, t),
+        endWidth: lerp(a.endWidth, b.endWidth, t),
+      });
+    } else if (a && b.kind !== 'shadow' && a.kind !== 'arrow' && a.kind !== 'shadow') {
       result.push({ ...b, x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) });
     } else if (t >= 0.5) {
       result.push(b);

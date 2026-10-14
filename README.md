@@ -32,6 +32,15 @@ La visión completa del producto y la hoja de ruta están en
      flecha**, seleccionala y arrastrá el punto amarillo del medio (o usá el
      control *Curva*); al curvarla toma el color de la curva. El tipo también
      se cambia desde el panel de la flecha seleccionada.
+   - *Sombra de bloqueo*: arrastrá desde el bloqueo hacia el fondo de la
+     cancha y aparece la zona que tapa el bloqueo (un cono translúcido). Desde
+     el panel ajustás el ancho en el bloqueo y al final; en la animación
+     acompaña al bloqueo.
+   - *Texto*: tocá la cancha para escribir. Se puede mover, tiene tres
+     tamaños (chico, mediano, grande) y cuatro colores.
+   - Al seleccionar un jugador aparece, al lado del tachito, el **globito de
+     comentario**: lo que escribas (por ejemplo "Se desplaza a 1") se ve
+     debajo del jugador en la pizarra. Cada paso tiene su propio comentario.
    - El panel *Reglas de rotación* avisa si hay faltas de posición. Se
      controla solo al momento del saque y solo al equipo que recibe; cada paso
      tiene un *Momento* (saque de A, saque de B o pelota en juego) que se

@@ -10,8 +10,13 @@ import {
   toCourt,
 } from '../domain/court';
 import { ARROW_KINDS, arrowColor, arrowDashed, arrowPath, curveThrough, headMarkerId, midPoint } from '../domain/arrows';
+import { DEFAULT_SHADOW, TEXT_COLORS, TEXT_SIZES, shadowPoints, textBox, textLines, wrapText } from '../domain/shadows';
+import { isSegment } from '../domain/types';
 import type {
   ArrowElement,
+  BlockShadowElement,
+  PointElement,
+  TextElement,
   ArrowStyle,
   BoardElement,
   Player,
@@ -35,8 +40,12 @@ interface BoardProps {
   onSelect: (id: string | null) => void;
   onUpdate: (element: BoardElement) => void;
   onAddArrow: (arrow: Omit<ArrowElement, 'id'>) => void;
+  /** Agrega otro elemento dibujado en la pizarra (sombra del bloqueo, texto). */
+  onAddElement?: (element: Omit<BlockShadowElement, 'id'> | Omit<TextElement, 'id'>) => void;
   /** Si está, el elemento seleccionado muestra un tachito para borrarlo. */
   onDelete?: (id: string) => void;
+  /** Si está, el jugador seleccionado muestra un botón para comentarlo. */
+  onComment?: (id: string) => void;
 }
 
 /** Qué parte de una flecha se arrastra: entera, un extremo o el punto medio (curva). */
@@ -44,6 +53,7 @@ type ArrowPart = 'whole' | 'start' | 'end' | 'mid';
 
 type Drag =
   | { type: 'element'; id: string; part: ArrowPart; ox: number; oy: number; dx: number; dy: number }
+  | { type: 'shadow'; x1: number; y1: number; x2: number; y2: number }
   | {
       type: 'arrow';
       style: ArrowStyle;
@@ -59,12 +69,18 @@ type Drag =
 export const DEFAULT_BEND = 0.22;
 
 /** Qué flecha dibuja cada herramienta. */
-const ARROW_TOOLS: Record<Exclude<Tool, 'select'>, { style: ArrowStyle; bend: number }> = {
+const ARROW_TOOLS: Record<ArrowTool, { style: ArrowStyle; bend: number }> = {
   'arrow-move': { style: 'move', bend: 0 },
   'arrow-ball': { style: 'ball', bend: 0 },
   'arrow-curve': { style: 'ball', bend: DEFAULT_BEND },
   'arrow-curve-dashed': { style: 'move', bend: DEFAULT_BEND },
 };
+
+type ArrowTool = 'arrow-move' | 'arrow-ball' | 'arrow-curve' | 'arrow-curve-dashed';
+
+function drawnShadow(d: Extract<Drag, { type: 'shadow' }>): Omit<BlockShadowElement, 'id'> {
+  return { kind: 'shadow', x1: d.x1, y1: d.y1, x2: d.x2, y2: d.y2, ...DEFAULT_SHADOW };
+}
 
 /** Flecha que resulta de lo dibujado hasta ahora. */
 function drawnArrow(d: Extract<Drag, { type: 'arrow' }>): Omit<ArrowElement, 'id'> {
@@ -105,8 +121,8 @@ function svgPoint(svg: SVGSVGElement, clientX: number, clientY: number) {
 function applyDrag(el: BoardElement, drag: Drag | null): BoardElement {
   if (!drag || drag.type !== 'element' || drag.id !== el.id) return el;
   const { dx, dy, part } = drag;
-  if (el.kind === 'arrow') {
-    if (part === 'mid') return { ...el, curve: curveThrough(el, { x: drag.ox + dx, y: drag.oy + dy }) };
+  if (isSegment(el)) {
+    if (part === 'mid' && el.kind === 'arrow') return { ...el, curve: curveThrough(el, { x: drag.ox + dx, y: drag.oy + dy }) };
     return {
       ...el,
       ...(part !== 'end' ? { x1: el.x1 + dx, y1: el.y1 + dy } : {}),
@@ -128,7 +144,9 @@ export function Board({
   onSelect,
   onUpdate,
   onAddArrow,
+  onAddElement,
   onDelete,
+  onComment,
 }: BoardProps) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const playersById = new Map(players.map((p) => [p.id, p]));
@@ -156,8 +174,19 @@ export function Board({
       onSelect(null);
       return;
     }
-    e.currentTarget.setPointerCapture(e.pointerId);
     const p = point(e);
+    if (tool === 'text') {
+      // Que el clic no le saque el foco al campo donde se va a escribir.
+      e.preventDefault();
+      // Un toque en la cancha crea el texto ahí mismo.
+      onAddElement?.({ kind: 'text', x: p.x, y: p.y, text: 'Texto', size: 'M', color: TEXT_COLORS[0].value });
+      return;
+    }
+    e.currentTarget.setPointerCapture(e.pointerId);
+    if (tool === 'shadow') {
+      setDrag({ type: 'shadow', x1: p.x, y1: p.y, x2: p.x, y2: p.y });
+      return;
+    }
     setDrag({
       type: 'arrow',
       ...ARROW_TOOLS[tool],
@@ -184,15 +213,17 @@ export function Board({
       const el = elements.find((x) => x.id === drag.id);
       if (el && (drag.dx !== 0 || drag.dy !== 0)) onUpdate(applyDrag(el, drag));
     } else if (Math.hypot(drag.x2 - drag.x1, drag.y2 - drag.y1) > 0.3) {
-      onAddArrow(drawnArrow(drag));
+      if (drag.type === 'shadow') onAddElement?.(drawnShadow(drag));
+      else onAddArrow(drawnArrow(drag));
     }
     setDrag(null);
   };
 
   const shown = elements.map((el) => applyDrag(el, drag));
-  // Las flechas se dibujan debajo del resto de los elementos.
+  // Abajo las sombras del bloqueo, después las flechas y arriba el resto.
+  const shadows = shown.filter((e): e is BlockShadowElement => e.kind === 'shadow');
   const arrows = shown.filter((e): e is ArrowElement => e.kind === 'arrow');
-  const points = shown.filter((e) => e.kind !== 'arrow');
+  const points = shown.filter((e): e is PointElement => !isSegment(e));
   const selectedEl = shown.find((e) => e.id === selectedId) ?? null;
 
   return (
@@ -225,6 +256,16 @@ export function Board({
       </defs>
 
       <Court showZones={showZones} />
+
+      {shadows.map((sh) => (
+        <Shadow
+          key={sh.id}
+          shadow={sh}
+          selected={sh.id === selectedId}
+          onPointerDown={(e, part) => startElementDrag(e, sh.id, part)}
+        />
+      ))}
+      {drag?.type === 'shadow' && <Shadow shadow={{ id: 'preview', ...drawnShadow(drag) }} selected={false} />}
 
       {arrows.map((a) => (
         <Arrow
@@ -275,6 +316,8 @@ export function Board({
                 <text textAnchor="middle" dominantBaseline="central" fontSize={0.4} fontWeight={700} fill="#ffffff">E</text>
               </g>
             );
+          case 'text':
+            return <TextMark key={el.id} element={el} selected={selected} onPointerDown={down} />;
           case 'cart':
             return (
               <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})`} onPointerDown={down}>
@@ -289,6 +332,9 @@ export function Board({
       })}
       {onDelete && !readOnly && !drag && selectedEl && (
         <DeleteButton element={selectedEl} onDelete={() => onDelete(selectedEl.id)} />
+      )}
+      {onComment && !readOnly && !drag && selectedEl?.kind === 'player' && (
+        <CommentButton element={selectedEl} onComment={() => onComment(selectedEl.id)} />
       )}
     </svg>
   );
@@ -417,6 +463,7 @@ function PlayerMark({
   onPointerDown: (e: ReactPointerEvent<SVGElement>) => void;
 }) {
   const caption = player ? `${player.name} · ${positionShort(player.position)}` : '';
+  const commentLines = token.comment ? wrapText(token.comment, 24) : [];
   return (
     <g className="el" transform={`translate(${token.x} ${token.y})`} onPointerDown={onPointerDown}>
       {selected && <Halo r={0.6} />}
@@ -434,6 +481,25 @@ function PlayerMark({
           {caption}
         </text>
       )}
+      {commentLines.length > 0 && (
+        <text
+          textAnchor="middle"
+          fontSize={0.36}
+          fontWeight={700}
+          fontStyle="italic"
+          fill={COMMENT_COLOR}
+          stroke="#ffffff"
+          strokeWidth={0.12}
+          strokeLinejoin="round"
+          paintOrder="stroke"
+        >
+          {commentLines.map((line, i) => (
+            <tspan key={i} x={0} y={(caption ? 1.15 : 0.85) + i * 0.42}>
+              {line}
+            </tspan>
+          ))}
+        </text>
+      )}
     </g>
   );
 }
@@ -443,6 +509,13 @@ function deleteButtonSpot(el: BoardElement) {
   if (el.kind === 'arrow') {
     const m = midPoint(el);
     return clampToView(m.x + 0.6, m.y - 0.6);
+  }
+  if (el.kind === 'shadow') {
+    return clampToView((el.x1 + el.x2) / 2 + 0.5, (el.y1 + el.y2) / 2 - 0.5);
+  }
+  if (el.kind === 'text') {
+    const box = textBox(el);
+    return clampToView(el.x + box.width / 2 + 0.35, el.y - TEXT_SIZES[el.size] * 0.9);
   }
   const offset = el.kind === 'player' ? 0.62 : 0.5;
   return clampToView(el.x + offset, el.y - offset);
@@ -474,6 +547,134 @@ function DeleteButton({ element, onDelete }: { element: BoardElement; onDelete: 
       <circle r={0.34} fill="#C0262D" stroke="#ffffff" strokeWidth={0.05} />
       <g transform="translate(-0.19 -0.2) scale(0.016)" fill="none" stroke="#ffffff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6" />
+      </g>
+    </g>
+  );
+}
+
+/** Sombra del bloqueo: trapecio translúcido que se abre desde el bloqueo. */
+function Shadow({
+  shadow,
+  selected,
+  onPointerDown,
+}: {
+  shadow: BlockShadowElement;
+  selected: boolean;
+  onPointerDown?: (e: ReactPointerEvent<SVGElement>, part: ArrowPart) => void;
+}) {
+  const points = shadowPoints(shadow);
+  return (
+    <g className={onPointerDown ? 'el' : undefined}>
+      <polygon
+        points={points}
+        fill="#0E1A2B"
+        fillOpacity={0.22}
+        stroke={selected ? SELECTION_COLOR : '#0E1A2B'}
+        strokeOpacity={selected ? 1 : 0.55}
+        strokeWidth={selected ? 0.07 : 0.04}
+        strokeDasharray="0.2 0.12"
+        strokeLinejoin="round"
+        onPointerDown={onPointerDown ? (e) => onPointerDown(e, 'whole') : undefined}
+        pointerEvents={onPointerDown ? undefined : 'none'}
+      />
+      {selected && onPointerDown && (
+        <>
+          <circle className="handle ui-only" cx={shadow.x1} cy={shadow.y1} r={0.18} onPointerDown={(e) => onPointerDown(e, 'start')}>
+            <title>Arrastrá para mover el inicio (el bloqueo)</title>
+          </circle>
+          <circle className="handle ui-only" cx={shadow.x2} cy={shadow.y2} r={0.18} onPointerDown={(e) => onPointerDown(e, 'end')}>
+            <title>Arrastrá para mover el final de la sombra</title>
+          </circle>
+        </>
+      )}
+    </g>
+  );
+}
+
+/** Texto escrito en el tablero. */
+function TextMark({
+  element,
+  selected,
+  onPointerDown,
+}: {
+  element: TextElement;
+  selected: boolean;
+  onPointerDown: (e: ReactPointerEvent<SVGElement>) => void;
+}) {
+  const size = TEXT_SIZES[element.size];
+  const lines = textLines(element);
+  const box = textBox(element);
+  const top = -box.height / 2;
+  // Contorno contrastante para que se lea sobre la madera o la franja azul.
+  const halo = element.color.toUpperCase() === '#FFFFFF' ? '#0E1A2B' : '#FFFFFF';
+  return (
+    <g className="el" transform={`translate(${element.x} ${element.y})`} onPointerDown={onPointerDown}>
+      {/* Área para tocarlo y arrastrarlo. */}
+      <rect x={-box.width / 2 - 0.15} y={top - 0.1} width={box.width + 0.3} height={box.height + 0.2} fill="transparent" />
+      {selected && (
+        <rect
+          className="ui-only"
+          x={-box.width / 2 - 0.15}
+          y={top - 0.1}
+          width={box.width + 0.3}
+          height={box.height + 0.2}
+          rx={0.1}
+          fill="none"
+          stroke={SELECTION_COLOR}
+          strokeWidth={0.07}
+          strokeDasharray="0.15 0.1"
+        />
+      )}
+      <text
+        textAnchor="middle"
+        fontSize={size}
+        fontWeight={700}
+        fill={element.color}
+        stroke={halo}
+        strokeWidth={size * 0.16}
+        strokeLinejoin="round"
+        paintOrder="stroke"
+      >
+        {lines.map((line, i) => (
+          <tspan key={i} x={0} y={top + size * (i * 1.2 + 0.95)}>
+            {line || ' '}
+          </tspan>
+        ))}
+      </text>
+    </g>
+  );
+}
+
+/** Color de los comentarios debajo de los jugadores. */
+const COMMENT_COLOR = '#1F3C9C';
+
+/** Botón al lado del tachito para escribir un comentario del jugador. */
+function CommentButton({ element, onComment }: { element: PlayerToken; onComment: () => void }) {
+  const d = deleteButtonSpot(element);
+  const p = clampToView(d.x + 0.78, d.y);
+  return (
+    <g
+      className="comment-button ui-only"
+      transform={`translate(${p.x} ${p.y})`}
+      role="button"
+      aria-label="Comentar jugador"
+      tabIndex={0}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onComment();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onComment();
+        }
+      }}
+    >
+      <title>Agregar un comentario debajo del jugador</title>
+      <circle r={0.34} fill="#1F4FB8" stroke="#ffffff" strokeWidth={0.05} />
+      <g transform="translate(-0.19 -0.19) scale(0.016)" fill="none" stroke="#ffffff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 5h16v11H9l-5 4zM8 9h8M8 12h5" />
       </g>
     </g>
   );
