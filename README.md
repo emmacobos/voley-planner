@@ -86,7 +86,9 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
 5. **Exportar PNG** descarga una imagen del paso actual. **Presentar** muestra
    la jugada a pantalla completa (para una tablet o una tele en el gimnasio),
    con botones grandes de paso anterior/siguiente, reproducir y la descripción
-   de cada paso; se maneja también con ← →, Espacio y Esc. **Exportar video**
+   de cada paso; se maneja también con ← →, Espacio y Esc. Con **✏ Marcar**
+   (o la tecla D) se dibuja a mano sobre la jugada, en dorado, blanco o rojo,
+   como en la tele: cada paso tiene sus marcas y no se guardan. **Exportar video**
    graba la jugada animada (con una pausa en cada paso y su descripción abajo)
    y la descarga en MP4 —o WebM si el navegador no graba MP4— para mandarla
    por WhatsApp. **Compartir link** arma un link de solo lectura: quien lo

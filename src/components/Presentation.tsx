@@ -1,11 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { elementsAtProgress } from '../domain/animation';
+import { VIEW } from '../domain/court';
 import type { Frame, Player } from '../domain/types';
 import { Board } from './Board';
 
 const TRANSITION_MS = 1200;
 const noop = () => {};
+
+/** Colores para marcar a mano sobre la jugada. */
+const INK = [
+  { value: '#F2CF83', label: 'Dorado' },
+  { value: '#FFFFFF', label: 'Blanco' },
+  { value: '#E5484D', label: 'Rojo' },
+];
+
+interface Stroke {
+  color: string;
+  points: string;
+}
 
 /**
  * Pizarra a pantalla completa para mostrar la jugada en el gimnasio: botones
@@ -43,6 +56,44 @@ export function Presentation({
   });
 
   const index = Math.round(progress);
+
+  // Marcas a mano alzada: no se guardan; cada paso tiene las suyas.
+  const [drawing, setDrawing] = useState(false);
+  const [ink, setInk] = useState(INK[0].value);
+  const [strokes, setStrokes] = useState<Record<number, Stroke[]>>({});
+  const live = useRef<{ svg: SVGSVGElement; points: string[] } | null>(null);
+  const [livePoints, setLivePoints] = useState<string | null>(null);
+  const toBoard = (svg: SVGSVGElement, e: ReactPointerEvent) => {
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
+    return `${p.x.toFixed(2)},${p.y.toFixed(2)}`;
+  };
+  const inkDown = (e: ReactPointerEvent<SVGSVGElement>) => {
+    const svg = e.currentTarget;
+    const pt = toBoard(svg, e);
+    if (!pt) return;
+    svg.setPointerCapture(e.pointerId);
+    live.current = { svg, points: [pt] };
+    setLivePoints(pt);
+  };
+  const inkMove = (e: ReactPointerEvent<SVGSVGElement>) => {
+    const l = live.current;
+    if (!l) return;
+    const pt = toBoard(l.svg, e);
+    if (!pt) return;
+    l.points.push(pt);
+    setLivePoints(l.points.join(' '));
+  };
+  const inkUp = () => {
+    const l = live.current;
+    live.current = null;
+    setLivePoints(null);
+    if (!l || l.points.length < 2) return;
+    setStrokes((all) => ({ ...all, [index]: [...(all[index] ?? []), { color: ink, points: l.points.join(' ') }] }));
+  };
+  const clearInk = () => setStrokes((all) => ({ ...all, [index]: [] }));
+  const stepStrokes = strokes[index] ?? [];
   const moving = target !== null;
   const playingAll = moving && target === last && index < last;
 
@@ -111,7 +162,10 @@ export function Presentation({
         e.preventDefault();
         togglePlay();
       } else if (e.key === 'Escape') {
-        onClose();
+        if (drawing) setDrawing(false);
+        else onClose();
+      } else if (e.key === 'd' || e.key === 'D') {
+        setDrawing((d) => !d);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -128,12 +182,40 @@ export function Presentation({
     <div className="presentation" ref={rootRef} role="dialog" aria-label={`Presentación: ${title}`}>
       <header className="presentation-top">
         <h2>{title}</h2>
+        <div className="ink-tools">
+          <button
+            className={`ink-toggle${drawing ? ' active' : ''}`}
+            onClick={() => setDrawing(!drawing)}
+            aria-pressed={drawing}
+            title="Marcar a mano sobre la jugada (D). No se guarda."
+          >
+            ✏ {drawing ? 'Marcando' : 'Marcar'}
+          </button>
+          {drawing &&
+            INK.map((c) => (
+              <button
+                key={c.value}
+                className={`ink-color${ink === c.value ? ' active' : ''}`}
+                style={{ background: c.value }}
+                onClick={() => setInk(c.value)}
+                aria-label={c.label}
+                aria-pressed={ink === c.value}
+                title={c.label}
+              />
+            ))}
+          {(drawing || stepStrokes.length > 0) && (
+            <button className="ink-clear" onClick={clearInk} disabled={!stepStrokes.length} title="Borrar las marcas de este paso">
+              Borrar marcas
+            </button>
+          )}
+        </div>
         <button className="presentation-close" onClick={onClose} aria-label="Cerrar presentación" title="Cerrar (Esc)">
           ×
         </button>
       </header>
 
       <div className="presentation-board">
+        <div className="ink-canvas">
         <Board
           elements={elements}
           players={players}
@@ -145,6 +227,21 @@ export function Presentation({
           onUpdate={noop}
           onAddArrow={noop}
         />
+        <svg
+          className={`ink-layer${drawing ? ' drawing' : ''}`}
+          viewBox={`${VIEW.minX} ${VIEW.minY} ${VIEW.width} ${VIEW.height}`}
+          onPointerDown={drawing ? inkDown : undefined}
+          onPointerMove={drawing ? inkMove : undefined}
+          onPointerUp={drawing ? inkUp : undefined}
+          onPointerCancel={drawing ? inkUp : undefined}
+          aria-hidden="true"
+        >
+          {stepStrokes.map((st, i) => (
+            <polyline key={i} points={st.points} stroke={st.color} />
+          ))}
+          {livePoints && <polyline points={livePoints} stroke={ink} />}
+        </svg>
+        </div>
       </div>
 
       <p className="presentation-note">{note || `Paso ${index + 1}`}</p>
@@ -178,7 +275,7 @@ export function Presentation({
           <option value={2}>2×</option>
         </select>
       </footer>
-      <p className="presentation-hint">← → pasos · Espacio reproducir · Esc salir</p>
+      <p className="presentation-hint">← → pasos · Espacio reproducir · D marcar · Esc salir</p>
       {footer}
     </div>
   );

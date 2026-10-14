@@ -5103,3 +5103,79 @@ input.num {
     order: 3;
   }
 }
+
+/* Marcar a mano en la presentación */
+.ink-canvas {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.ink-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  pointer-events: none;
+  touch-action: none;
+}
+
+.ink-layer.drawing {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.ink-layer polyline {
+  fill: none;
+  stroke-width: 0.14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 0.06px rgb(0 0 0 / 0.6));
+}
+
+.ink-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.ink-tools button {
+  min-height: 40px;
+  border-color: transparent;
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+}
+
+.ink-tools .ink-toggle.active {
+  background: var(--gold-metal);
+  color: var(--gold-ink);
+}
+
+.ink-tools .ink-color {
+  width: 32px;
+  min-height: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid rgb(255 255 255 / 0.3);
+}
+
+.ink-tools .ink-color.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgb(242 207 131 / 0.7);
+}
+
+@media (max-width: 700px) {
+  .presentation-top {
+    flex-wrap: wrap;
+  }
+
+  .ink-tools {
+    order: 3;
+    flex-wrap: wrap;
+    margin-left: 0;
+  }
+}
