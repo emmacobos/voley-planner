@@ -1,4 +1,5 @@
 import { AccountMenu } from './components/AccountMenu';
+import { BallLogo } from './components/BallLogo';
 import { ExerciseEditor } from './components/ExerciseEditor';
 import { ExerciseList } from './components/ExerciseList';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -17,16 +18,7 @@ export default function App() {
     <div className={`app route-${route.name}`}>
       <aside className="sidebar">
         <a className="brand" href="#/sesiones" aria-label="Voley Planner, inicio">
-          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
-            <circle cx="17" cy="17" r="15" fill="#F5B82E" />
-            <path
-              d="M17 2c-3 6-3 14 2 20M4 11c7 1 13 5 15 11M30 12c-6 1-11 5-11 10M17 32c2-4 6-7 12-8"
-              fill="none"
-              stroke="#0E1A2B"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-            />
-          </svg>
+          <BallLogo />
           <span className="brand-text">
             <span className="brand-top">Voley</span>
             <span className="brand-bottom">Planner</span>

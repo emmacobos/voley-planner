@@ -48,25 +48,34 @@ export function arrowPath(a: ArrowGeom): string {
   return `M${a.x1},${a.y1} Q${c.x},${c.y} ${a.x2},${a.y2}`;
 }
 
-/** Colores disponibles para las flechas. */
-export const ARROW_COLORS: { value: string; label: string }[] = [
-  { value: '#FFFFFF', label: 'Blanco' },
-  { value: '#0E1A2B', label: 'Azul marino' },
-  { value: '#F5B82E', label: 'Amarillo' },
-  { value: '#C0262D', label: 'Rojo' },
-  { value: '#1F4FB8', label: 'Azul' },
-  { value: '#15935E', label: 'Verde' },
-  { value: '#7E22CE', label: 'Violeta' },
+export type ArrowKind = 'desplazamiento' | 'pelota' | 'curva' | 'curva-punteada';
+
+/**
+ * Tipos de flecha, cada uno con su color. El tipo sale de cómo es la flecha:
+ * punteada (desplazamiento) o continua (pelota), recta o curva.
+ */
+export const ARROW_KINDS: { value: ArrowKind; label: string; color: string; style: ArrowElement['style']; curved: boolean }[] = [
+  { value: 'desplazamiento', label: 'Desplazamiento', color: '#1F4FB8', style: 'move', curved: false },
+  { value: 'pelota', label: 'Pelota', color: '#0E1A2B', style: 'ball', curved: false },
+  { value: 'curva', label: 'Curva', color: '#C0262D', style: 'ball', curved: true },
+  { value: 'curva-punteada', label: 'Curva punteada', color: '#15935E', style: 'move', curved: true },
 ];
 
-/** Color de una flecha: el elegido o, si no, azul marino (el trazo distingue el tipo). */
-export function arrowColor(a: Pick<ArrowElement, 'style' | 'color'>): string {
-  return a.color ?? '#0E1A2B';
+export function arrowKind(a: Pick<ArrowElement, 'style' | 'curve'>): ArrowKind {
+  const curved = !!a.curve;
+  if (a.style === 'move') return curved ? 'curva-punteada' : 'desplazamiento';
+  return curved ? 'curva' : 'pelota';
 }
 
-/** Si la flecha es punteada: la elección o, si no, punteada solo para desplazamientos. */
-export function arrowDashed(a: Pick<ArrowElement, 'style' | 'dashed'>): boolean {
-  return a.dashed ?? a.style === 'move';
+/** Color de una flecha según su tipo. */
+export function arrowColor(a: Pick<ArrowElement, 'style' | 'curve'>): string {
+  const kind = arrowKind(a);
+  return ARROW_KINDS.find((k) => k.value === kind)!.color;
+}
+
+/** Las de desplazamiento (rectas o curvas) son punteadas. */
+export function arrowDashed(a: Pick<ArrowElement, 'style'>): boolean {
+  return a.style === 'move';
 }
 
 /** Id del marcador SVG de la punta para un color. */

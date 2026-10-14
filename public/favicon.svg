@@ -1,1 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="#F5B82E"/><path d="M17 2c-3 6-3 14 2 20M4 11c7 1 13 5 15 11M30 12c-6 1-11 5-11 10M17 32c2-4 6-7 12-8" fill="none" stroke="#0E1A2B" stroke-width="2.2" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <clipPath id="ball"><circle cx="32" cy="32" r="30"/></clipPath>
+    <radialGradient id="shade" cx="40%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.35"/>
+      <stop offset="0.45" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="0.8" stop-color="#000" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.3"/>
+    </radialGradient>
+  </defs>
+  <g clip-path="url(#ball)">
+    <rect width="64" height="64" fill="#F5C400"/>
+    <path d="M0 14 C 10 18, 18 25, 28 26 C 38 27, 48 19, 64 16 L 64 32 C 52 34, 40 36, 33 40 C 28 46, 28 56, 31 66 L 16 66 C 18 56, 17 46, 13 39 C 9 33, 5 29, 0 28 Z" fill="#1F3FA6"/>
+    <g fill="none" stroke="#000" stroke-opacity="0.16" stroke-width="0.7">
+      <path d="M22 26 C 26 16, 34 8, 46 3"/>
+      <path d="M33 40 C 42 44, 52 50, 60 60"/>
+      <path d="M44 36 C 50 44, 56 46, 64 46"/>
+      <path d="M6 30 C 4 40, 6 50, 12 58"/>
+      <path d="M40 22 C 42 14, 48 8, 56 6"/>
+    </g>
+    <circle cx="32" cy="32" r="30" fill="url(#shade)"/>
+  </g>
+  <circle cx="32" cy="32" r="30" fill="none" stroke="#0E1A2B" stroke-opacity="0.35" stroke-width="1"/>
+</svg>

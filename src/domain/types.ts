@@ -83,10 +83,6 @@ export interface ArrowElement {
   y2: number;
   /** Curvatura en metros (0 o ausente: recta). Ver `domain/arrows.ts`. */
   curve?: number;
-  /** Color del trazo; si falta, azul marino. */
-  color?: string;
-  /** Trazo punteado; si falta, punteado solo para desplazamientos. */
-  dashed?: boolean;
 }
 
 export type PointElement =

@@ -9,7 +9,7 @@ import {
   clampToView,
   toCourt,
 } from '../domain/court';
-import { ARROW_COLORS, arrowColor, arrowDashed, arrowPath, curveThrough, headMarkerId, midPoint } from '../domain/arrows';
+import { ARROW_KINDS, arrowColor, arrowDashed, arrowPath, curveThrough, headMarkerId, midPoint } from '../domain/arrows';
 import type {
   ArrowElement,
   ArrowStyle,
@@ -47,19 +47,21 @@ type Drag =
       style: ArrowStyle;
       /** Curvatura como fracción del largo (0: recta). */
       bend: number;
-      dashed?: boolean;
       x1: number;
       y1: number;
       x2: number;
       y2: number;
     };
 
+/** Curvatura de las flechas curvas al dibujarlas, como fracción del largo. */
+export const DEFAULT_BEND = 0.22;
+
 /** Qué flecha dibuja cada herramienta. */
-const ARROW_TOOLS: Record<Exclude<Tool, 'select'>, { style: ArrowStyle; bend: number; dashed?: boolean }> = {
+const ARROW_TOOLS: Record<Exclude<Tool, 'select'>, { style: ArrowStyle; bend: number }> = {
   'arrow-move': { style: 'move', bend: 0 },
   'arrow-ball': { style: 'ball', bend: 0 },
-  'arrow-curve': { style: 'ball', bend: 0.22, dashed: false },
-  'arrow-curve-dashed': { style: 'move', bend: 0.22, dashed: true },
+  'arrow-curve': { style: 'ball', bend: DEFAULT_BEND },
+  'arrow-curve-dashed': { style: 'move', bend: DEFAULT_BEND },
 };
 
 /** Flecha que resulta de lo dibujado hasta ahora. */
@@ -74,7 +76,6 @@ function drawnArrow(d: Extract<Drag, { type: 'arrow' }>): Omit<ArrowElement, 'id
     x2: d.x2,
     y2: d.y2,
     ...(curve ? { curve } : {}),
-    ...(d.dashed !== undefined ? { dashed: d.dashed } : {}),
   };
 }
 
@@ -203,10 +204,10 @@ export function Board({
       onPointerCancel={() => setDrag(null)}
     >
       <defs>
-        {ARROW_COLORS.map((c) => (
+        {ARROW_KINDS.map((c) => (
           <marker
             key={c.value}
-            id={headMarkerId(c.value)}
+            id={headMarkerId(c.color)}
             viewBox="0 0 10 10"
             refX="8"
             refY="5"
@@ -214,7 +215,7 @@ export function Board({
             markerHeight="4"
             orient="auto-start-reverse"
           >
-            <path d="M0,0 L10,5 L0,10 z" fill={c.value} />
+            <path d="M0,0 L10,5 L0,10 z" fill={c.color} />
           </marker>
         ))}
       </defs>

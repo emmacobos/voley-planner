@@ -1160,26 +1160,29 @@ main {
   cursor: grab;
 }
 
-/* Colores de flecha */
+/* Tipos de flecha */
 
-.swatches {
+.arrow-kind-select {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.color-swatch {
-  width: 30px;
-  height: 30px;
-  min-height: 30px;
-  padding: 0;
+.arrow-kind-select select {
+  flex: 1;
+}
+
+.arrow-kind-dot {
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  border: 2px solid var(--border);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--border);
 }
 
-.color-swatch.active {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
+/* En modo oscuro, el ícono azul marino de la flecha de pelota se aclara para verse. */
+:root[data-theme='dark'] .arrow-icon[style*='14, 26, 43'] {
+  color: #dce3ee !important;
 }
 
 /* Pasos: línea de tiempo */
