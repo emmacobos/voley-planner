@@ -32,8 +32,8 @@ describe('flechas curvas', () => {
 });
 
 describe('estilo de las flechas', () => {
-  it('sin elección, el color y el trazo dependen del tipo', () => {
-    expect(arrowColor({ style: 'move' })).toBe('#FFFFFF');
+  it('sin elección, el color es azul marino y el trazo depende del tipo', () => {
+    expect(arrowColor({ style: 'move' })).toBe('#0E1A2B');
     expect(arrowColor({ style: 'ball' })).toBe('#0E1A2B');
     expect(arrowDashed({ style: 'move' })).toBe(true);
     expect(arrowDashed({ style: 'ball' })).toBe(false);

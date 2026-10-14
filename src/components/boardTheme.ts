@@ -5,13 +5,21 @@ export type Tool = 'select' | 'arrow-move' | 'arrow-ball' | 'arrow-curve' | 'arr
 export const TEAM_COLORS: Record<Team, string> = { A: '#1F4FB8', B: '#C0262D' };
 
 /**
- * Colores de cancha estilo VNL: zona libre turquesa, zona de defensa salmón
- * y zona de ataque (de la línea de 3 m a la red) naranja más intenso.
+ * Cancha de estadio: madera clara con la zona de ataque más oscura, franja
+ * azul alrededor, piso claro hasta los carteles de los bordes.
  */
 export const COURT_COLORS = {
-  freeZone: '#27A7A6',
-  court: '#F3A07C',
-  frontZone: '#EC7A3C',
+  court: '#E8D3AE',
+  frontZone: '#C99A68',
+  lines: '#FFFFFF',
+  bandColor: '#1F3C9C',
+  /** Ancho de la franja azul más allá de las líneas de fondo y laterales (m). */
+  band: { ends: 2.3, sides: 2.1 },
+  floor: '#E6D6B8',
+  boards: '#14204A',
+  /** Profundidad de los carteles en el borde (m). */
+  boardDepth: 0.3,
+  zoneText: '#6B4A25',
   net: '#0E1A2B',
 };
 

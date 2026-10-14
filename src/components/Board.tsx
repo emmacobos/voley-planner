@@ -291,12 +291,41 @@ function Halo({ r }: { r: number }) {
 }
 
 function Court({ showZones }: { showZones: boolean }) {
-  const line = { stroke: '#ffffff', strokeWidth: 0.05 };
+  const line = { stroke: COURT_COLORS.lines, strokeWidth: 0.05 };
+  const B = COURT_COLORS.band;
+  const board = COURT_COLORS.boardDepth;
   return (
     <g pointerEvents="none">
-      <rect x={VIEW.minX} y={VIEW.minY} width={VIEW.width} height={VIEW.height} fill={COURT_COLORS.freeZone} />
+      <defs>
+        {/* Tablas de madera a lo largo de la cancha. */}
+        <pattern id="court-planks" width="3" height="0.24" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="0.12" x2="3" y2="0.12" stroke="#7a5326" strokeOpacity="0.07" strokeWidth="0.02" />
+          <line x1="1.9" y1="0" x2="1.9" y2="0.12" stroke="#7a5326" strokeOpacity="0.06" strokeWidth="0.02" />
+          <line x1="0.7" y1="0.12" x2="0.7" y2="0.24" stroke="#7a5326" strokeOpacity="0.06" strokeWidth="0.02" />
+        </pattern>
+      </defs>
+      {/* Piso del estadio y carteles en los bordes. */}
+      <rect x={VIEW.minX} y={VIEW.minY} width={VIEW.width} height={VIEW.height} fill={COURT_COLORS.boards} />
+      <rect
+        x={VIEW.minX + board}
+        y={VIEW.minY + board}
+        width={VIEW.width - board * 2}
+        height={VIEW.height - board * 2}
+        fill={COURT_COLORS.floor}
+      />
+      <rect
+        x={VIEW.minX + board}
+        y={VIEW.minY + board}
+        width={VIEW.width - board * 2}
+        height={VIEW.height - board * 2}
+        fill="url(#court-planks)"
+      />
+      {/* Franja azul alrededor de la cancha. */}
+      <rect x={-B.ends} y={-B.sides} width={COURT_LENGTH + B.ends * 2} height={COURT_WIDTH + B.sides * 2} fill={COURT_COLORS.bandColor} />
+      {/* Cancha de madera, con la zona de ataque más oscura. */}
       <rect x={0} y={0} width={COURT_LENGTH} height={COURT_WIDTH} fill={COURT_COLORS.court} />
       <rect x={NET_X - ATTACK_LINE_DIST} y={0} width={ATTACK_LINE_DIST * 2} height={COURT_WIDTH} fill={COURT_COLORS.frontZone} />
+      <rect x={0} y={0} width={COURT_LENGTH} height={COURT_WIDTH} fill="url(#court-planks)" />
       <rect x={0} y={0} width={COURT_LENGTH} height={COURT_WIDTH} fill="none" {...line} />
       <line x1={NET_X - ATTACK_LINE_DIST} y1={0} x2={NET_X - ATTACK_LINE_DIST} y2={COURT_WIDTH} {...line} />
       <line x1={NET_X + ATTACK_LINE_DIST} y1={0} x2={NET_X + ATTACK_LINE_DIST} y2={COURT_WIDTH} {...line} />
@@ -305,7 +334,7 @@ function Court({ showZones }: { showZones: boolean }) {
           ZONES.map((z) => {
             const c = toCourt(team, ZONE_LABEL[z].depth, ZONE_LABEL[z].lateral);
             return (
-              <text key={`${team}${z}`} x={c.x} y={c.y} textAnchor="middle" dominantBaseline="central" fontFamily={DISPLAY_FONT} fontSize={0.95} fontWeight={700} fill="#ffffff" opacity={0.4}>
+              <text key={`${team}${z}`} x={c.x} y={c.y} textAnchor="middle" dominantBaseline="central" fontFamily={DISPLAY_FONT} fontSize={0.95} fontWeight={700} fill={COURT_COLORS.zoneText} opacity={0.35}>
                 {z}
               </text>
             );

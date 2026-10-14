@@ -59,9 +59,9 @@ export const ARROW_COLORS: { value: string; label: string }[] = [
   { value: '#7E22CE', label: 'Violeta' },
 ];
 
-/** Color de una flecha: el elegido o, si no, el de su tipo. */
+/** Color de una flecha: el elegido o, si no, azul marino (el trazo distingue el tipo). */
 export function arrowColor(a: Pick<ArrowElement, 'style' | 'color'>): string {
-  return a.color ?? (a.style === 'move' ? '#FFFFFF' : '#0E1A2B');
+  return a.color ?? '#0E1A2B';
 }
 
 /** Si la flecha es punteada: la elección o, si no, punteada solo para desplazamientos. */
