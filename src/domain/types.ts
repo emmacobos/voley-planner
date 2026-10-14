@@ -93,8 +93,13 @@ export type TextSize = 'S' | 'M' | 'L';
 export interface TextElement extends Positioned {
   kind: 'text';
   text: string;
+  /** Tamaño de base (se usa si no hay `fontSize`). */
   size: TextSize;
   color: string;
+  /** Alto de letra en metros, elegido a mano (pisa a `size`). */
+  fontSize?: number;
+  /** Ancho del cuadro en metros: si está, las líneas se cortan para entrar en ese ancho. */
+  width?: number;
 }
 
 /**

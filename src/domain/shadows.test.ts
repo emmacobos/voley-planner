@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { shadowCorners, textBox, textLines, wrapText } from './shadows';
+import { shadowCorners, textBox, textFontSize, textLines, wrapText } from './shadows';
 
 describe('sombra del bloqueo', () => {
   it('nace con el ancho del bloqueo y se abre hacia el fondo', () => {
@@ -23,6 +23,21 @@ describe('texto en el tablero', () => {
     const box = textBox({ text: 'Bloqueo\ndoble', size: 'M' });
     expect(box.height).toBeCloseTo(2 * 0.6 * 1.2);
     expect(box.width).toBeGreaterThan(textBox({ text: 'doble', size: 'M' }).width);
+  });
+
+  it('usa el tamaño de letra elegido a mano antes que el de base', () => {
+    expect(textFontSize({ size: 'M' })).toBeCloseTo(0.6);
+    expect(textFontSize({ size: 'M', fontSize: 1.4 })).toBeCloseTo(1.4);
+    expect(textBox({ text: 'Hola', size: 'S', fontSize: 1 }).height).toBeCloseTo(1.2);
+  });
+
+  it('con un ancho fijo corta las líneas para que entren en el cuadro', () => {
+    const t = { text: 'Bloqueo doble por zona cuatro', size: 'M' as const, width: 3 };
+    // 3 m de ancho con letra de 0,6 m: entran 9 caracteres por línea.
+    expect(textLines(t)).toEqual(['Bloqueo', 'doble por', 'zona', 'cuatro']);
+    expect(textBox(t).width).toBe(3);
+    expect(textBox(t).height).toBeCloseTo(4 * 0.6 * 1.2);
+    expect(textLines({ text: '', size: 'M', width: 3 })).toEqual(['']);
   });
 });
 

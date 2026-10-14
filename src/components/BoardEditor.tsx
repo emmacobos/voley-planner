@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { elementsAtProgress } from '../domain/animation';
 import { ARROW_KINDS, arrowColor, arrowKind } from '../domain/arrows';
 import type { ArrowKind } from '../domain/arrows';
-import { TEXT_COLORS } from '../domain/shadows';
+import { TEXT_COLORS, TEXT_FONT_RANGE, TEXT_MIN_WIDTH, TEXT_SIZES, textBox, textFontSize } from '../domain/shadows';
 import { NET_X } from '../domain/court';
 import { newId } from '../domain/ids';
 import {
@@ -36,6 +36,7 @@ import { downloadSvgAsPng, slugify } from '../utils/exportPng';
 import { exportPlayVideo, videoSupport } from '../utils/exportVideo';
 import { Board, DEFAULT_BEND } from './Board';
 import { FloatingPanel } from './FloatingPanel';
+import { FloatingPanelReady } from './floatingPanelReady';
 import { Presentation } from './Presentation';
 import type { Tool } from './boardTheme';
 
@@ -682,18 +683,20 @@ function SelectedPanel({
   onFocused?: () => void;
 }) {
   const fieldRef = useRef<HTMLTextAreaElement>(null);
+  const ready = useContext(FloatingPanelReady);
   useEffect(() => {
     const field = fieldRef.current;
-    if (!focusField || !field) return;
+    // Esperar a que la tarjeta esté ubicada: oculta, el foco falla o mueve la página.
+    if (!focusField || !field || !ready) return;
     field.focus({ preventScroll: true });
-    // Solo desplazar la página si el campo no se ve (por ejemplo en el celular).
-    const r = field.getBoundingClientRect();
-    if (r.top < 0 || r.bottom > window.innerHeight) field.scrollIntoView({ block: 'nearest' });
+    // Solo desplazar la página si el campo quedó abajo, fuera de la pantalla (por ejemplo en el celular).
+    if (field.getBoundingClientRect().bottom > window.innerHeight) field.scrollIntoView({ block: 'nearest' });
     if (focusField === 'text') field.select();
     onFocused?.();
-  }, [focusField, element.id, onFocused]);
+  }, [focusField, element.id, onFocused, ready]);
 
   if (element.kind === 'text') {
+    const fontSize = textFontSize(element);
     return (
       <div className="stack">
         <label className="field">
@@ -707,25 +710,66 @@ function SelectedPanel({
           />
         </label>
         <div className="field">
-          Tamaño
-          <div className="segmented" role="group" aria-label="Tamaño del texto">
+          <span className="field-row">
+            Tamaño de letra <output>{Math.round((fontSize / TEXT_SIZES.M) * 100)} %</output>
+          </span>
+          <input
+            type="range"
+            min={TEXT_FONT_RANGE.min}
+            max={TEXT_FONT_RANGE.max}
+            step={0.05}
+            value={fontSize}
+            onChange={(e) => onUpdate({ ...element, fontSize: Number(e.target.value) })}
+            aria-label="Tamaño de letra"
+          />
+          <div className="segmented" role="group" aria-label="Tamaños rápidos">
             {(
               [
                 ['S', 'Chico'],
                 ['M', 'Mediano'],
                 ['L', 'Grande'],
               ] as [TextSize, string][]
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                className={element.size === value ? 'active' : ''}
-                aria-pressed={element.size === value}
-                onClick={() => onUpdate({ ...element, size: value })}
-              >
-                {label}
-              </button>
-            ))}
+            ).map(([value, label]) => {
+              const active = Math.abs(fontSize - TEXT_SIZES[value]) < 0.001;
+              return (
+                <button
+                  key={value}
+                  className={active ? 'active' : ''}
+                  aria-pressed={active}
+                  onClick={() => {
+                    const { fontSize: _custom, ...rest } = element;
+                    onUpdate({ ...rest, size: value });
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
+        </div>
+        <div className="field">
+          <span className="field-row">
+            Ancho del cuadro{' '}
+            {element.width ? (
+              <button className="link-button" onClick={() => {
+                  const { width: _width, ...rest } = element;
+                  onUpdate(rest);
+                }}>
+                Automático
+              </button>
+            ) : (
+              <output>automático</output>
+            )}
+          </span>
+          <input
+            type="range"
+            min={TEXT_MIN_WIDTH}
+            max={16}
+            step={0.1}
+            value={textBox(element).width}
+            onChange={(e) => onUpdate({ ...element, width: Number(e.target.value) })}
+            aria-label="Ancho del cuadro"
+          />
         </div>
         <div className="field">
           Color
@@ -743,7 +787,10 @@ function SelectedPanel({
             ))}
           </div>
         </div>
-        <p className="hint">Arrastralo para moverlo. Enter hace una línea nueva.</p>
+        <p className="hint">
+          Arrastralo para moverlo. En la pizarra, el borde derecho cambia el ancho y la esquina el tamaño de la letra.
+          Enter hace una línea nueva.
+        </p>
       </div>
     );
   }

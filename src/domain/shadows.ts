@@ -39,18 +39,37 @@ export const TEXT_COLORS: { value: string; label: string }[] = [
   { value: '#DFB97D', label: 'Dorado' },
 ];
 
-/** Líneas del texto (siempre al menos una). */
-export function textLines(t: Pick<TextElement, 'text'>): string[] {
+/** Rango del alto de letra (en metros) que se puede elegir. */
+export const TEXT_FONT_RANGE = { min: 0.25, max: 2.5 };
+/** Ancho mínimo del cuadro de texto, en metros. */
+export const TEXT_MIN_WIDTH = 0.8;
+/** Ancho aproximado de cada letra en relación con su alto. */
+const CHAR_WIDTH = 0.55;
+
+type TextShape = Pick<TextElement, 'text' | 'size'> & Partial<Pick<TextElement, 'fontSize' | 'width'>>;
+
+/** Alto de letra en metros: el elegido a mano o el del tamaño de base. */
+export function textFontSize(t: Pick<TextElement, 'size'> & Partial<Pick<TextElement, 'fontSize'>>): number {
+  return t.fontSize ?? TEXT_SIZES[t.size];
+}
+
+/** Líneas del texto (siempre al menos una). Si el cuadro tiene ancho, corta las líneas largas. */
+export function textLines(t: Pick<TextElement, 'text'> & Partial<TextShape>): string[] {
+  if (t.width && t.size) {
+    const maxChars = Math.max(1, Math.floor(t.width / (textFontSize(t as TextShape) * CHAR_WIDTH)));
+    const lines = wrapText(t.text, maxChars);
+    return lines.length ? lines : [''];
+  }
   const lines = t.text.split('\n');
   return lines.length ? lines : [''];
 }
 
 /** Medida aproximada del texto, en metros, para la selección y el tachito. */
-export function textBox(t: Pick<TextElement, 'text' | 'size'>): { width: number; height: number } {
-  const h = TEXT_SIZES[t.size];
+export function textBox(t: TextShape): { width: number; height: number } {
+  const h = textFontSize(t);
   const lines = textLines(t);
   const longest = Math.max(1, ...lines.map((l) => l.length));
-  return { width: longest * h * 0.55, height: lines.length * h * 1.2 };
+  return { width: t.width ?? longest * h * CHAR_WIDTH, height: lines.length * h * 1.2 };
 }
 
 /** Parte un texto en líneas de hasta `maxChars` caracteres, respetando los saltos de línea. */

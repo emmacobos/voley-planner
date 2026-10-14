@@ -10,7 +10,17 @@ import {
   toCourt,
 } from '../domain/court';
 import { ARROW_KINDS, arrowColor, arrowDashed, arrowPath, curveThrough, headMarkerId, midPoint } from '../domain/arrows';
-import { DEFAULT_SHADOW, TEXT_COLORS, TEXT_SIZES, shadowPoints, textBox, textLines, wrapText } from '../domain/shadows';
+import {
+  DEFAULT_SHADOW,
+  TEXT_COLORS,
+  TEXT_FONT_RANGE,
+  TEXT_MIN_WIDTH,
+  shadowPoints,
+  textBox,
+  textFontSize,
+  textLines,
+  wrapText,
+} from '../domain/shadows';
 import { isSegment } from '../domain/types';
 import type {
   ArrowElement,
@@ -48,8 +58,11 @@ interface BoardProps {
   onComment?: (id: string) => void;
 }
 
-/** Qué parte de una flecha se arrastra: entera, un extremo o el punto medio (curva). */
-type ArrowPart = 'whole' | 'start' | 'end' | 'mid';
+/**
+ * Qué parte se arrastra: el elemento entero, un extremo o el punto medio
+ * (curva) de una flecha, o el borde (ancho) o la esquina (tamaño) de un texto.
+ */
+type ArrowPart = 'whole' | 'start' | 'end' | 'mid' | 'width' | 'scale';
 
 type Drag =
   | { type: 'element'; id: string; part: ArrowPart; ox: number; oy: number; dx: number; dy: number }
@@ -129,8 +142,29 @@ function applyDrag(el: BoardElement, drag: Drag | null): BoardElement {
       ...(part !== 'start' ? { x2: el.x2 + dx, y2: el.y2 + dy } : {}),
     };
   }
+  if (el.kind === 'text' && (part === 'width' || part === 'scale')) return resizeText(el, drag.ox, drag.oy, dx, dy, part);
   const p = clampToView(el.x + dx, el.y + dy);
   return { ...el, ...p };
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/** Agranda o achica el cuadro de texto (borde: ancho; esquina: tamaño de letra). */
+function resizeText(el: TextElement, ox: number, oy: number, dx: number, dy: number, part: 'width' | 'scale'): TextElement {
+  const box = textBox(el);
+  if (part === 'width') {
+    // El texto está centrado: el cuadro crece hacia los dos lados.
+    const width = Math.max(TEXT_MIN_WIDTH, box.width + 2 * dx);
+    return { ...el, width: round2(width) };
+  }
+  // Escala según cuánto se alejó la esquina del centro del texto.
+  const from = Math.hypot(ox - el.x, oy - el.y);
+  const to = Math.hypot(ox + dx - el.x, oy + dy - el.y);
+  if (from < 0.01) return el;
+  const font = textFontSize(el);
+  const fontSize = Math.min(TEXT_FONT_RANGE.max, Math.max(TEXT_FONT_RANGE.min, font * (to / from)));
+  const k = fontSize / font;
+  return { ...el, fontSize: round2(fontSize), ...(el.width ? { width: round2(Math.max(TEXT_MIN_WIDTH, el.width * k)) } : {}) };
 }
 
 export function Board({
@@ -158,7 +192,10 @@ export function Board({
     id: string,
     part: ArrowPart = 'whole',
   ) => {
-    if (readOnly || tool !== 'select') return;
+    if (readOnly) return;
+    // Los puntos de agarre del elemento seleccionado (curva, extremos, borde
+    // del texto) se arrastran aunque esté activa una herramienta de dibujo.
+    if (tool !== 'select' && (part === 'whole' || id !== selectedId)) return;
     e.stopPropagation();
     const svg = e.currentTarget.ownerSVGElement;
     if (!svg) return;
@@ -317,7 +354,15 @@ export function Board({
               </g>
             );
           case 'text':
-            return <TextMark key={el.id} element={el} selected={selected} onPointerDown={down} />;
+            return (
+              <TextMark
+                key={el.id}
+                element={el}
+                selected={selected}
+                onPointerDown={down}
+                onHandleDown={(e, part) => startElementDrag(e, el.id, part)}
+              />
+            );
           case 'cart':
             return (
               <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})`} onPointerDown={down}>
@@ -515,7 +560,8 @@ function deleteButtonSpot(el: BoardElement) {
   }
   if (el.kind === 'text') {
     const box = textBox(el);
-    return clampToView(el.x + box.width / 2 + 0.35, el.y - TEXT_SIZES[el.size] * 0.9);
+    // Arriba a la derecha, sin tapar los agarres del borde y la esquina.
+    return clampToView(el.x + box.width / 2 + 0.5, el.y - box.height / 2 - 0.4);
   }
   const offset = el.kind === 'player' ? 0.62 : 0.5;
   return clampToView(el.x + offset, el.y - offset);
@@ -596,12 +642,14 @@ function TextMark({
   element,
   selected,
   onPointerDown,
+  onHandleDown,
 }: {
   element: TextElement;
   selected: boolean;
   onPointerDown: (e: ReactPointerEvent<SVGElement>) => void;
+  onHandleDown?: (e: ReactPointerEvent<SVGElement>, part: 'width' | 'scale') => void;
 }) {
-  const size = TEXT_SIZES[element.size];
+  const size = textFontSize(element);
   const lines = textLines(element);
   const box = textBox(element);
   const top = -box.height / 2;
@@ -641,6 +689,30 @@ function TextMark({
           </tspan>
         ))}
       </text>
+      {selected && onHandleDown && (
+        <>
+          <rect
+            className="handle handle-width ui-only"
+            x={box.width / 2 + 0.15 - 0.09}
+            y={-0.28}
+            width={0.18}
+            height={0.56}
+            rx={0.07}
+            onPointerDown={(e) => onHandleDown(e, 'width')}
+          >
+            <title>Arrastrá para cambiar el ancho del cuadro</title>
+          </rect>
+          <circle
+            className="handle handle-scale ui-only"
+            cx={box.width / 2 + 0.15}
+            cy={-top + 0.1}
+            r={0.18}
+            onPointerDown={(e) => onHandleDown(e, 'scale')}
+          >
+            <title>Arrastrá para agrandar o achicar la letra</title>
+          </circle>
+        </>
+      )}
     </g>
   );
 }

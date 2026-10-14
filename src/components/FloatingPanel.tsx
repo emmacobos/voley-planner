@@ -3,6 +3,8 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode, RefOb
 import { midPoint } from '../domain/arrows';
 import { shadowCorners, textBox, wrapText } from '../domain/shadows';
 import type { BoardElement } from '../domain/types';
+import { holdPageHeight } from '../utils/holdPageHeight';
+import { FloatingPanelReady } from './floatingPanelReady';
 
 const CARD_WIDTH = 280;
 const GAP = 10;
@@ -19,8 +21,19 @@ const TITLES: Record<BoardElement['kind'], string> = {
   text: 'Texto',
 };
 
-/** Rectángulo (en metros) que ocupa el elemento en la pizarra, incluidos sus textos. */
+/** Margen (en metros) para no tapar los puntos de agarre del elemento. */
+const HANDLE_PAD = 0.35;
+
+/** Rectángulo (en metros) que ocupa el elemento en la pizarra, incluidos sus textos y agarres. */
 function elementBounds(el: BoardElement): { x1: number; y1: number; x2: number; y2: number } {
+  if (el.kind === 'arrow' || el.kind === 'shadow' || el.kind === 'text') {
+    const b = rawBounds(el);
+    return { x1: b.x1 - HANDLE_PAD, y1: b.y1 - HANDLE_PAD, x2: b.x2 + HANDLE_PAD, y2: b.y2 + HANDLE_PAD };
+  }
+  return rawBounds(el);
+}
+
+function rawBounds(el: BoardElement): { x1: number; y1: number; x2: number; y2: number } {
   if (el.kind === 'arrow') {
     const m = midPoint(el);
     const xs = [el.x1, el.x2, m.x];
@@ -87,6 +100,32 @@ export function FloatingPanel({
       observer.disconnect();
     };
   }, []);
+
+  // Alto de la página con la tarjeta abierta: al cerrarla se mantiene para que
+  // la página no salte hacia arriba (la tarjeta puede pasar el final de la página).
+  const pageHeight = useRef(0);
+  useEffect(() => {
+    pageHeight.current = document.documentElement.scrollHeight;
+  }, [element, resizes, placement, manual]);
+  useLayoutEffect(() => () => holdPageHeight(pageHeight.current), []);
+
+  // Tocar afuera de la tarjeta la cierra (en la pizarra lo resuelve la pizarra misma).
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  });
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target || !target.isConnected) return;
+      if (cardRef.current?.contains(target) || stageRef.current?.contains(target)) return;
+      // Diálogos abiertos encima (por ejemplo, confirmaciones) no cuentan.
+      if ((target as Element).closest?.('dialog, [role="dialog"], .modal-backdrop')) return;
+      closeRef.current();
+    };
+    document.addEventListener('pointerdown', onDown, true);
+    return () => document.removeEventListener('pointerdown', onDown, true);
+  }, [stageRef]);
 
   // Ubicación debajo del elemento (se recalcula cuando el elemento se mueve).
   useLayoutEffect(() => {
@@ -168,7 +207,7 @@ export function FloatingPanel({
           ×
         </button>
       </div>
-      {children}
+      <FloatingPanelReady.Provider value={position !== null}>{children}</FloatingPanelReady.Provider>
     </div>
   );
 }

@@ -945,11 +945,14 @@ main {
 
 .inline-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+  max-width: 100%;
 }
 
 .inline-form input {
-  min-width: 260px;
+  min-width: min(260px, 100%);
+  flex: 1;
   border-radius: 999px;
   padding-left: 1rem;
 }
@@ -1175,8 +1178,20 @@ main {
   justify-content: space-between;
 }
 
+.toolbar > .segmented {
+  max-width: 100%;
+}
+
+@media (max-width: 700px) {
+  /* Cuando las herramientas ocupan varias filas, una píldora queda deforme. */
+  .toolbar > .segmented {
+    border-radius: 20px;
+  }
+}
+
 .toolbar-group {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
 }
@@ -1300,6 +1315,38 @@ main {
   stroke: var(--navy);
   stroke-width: 0.05;
   cursor: move;
+}
+
+.floating-panel .segmented {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.floating-panel .segmented button {
+  flex: 1;
+  padding: 0.3rem 0.4rem;
+}
+
+.field-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.field-row output {
+  color: var(--muted);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.board .handle-width {
+  cursor: ew-resize;
+}
+
+.board .handle-scale {
+  fill: var(--ball);
+  cursor: nwse-resize;
 }
 
 .board .handle-curve {
@@ -3563,7 +3610,7 @@ input.num {
   .board-editor,
   .session-layout,
   .print-top {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .session-side {
@@ -3571,7 +3618,7 @@ input.num {
   }
 
   .meta-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .span-2,

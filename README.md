@@ -55,12 +55,18 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      cancha y aparece la zona que tapa el bloqueo (un cono translúcido). Desde
      el panel ajustás el ancho en el bloqueo y al final; en la animación
      acompaña al bloqueo.
-   - *Texto*: tocá la cancha para escribir. Se puede mover, tiene tres
-     tamaños (chico, mediano, grande) y cuatro colores.
+   - *Texto*: tocá la cancha para escribir. Se puede mover y tiene cuatro
+     colores. El tamaño de letra va de muy chico a muy grande (barra o
+     tamaños rápidos chico, mediano y grande) y el cuadro se ensancha o se
+     angosta a gusto: en la pizarra, arrastrá el borde derecho para el ancho
+     y la esquina para agrandar la letra.
+   - Los puntos de agarre del elemento seleccionado (curva y extremos de una
+     flecha, borde y esquina de un texto) se arrastran aunque esté elegida
+     una herramienta de dibujo.
    - Al tocar un elemento se abre su **tarjeta** al lado, sobre la pizarra,
      con todo lo que se puede cambiar (en el celular aparece debajo de la
      pizarra). Aparece debajo del elemento para no taparlo, se mueve arrastrando
-     su título y se cierra con la ✕ o con Esc.
+     su título y se cierra con la ✕, con Esc o tocando en cualquier otro lugar.
    - Al seleccionar un jugador aparece, al lado del tachito, el **globito de
      comentario**: lo que escribas (por ejemplo "Se desplaza a 1") se ve
      debajo del jugador en la pizarra. Cada paso tiene su propio comentario.
