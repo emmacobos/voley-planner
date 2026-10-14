@@ -552,7 +552,8 @@ main {
   padding: 0.3rem 0.95rem;
 }
 
-.segmented button:hover:not(:disabled) {
+/* El botón activo mantiene sus colores al pasar el mouse (algunos tienen fondo oscuro). */
+.segmented button:not(.active):hover:not(:disabled) {
   color: var(--text);
 }
 
