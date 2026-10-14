@@ -35,6 +35,7 @@ import { POSITIONS, SITUATIONS } from '../domain/types';
 import { downloadSvgAsPng, slugify } from '../utils/exportPng';
 import { Board, DEFAULT_BEND } from './Board';
 import { FloatingPanel } from './FloatingPanel';
+import { Presentation } from './Presentation';
 import type { Tool } from './boardTheme';
 
 interface BoardEditorProps {
@@ -95,6 +96,7 @@ export function BoardEditor({
   const [future, setFuture] = useState<Frame[][]>([]);
   const [progress, setProgress] = useState<number | null>(null);
   const [speed, setSpeed] = useState(1);
+  const [presenting, setPresenting] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(0);
@@ -289,6 +291,9 @@ export function BoardEditor({
 
   return (
     <div className="board-editor">
+      {presenting && (
+        <Presentation title={title} frames={frames} players={allPlayers} startAt={index} onClose={() => setPresenting(false)} />
+      )}
       <div className="board-main">
         <div className="toolbar">
           <div className="segmented" role="group" aria-label="Herramienta">
@@ -357,6 +362,18 @@ export function BoardEditor({
             </label>
             <button onClick={() => svgRef.current && downloadSvgAsPng(svgRef.current, `${slugify(title)}-paso-${index + 1}`)}>
               Exportar PNG
+            </button>
+            <button
+              className="present-button"
+              onClick={() => {
+                setProgress(null);
+                setSelectedId(null);
+                setPresenting(true);
+              }}
+              title="Mostrar la jugada a pantalla completa (por ejemplo en una tablet o una tele)"
+            >
+              <Icon d="M3 4h18v12H3zM8 20h8M12 16v4" />
+              Presentar
             </button>
           </div>
         </div>

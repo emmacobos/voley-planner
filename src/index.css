@@ -2306,6 +2306,163 @@ input.num {
   padding: 0.7rem 0.4rem;
 }
 
+/* Modo presentación: pizarra a pantalla completa */
+
+.presentation {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 1.5rem 0.8rem;
+  background: radial-gradient(120% 120% at 50% 0%, #1b2f63 0%, #070f1b 70%);
+  color: #fff;
+}
+
+.presentation-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.presentation-top h2 {
+  margin: 0;
+  color: #fff;
+  font-family: var(--display);
+  font-size: 1.8rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.presentation-close {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  font-size: 1.8rem;
+  line-height: 1;
+  background: rgb(255 255 255 / 0.12);
+  border-color: transparent;
+  color: #fff;
+}
+
+.presentation-close:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.22);
+}
+
+.presentation-board {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.presentation-board .board {
+  /* La cancha mide 24 × 15: entra entera en el alto que dejan los controles. */
+  width: min(100%, calc((100dvh - 250px) * 1.6));
+  height: auto;
+  max-height: none;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.5);
+}
+
+.presentation-note {
+  margin: 0;
+  min-height: 1.6em;
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+}
+
+.presentation-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.presentation-controls button,
+.presentation-controls select {
+  min-height: 56px;
+  font-size: 1.2rem;
+}
+
+.presentation-step {
+  width: 64px;
+  padding: 0;
+  background: rgb(255 255 255 / 0.12);
+  border-color: transparent;
+  color: #fff;
+}
+
+.presentation-step:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.22);
+}
+
+.presentation-play {
+  min-width: 230px;
+}
+
+.presentation-dots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.presentation-dots button {
+  width: 56px;
+  padding: 0;
+  background: rgb(255 255 255 / 0.12);
+  border-color: transparent;
+  color: #fff;
+  font-family: var(--display);
+}
+
+.presentation-dots button.active {
+  background: var(--ball);
+  color: #0e1a2b;
+}
+
+.presentation-controls select {
+  width: auto;
+  background: rgb(255 255 255 / 0.12);
+  border-color: transparent;
+  color: #fff;
+}
+
+.presentation-controls select option {
+  color: #0e1a2b;
+}
+
+.presentation-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #9fb0c8;
+}
+
+@media (max-width: 700px) {
+  .presentation {
+    padding: 0.75rem;
+  }
+
+  .presentation-top h2 {
+    font-size: 1.2rem;
+  }
+
+  .presentation-note {
+    font-size: 1.15rem;
+  }
+
+  .presentation-hint {
+    display: none;
+  }
+}
+
 /* Aviso de datos de ejemplo */
 
 .demo-banner {

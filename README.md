@@ -69,7 +69,10 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    *¿Cómo se arma y se reproduce una jugada?* con el paso a paso.
    Para borrar un elemento, tocalo y usá el **tachito** rojo que aparece al
    lado.
-5. **Exportar PNG** descarga una imagen del paso actual.
+5. **Exportar PNG** descarga una imagen del paso actual. **Presentar** muestra
+   la jugada a pantalla completa (para una tablet o una tele en el gimnasio),
+   con botones grandes de paso anterior/siguiente, reproducir y la descripción
+   de cada paso; se maneja también con ← →, Espacio y Esc.
 6. **Sesiones → Nueva sesión:** fecha, hora, plantel, objetivo y convocados.
    La sesión arranca con 5 bloques (90 minutos) que podés cambiar, reordenar
    o borrar. A cada bloque le agregás ejercicios de la biblioteca (con su
