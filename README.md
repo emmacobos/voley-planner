@@ -15,7 +15,8 @@ La visión completa del producto y la hoja de ruta están en
 La primera vez, el inicio muestra una **portada** con una jugada animada, lo que
 hace la app y los **primeros pasos** (plantel → ejercicio → sesión) con su
 progreso. **▶ Ver un ejemplo** carga un plantel, tres ejercicios (uno con una
-jugada K1 animada) y una sesión de muestra para recorrer la app; se borran
+jugada K1 animada) y cuatro sesiones de muestra (tres ya hechas, con asistencia)
+para recorrer la app; se borran
 todos juntos con **Borrar el ejemplo** sin tocar lo que cargaste vos. Cuando
 ya tenés sesiones, el inicio te saluda con la fecha, la **próxima sesión** (con
 sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
@@ -81,7 +82,12 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    o borrar. A cada bloque le agregás ejercicios de la biblioteca (con su
    duración) y elegís qué jugadores participan. El resumen muestra la
    duración total, la intensidad promedio y los minutos por tipo de ejercicio.
-7. **Exportar PDF:** abre una versión para imprimir con toda la sesión y las
+7. **Asistencia y carga:** al final de cada sesión marcás quién vino y el
+   esfuerzo de cada jugadora (1 a 10). La carga es esfuerzo × minutos (UA). En
+   *Planteles* ves la asistencia de las últimas 4 semanas y la carga semanal de
+   cada jugadora contra su promedio, con avisos si la carga sube más de 30 %,
+   si faltó a las últimas 2 sesiones o si su asistencia es baja.
+8. **Exportar PDF:** abre una versión para imprimir con toda la sesión y las
    pizarras; en el diálogo de impresión elegí "Guardar como PDF".
 
 Arriba a la derecha están tu **cuenta** y el botón de **modo oscuro** (se recuerda en cada

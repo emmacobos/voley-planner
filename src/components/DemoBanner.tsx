@@ -8,11 +8,11 @@ export function DemoBanner() {
   return (
     <div className="demo-banner no-print" role="status">
       <p>
-        <b>Estás viendo datos de ejemplo:</b> un plantel, tres ejercicios y una sesión. Tocá y cambiá lo que quieras.
+        <b>Estás viendo datos de ejemplo:</b> un plantel, tres ejercicios y cuatro sesiones (tres ya hechas, con asistencia). Tocá y cambiá lo que quieras.
       </p>
       <button
         onClick={() => {
-          if (confirm('¿Borrar el plantel, los ejercicios y la sesión de ejemplo? Lo que cargaste vos no se toca.')) removeDemo();
+          if (confirm('¿Borrar el plantel, los ejercicios y las sesiones de ejemplo? Lo que cargaste vos no se toca.')) removeDemo();
         }}
       >
         Borrar el ejemplo

@@ -4,6 +4,7 @@ import { newId } from '../domain/ids';
 import { blockDuration, formatMinutes, newBlock } from '../domain/sessions';
 import { BLOCK_KINDS, EXERCISE_TYPES, positionLabel } from '../domain/types';
 import type { BlockItem, BlockKind, Exercise, Player, SessionBlock, TrainingSession } from '../domain/types';
+import { AttendancePanel } from './AttendancePanel';
 import { SessionSummary } from './SessionSummary';
 
 export function SessionEditor({ id }: { id: string }) {
@@ -182,6 +183,8 @@ export function SessionEditor({ id }: { id: string }) {
               </button>
             ))}
           </div>
+
+          <AttendancePanel session={session} called={called} onChange={(attendance) => update({ attendance })} />
         </div>
 
         <aside className="session-side">

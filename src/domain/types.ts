@@ -227,6 +227,12 @@ export interface SessionBlock {
   notes: string;
 }
 
+/** Asistencia de una jugadora a una sesión y su esfuerzo percibido (RPE 1 a 10). */
+export interface AttendanceRecord {
+  present: boolean;
+  rpe?: number;
+}
+
 export interface TrainingSession {
   id: string;
   name: string;
@@ -240,6 +246,8 @@ export interface TrainingSession {
   /** Jugadores convocados a la sesión. */
   playerIds: string[];
   blocks: SessionBlock[];
+  /** Asistencia y esfuerzo por jugadora (se carga después del entrenamiento). */
+  attendance?: Record<string, AttendanceRecord>;
   createdAt: string;
   updatedAt: string;
 }

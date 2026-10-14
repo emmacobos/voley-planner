@@ -4,6 +4,7 @@ import { useAppStore } from '../store';
 import { POSITIONS } from '../domain/types';
 import type { Position } from '../domain/types';
 import { ageOn } from '../domain/players';
+import { LoadReport } from './LoadReport';
 
 export function RosterPage() {
   const squads = useAppStore((s) => s.squads);
@@ -14,6 +15,7 @@ export function RosterPage() {
   const addPlayer = useAppStore((s) => s.addPlayer);
   const updatePlayer = useAppStore((s) => s.updatePlayer);
   const removePlayer = useAppStore((s) => s.removePlayer);
+  const sessions = useAppStore((s) => s.sessions);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newSquad, setNewSquad] = useState('');
@@ -205,6 +207,7 @@ export function RosterPage() {
               </table>
             </div>
           )}
+          {sorted.length > 0 && <LoadReport players={sorted} sessions={sessions} />}
         </>
       )}
     </div>

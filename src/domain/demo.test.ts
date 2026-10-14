@@ -34,6 +34,12 @@ describe('buildDemoData', () => {
     expect(sessionDuration(s)).toBe(90);
   });
 
+  it('incluye sesiones pasadas con asistencia para ver la carga', () => {
+    const past = data.sessions.filter((s) => s.date < todayISO(today));
+    expect(past).toHaveLength(3);
+    expect(past.every((s) => Object.keys(s.attendance ?? {}).length === 12)).toBe(true);
+  });
+
   it('la jugada arranca en una recepción sin faltas de posición', () => {
     const play = data.exercises[0];
     expect(play.frames).toHaveLength(3);

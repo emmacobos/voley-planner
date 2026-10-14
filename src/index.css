@@ -2463,6 +2463,137 @@ input.num {
   }
 }
 
+/* Asistencia y esfuerzo de una sesión */
+
+.attendance {
+  margin-top: 1rem;
+}
+
+.attendance-head,
+.load-report-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.attendance h2,
+.load-report h2 {
+  margin: 0;
+}
+
+.attendance-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.attendance-list li {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 190px) 72px;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.attendance-list li.is-present {
+  box-shadow: inset 3px 0 0 var(--ok);
+}
+
+.attendance-list li.is-absent {
+  box-shadow: inset 3px 0 0 var(--danger);
+  opacity: 0.8;
+}
+
+.attendance-toggle button.active.absent {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.attendance-load {
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: right;
+  color: var(--muted);
+}
+
+.attendance-summary {
+  margin: 0.75rem 0 0;
+}
+
+/* Carga y asistencia del plantel */
+
+.load-report {
+  margin-top: 1.25rem;
+}
+
+.load-alert-count {
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.load-table {
+  max-width: none;
+  margin-top: 0.75rem;
+}
+
+.load-table tr.has-alert td {
+  background: var(--warn-soft);
+}
+
+.load-bars {
+  position: relative;
+  width: 160px;
+  height: 10px;
+  border-radius: 9px;
+  background: var(--track);
+}
+
+.load-bar {
+  display: block;
+  height: 100%;
+  border-radius: 9px;
+  background: var(--accent);
+}
+
+.load-avg {
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: 16px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--text);
+}
+
+.load-numbers {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.load-alerts {
+  font-size: 0.88rem;
+  color: var(--warn);
+}
+
+@media (max-width: 700px) {
+  .attendance-list li {
+    grid-template-columns: 1fr auto;
+  }
+}
+
 /* Aviso de datos de ejemplo */
 
 .demo-banner {

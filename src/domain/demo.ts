@@ -198,5 +198,41 @@ export function buildDemoData(today: Date = new Date()): DemoData {
     updatedAt: now,
   };
 
-  return { squads: [squad], players, exercises: [play, warmup, game], sessions: [session] };
+  // Tres sesiones ya hechas, con asistencia y esfuerzo, para ver la carga del plantel.
+  const past = (name: string, daysAgo: number, title: string, rpeBase: number): TrainingSession => {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysAgo);
+    return {
+      ...session,
+      id: id(`sesion-${name}`),
+      name: title,
+      date: todayISO(d),
+      objective: '',
+      blocks: session.blocks.map((b) => ({
+        ...b,
+        id: `${b.id}-${name}`,
+        items: b.items.map((i) => ({ ...i, id: `${i.id}-${name}` })),
+      })),
+      attendance: Object.fromEntries(
+        players.map((p, i) => [
+          p.id,
+          // La 12 faltó a todas y la 9 a una; la 3 tuvo una semana muy exigente.
+          p.number === 12 || (p.number === 9 && name === 'anterior')
+            ? { present: false }
+            : { present: true, rpe: p.number === 3 && name === 'reciente' ? 9 : Math.min(10, rpeBase + (i % 3)) },
+        ]),
+      ),
+    };
+  };
+
+  return {
+    squads: [squad],
+    players,
+    exercises: [play, warmup, game],
+    sessions: [
+      session,
+      past('reciente', 2, 'Defensa y contraataque', 5),
+      past('anterior', 9, 'Saque y recepción', 4),
+      past('primera', 16, 'Técnica de ataque', 4),
+    ],
+  };
 }
