@@ -64,6 +64,8 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    - Los puntos de agarre del elemento seleccionado (curva y extremos de una
      flecha, borde y esquina de un texto) se arrastran aunque esté elegida
      una herramienta de dibujo.
+   - En el celular las herramientas quedan en una barra fija abajo, con íconos, y
+     los puntos de agarre son más grandes para usarlos con el dedo.
    - Al tocar un elemento se abre su **tarjeta** al lado, sobre la pizarra,
      con todo lo que se puede cambiar (en el celular aparece debajo de la
      pizarra). Aparece debajo del elemento para no taparlo, se mueve arrastrando

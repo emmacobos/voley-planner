@@ -311,10 +311,10 @@ export function BoardEditor({
       )}
       <div className="board-main">
         <div className="toolbar">
-          <div className="segmented" role="group" aria-label="Herramienta">
+          <div className="segmented tool-bar" role="group" aria-label="Herramienta">
             <button className={tool === 'select' ? 'active' : ''} onClick={() => setTool('select')} title="Seleccionar y mover (Esc)">
               <Icon d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12m0-1.5v-2a1.5 1.5 0 0 1 3 0V12m0-1v-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.2a6 6 0 0 1-4.8-2.4L4.3 16a1.5 1.5 0 0 1 2.4-1.8L8 16" />
-              Mover
+              <span className="tool-label">Mover</span>
             </button>
             <button
               className={tool === 'arrow-move' ? 'active' : ''}
@@ -322,7 +322,8 @@ export function BoardEditor({
               title="Arrastrá sobre la cancha para dibujar. Para curvarla, seleccionala y arrastrá su punto del medio."
             >
               <Icon d="M4 18c4-1 7-5 9-9m0 0-4 .5M13 9l1 4" dashed color={kindColor('desplazamiento')} />
-              Flecha desplazamiento
+              <span className="tool-label">Flecha desplazamiento</span>
+              <span className="tool-short">Despl.</span>
             </button>
             <button
               className={tool === 'arrow-ball' ? 'active' : ''}
@@ -330,7 +331,8 @@ export function BoardEditor({
               title="Arrastrá sobre la cancha para dibujar. Para curvarla, seleccionala y arrastrá su punto del medio."
             >
               <Icon d="M4 18c4-1 7-5 9-9m0 0-4 .5M13 9l1 4" color={kindColor('pelota')} />
-              Flecha pelota
+              <span className="tool-label">Flecha pelota</span>
+              <span className="tool-short">Pelota</span>
             </button>
             <button
               className={tool === 'arrow-curve' ? 'active' : ''}
@@ -338,7 +340,8 @@ export function BoardEditor({
               title="Arrastrá sobre la cancha para dibujar una flecha curva. Ajustá la curva con su punto del medio."
             >
               <Icon d="M4 19C5 9 13 5 19 7m0 0-3.5-2.5M19 7l-2.5 3.2" color={kindColor('curva')} />
-              Flecha curva
+              <span className="tool-label">Flecha curva</span>
+              <span className="tool-short">Curva</span>
             </button>
             <button
               className={tool === 'arrow-curve-dashed' ? 'active' : ''}
@@ -346,7 +349,8 @@ export function BoardEditor({
               title="Arrastrá sobre la cancha para dibujar una flecha curva punteada. Ajustá la curva con su punto del medio."
             >
               <Icon d="M4 19C5 9 13 5 19 7m0 0-3.5-2.5M19 7l-2.5 3.2" dashed color={kindColor('curva-punteada')} />
-              Curva punteada
+              <span className="tool-label">Curva punteada</span>
+              <span className="tool-short">Punteada</span>
             </button>
             <button
               className={tool === 'shadow' ? 'active' : ''}
@@ -354,7 +358,8 @@ export function BoardEditor({
               title="Arrastrá desde el bloqueo hacia el fondo de la cancha para marcar la zona que tapa."
             >
               <Icon d="M4 10.5h3v3H4zM7 10.5 20 4v16L7 13.5" />
-              Sombra de bloqueo
+              <span className="tool-label">Sombra de bloqueo</span>
+              <span className="tool-short">Sombra</span>
             </button>
             <button
               className={tool === 'text' ? 'active' : ''}
@@ -362,7 +367,7 @@ export function BoardEditor({
               title="Tocá la cancha donde quieras escribir."
             >
               <Icon d="M5 5h14M12 5v14M9 19h6" />
-              Texto
+              <span className="tool-label">Texto</span>
             </button>
           </div>
           <div className="toolbar-group">

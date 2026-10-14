@@ -51,6 +51,10 @@ if (measureCanvas) {
   });
 }
 
+/** En pantallas táctiles los puntos de agarre se agrandan para tocarlos con el dedo. */
+const TOUCH = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
+const HANDLE = TOUCH ? 1.8 : 1;
+
 interface BoardProps {
   elements: BoardElement[];
   players: Player[];
@@ -497,9 +501,9 @@ function Arrow({
       )}
       {selected && onPointerDown && (
         <>
-          <circle className="handle ui-only" cx={x1} cy={y1} r={0.18} onPointerDown={(e) => onPointerDown(e, 'start')} />
-          <circle className="handle ui-only" cx={x2} cy={y2} r={0.18} onPointerDown={(e) => onPointerDown(e, 'end')} />
-          <circle className="handle handle-curve ui-only" cx={mid.x} cy={mid.y} r={0.2} onPointerDown={(e) => onPointerDown(e, 'mid')}>
+          <circle className="handle ui-only" cx={x1} cy={y1} r={0.18 * HANDLE} onPointerDown={(e) => onPointerDown(e, 'start')} />
+          <circle className="handle ui-only" cx={x2} cy={y2} r={0.18 * HANDLE} onPointerDown={(e) => onPointerDown(e, 'end')} />
+          <circle className="handle handle-curve ui-only" cx={mid.x} cy={mid.y} r={0.2 * HANDLE} onPointerDown={(e) => onPointerDown(e, 'mid')}>
             <title>Arrastrá para curvar la flecha</title>
           </circle>
         </>
@@ -638,10 +642,10 @@ function Shadow({
       />
       {selected && onPointerDown && (
         <>
-          <circle className="handle ui-only" cx={shadow.x1} cy={shadow.y1} r={0.18} onPointerDown={(e) => onPointerDown(e, 'start')}>
+          <circle className="handle ui-only" cx={shadow.x1} cy={shadow.y1} r={0.18 * HANDLE} onPointerDown={(e) => onPointerDown(e, 'start')}>
             <title>Arrastrá para mover el inicio (el bloqueo)</title>
           </circle>
-          <circle className="handle ui-only" cx={shadow.x2} cy={shadow.y2} r={0.18} onPointerDown={(e) => onPointerDown(e, 'end')}>
+          <circle className="handle ui-only" cx={shadow.x2} cy={shadow.y2} r={0.18 * HANDLE} onPointerDown={(e) => onPointerDown(e, 'end')}>
             <title>Arrastrá para mover el final de la sombra</title>
           </circle>
         </>
@@ -717,10 +721,10 @@ function TextMark({
         <>
           <rect
             className="handle handle-width ui-only"
-            x={box.width / 2 + pad.x - 0.09}
-            y={-0.28}
-            width={0.18}
-            height={0.56}
+            x={box.width / 2 + pad.x - 0.09 * HANDLE}
+            y={-0.28 * HANDLE}
+            width={0.18 * HANDLE}
+            height={0.56 * HANDLE}
             rx={0.07}
             onPointerDown={(e) => onHandleDown(e, 'width')}
           >
@@ -730,7 +734,7 @@ function TextMark({
             className="handle handle-scale ui-only"
             cx={box.width / 2 + pad.x}
             cy={-top + pad.y}
-            r={0.18}
+            r={0.18 * HANDLE}
             onPointerDown={(e) => onHandleDown(e, 'scale')}
           >
             <title>Arrastrá para agrandar o achicar la letra</title>
