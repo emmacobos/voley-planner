@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { elementsAtProgress, interpolateFrames } from './animation';
+import { elementsAtProgress, interpolateFrames, playbackDuration, playbackProgress } from './animation';
 import type { BoardElement } from './types';
 
 const ball = (x: number, y: number): BoardElement => ({ id: 'b', kind: 'ball', x, y });
@@ -55,5 +55,22 @@ describe('sombra del bloqueo y texto', () => {
   it('mueve el texto como cualquier elemento', () => {
     const [t] = interpolateFrames([text(0)], [text(4)], 0.25);
     expect(t).toMatchObject({ x: 1, text: 'Hola' });
+  });
+});
+
+describe('playbackProgress', () => {
+  const timing = { intro: 1000, move: 1000, hold: 500, outro: 1000 };
+
+  it('pausa al principio, se mueve, pausa en cada paso y termina en el último', () => {
+    expect(playbackProgress(500, 3, timing)).toBe(0);
+    expect(playbackProgress(1500, 3, timing)).toBe(0.5);
+    expect(playbackProgress(2200, 3, timing)).toBe(1); // pausa en el paso 2
+    expect(playbackProgress(3000, 3, timing)).toBe(1.5);
+    expect(playbackProgress(9999, 3, timing)).toBe(2);
+  });
+
+  it('calcula la duración total', () => {
+    expect(playbackDuration(3, timing)).toBe(1000 + 2 * 1500 + 1000);
+    expect(playbackDuration(1, timing)).toBe(2000);
   });
 });

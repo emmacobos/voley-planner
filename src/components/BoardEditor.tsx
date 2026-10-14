@@ -33,6 +33,7 @@ import type {
 } from '../domain/types';
 import { POSITIONS, SITUATIONS } from '../domain/types';
 import { downloadSvgAsPng, slugify } from '../utils/exportPng';
+import { exportPlayVideo, videoSupport } from '../utils/exportVideo';
 import { Board, DEFAULT_BEND } from './Board';
 import { FloatingPanel } from './FloatingPanel';
 import { Presentation } from './Presentation';
@@ -97,6 +98,8 @@ export function BoardEditor({
   const [progress, setProgress] = useState<number | null>(null);
   const [speed, setSpeed] = useState(1);
   const [presenting, setPresenting] = useState(false);
+  /** Avance de la grabación del video (0 a 1) mientras se genera. */
+  const [videoProgress, setVideoProgress] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(0);
@@ -362,6 +365,39 @@ export function BoardEditor({
             </label>
             <button onClick={() => svgRef.current && downloadSvgAsPng(svgRef.current, `${slugify(title)}-paso-${index + 1}`)}>
               Exportar PNG
+            </button>
+            <button
+              className="video-button"
+              disabled={frames.length < 2 || videoProgress !== null || playing}
+              onClick={async () => {
+                if (!videoSupport()) {
+                  alert('Este navegador no puede grabar video. Probá con Chrome, Edge o Firefox.');
+                  return;
+                }
+                setSelectedId(null);
+                setVideoProgress(0);
+                try {
+                  await exportPlayVideo({
+                    title,
+                    frames,
+                    players: allPlayers,
+                    fileName: slugify(title),
+                    onProgress: setVideoProgress,
+                  });
+                } catch (err) {
+                  alert(err instanceof Error ? err.message : 'No se pudo generar el video.');
+                } finally {
+                  setVideoProgress(null);
+                }
+              }}
+              title={
+                frames.length < 2
+                  ? 'Agregá al menos un paso más para grabar la animación'
+                  : 'Descarga la jugada animada en video, para mandarla por WhatsApp'
+              }
+            >
+              <Icon d="M4 6h11a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zM16 10l5-3v10l-5-3" />
+              {videoProgress === null ? 'Exportar video' : `Grabando… ${Math.round(videoProgress * 100)}%`}
             </button>
             <button
               className="present-button"

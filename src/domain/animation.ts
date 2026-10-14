@@ -66,3 +66,38 @@ export function elementsAtProgress(
   const i = Math.max(0, Math.floor(p));
   return interpolateFrames(frames[i], frames[i + 1], easeInOut(p - i));
 }
+
+export interface PlaybackTiming {
+  /** Pausa en el primer paso antes de arrancar (ms). */
+  intro: number;
+  /** Duración de cada transición entre pasos (ms). */
+  move: number;
+  /** Pausa en cada paso al llegar (ms). */
+  hold: number;
+  /** Pausa extra en el último paso (ms). */
+  outro: number;
+}
+
+export const VIDEO_TIMING: PlaybackTiming = { intro: 1000, move: 1400, hold: 900, outro: 1200 };
+
+/** Duración total de la reproducción de `frameCount` pasos (ms). */
+export function playbackDuration(frameCount: number, timing: PlaybackTiming = VIDEO_TIMING): number {
+  const transitions = Math.max(0, frameCount - 1);
+  return timing.intro + transitions * (timing.move + timing.hold) + timing.outro;
+}
+
+/**
+ * Progreso (0 a frameCount - 1) en el instante `ms` de una reproducción que
+ * pausa en cada paso. Se usa directo con elementsAtProgress, que suaviza cada transición.
+ */
+export function playbackProgress(ms: number, frameCount: number, timing: PlaybackTiming = VIDEO_TIMING): number {
+  const last = frameCount - 1;
+  if (last <= 0) return 0;
+  let t = ms - timing.intro;
+  if (t <= 0) return 0;
+  const step = timing.move + timing.hold;
+  const seg = Math.floor(t / step);
+  if (seg >= last) return last;
+  t -= seg * step;
+  return seg + Math.min(1, t / timing.move);
+}
