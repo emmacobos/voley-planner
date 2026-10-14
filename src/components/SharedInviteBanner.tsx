@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ROLE_LABEL, openWorkspace, useSharing } from '../cloud/sharing';
+import { ROLE_LABEL, useSharing } from '../cloud/state';
+import { openWorkspace } from '../cloud/client';
 
 const DISMISSED_KEY = 'voley-planner-shares-seen';
 

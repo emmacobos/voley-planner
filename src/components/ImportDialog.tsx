@@ -1,4 +1,5 @@
-import { resolveImport, useAuth } from '../cloud/auth';
+import { useAuth } from '../cloud/state';
+import { resolveImport } from '../cloud/client';
 
 /**
  * Al entrar por primera vez en un navegador que ya tiene datos sin cuenta,

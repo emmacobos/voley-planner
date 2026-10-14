@@ -37,5 +37,7 @@ Correr lint, tests y build antes de cada commit.
 ## Estructura
 - `src/domain/` — lógica pura (cancha, rotaciones, formaciones 5-1, reglas, animación, sesiones) con tests
 - `src/components/` — pizarra SVG, editores, listas, vista de impresión
-- `src/cloud/` — Firebase: cuentas (`auth.ts`) y sincronización (`sync.ts`)
+- `src/cloud/` — Firebase: cuentas (`auth.ts`) y sincronización (`sync.ts`). La interfaz importa solo
+  `state.ts` (estado, sin Firebase) y `client.ts` (acciones que cargan Firebase aparte), para que la app
+  arranque sin esperar a Firebase. Las pantallas se cargan con `lazy` en `App.tsx`.
 - `src/store.ts` — estado global

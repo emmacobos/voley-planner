@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { authErrorMessage, resetPassword, signInWithEmail, signInWithGoogle, signUpWithEmail } from '../cloud/auth';
+import { authErrorMessage } from '../cloud/state';
+import { resetPassword, signInWithEmail, signInWithGoogle, signUpWithEmail } from '../cloud/client';
 
 type Mode = 'login' | 'signup' | 'reset';
 

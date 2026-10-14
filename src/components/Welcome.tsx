@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { elementsAtProgress, easeInOut } from '../domain/animation';
 import { buildDemoData } from '../domain/demo';
-import { useAuth } from '../cloud/auth';
+import { useAuth } from '../cloud/state';
 import { navigate } from '../hooks/useHashRoute';
 import { useAppStore } from '../store';
 import { AuthDialog } from './AuthDialog';

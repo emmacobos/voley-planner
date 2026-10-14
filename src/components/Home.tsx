@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { daysUntil } from '../domain/calendar';
-import { useAuth } from '../cloud/auth';
+import { useAuth } from '../cloud/state';
 import { blockDuration, formatMinutes, sessionDuration, sessionIntensity, todayISO, weekSummary } from '../domain/sessions';
 import { BLOCK_KINDS, INTENSITIES } from '../domain/types';
 import type { BlockKind, Exercise, TrainingSession } from '../domain/types';

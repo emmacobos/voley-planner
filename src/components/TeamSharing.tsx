@@ -1,18 +1,8 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { FirebaseError } from 'firebase/app';
-import { useAuth } from '../cloud/auth';
-import {
-  ROLE_LABEL,
-  openWorkspace,
-  recheckVerification,
-  retryInvites,
-  sendVerification,
-  shareWith,
-  stopSharingWith,
-  useSharing,
-} from '../cloud/sharing';
-import type { ShareRole } from '../cloud/sharing';
+import { errorCode, ROLE_LABEL, useAuth, useSharing } from '../cloud/state';
+import { openWorkspace, recheckVerification, retryInvites, sendVerification, shareWith, stopSharingWith } from '../cloud/client';
+import type { ShareRole } from '../cloud/state';
 import { AuthDialog } from './AuthDialog';
 
 /** Compartir los datos con el cuerpo técnico y ver lo que otros compartieron. */
@@ -49,7 +39,7 @@ export function TeamSharing() {
       setMessage({ ok: true, text: ok });
     } catch (err) {
       const text =
-        err instanceof FirebaseError && err.code === 'permission-denied'
+        errorCode(err) === 'permission-denied'
           ? 'Firebase rechazó el pedido: faltan publicar las reglas nuevas de Firestore (firestore.rules).'
           : err instanceof Error
             ? err.message

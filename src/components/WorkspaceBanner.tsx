@@ -1,5 +1,5 @@
-import { ROLE_LABEL, openWorkspace, useSharing } from '../cloud/sharing';
-import { useSyncStatus } from '../cloud/sync';
+import { ROLE_LABEL, useSharing, useSyncStatus } from '../cloud/state';
+import { openWorkspace } from '../cloud/client';
 import { hasData, useAppStore } from '../store';
 
 /** Aviso mientras se ven los datos que compartió otra persona del cuerpo técnico. */

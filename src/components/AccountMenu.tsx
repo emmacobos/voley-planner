@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { logOut, useAuth } from '../cloud/auth';
-import { useSyncStatus } from '../cloud/sync';
-import type { SyncState } from '../cloud/sync';
+import { ROLE_LABEL, useAuth, useSharing, useSyncStatus } from '../cloud/state';
+import { logOut, openWorkspace } from '../cloud/client';
+import type { SyncState } from '../cloud/state';
 import { hasData, useAppStore } from '../store';
 import { AuthDialog } from './AuthDialog';
-import { ROLE_LABEL, openWorkspace, useSharing } from '../cloud/sharing';
 
 const SYNC_LABEL: Record<SyncState, string> = {
   off: '',

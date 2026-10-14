@@ -1,11 +1,15 @@
 import { FirebaseError } from 'firebase/app';
 import { collection, deleteDoc, doc, onSnapshot, setDoc, writeBatch } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
-import { create } from 'zustand';
 import { DATA_KEYS, useAppStore } from '../store';
 import type { AppData, DataKey } from '../store';
 import { db } from './firebase';
 import { diffCollection, mergeRemote } from './diff';
+import { useSyncStatus } from './state';
+import type { SyncState } from './state';
+
+export { useSyncStatus } from './state';
+export type { SyncState } from './state';
 
 /**
  * Sincronización entre el store local y Firestore.
@@ -21,14 +25,6 @@ import { diffCollection, mergeRemote } from './diff';
  *   cuerpo técnico. En modo solo lectura, los cambios locales se deshacen.
  */
 
-export type SyncState = 'off' | 'loading' | 'saving' | 'saved' | 'offline' | 'error' | 'readonly';
-
-interface SyncStatus {
-  state: SyncState;
-  error: string | null;
-}
-
-export const useSyncStatus = create<SyncStatus>(() => ({ state: 'off', error: null }));
 
 const DEBOUNCE_MS = 800;
 const MAX_WAIT_MS = 4000;

@@ -1,22 +1,25 @@
+import { Suspense, lazy } from 'react';
 import { AccountMenu } from './components/AccountMenu';
 import { BallLogo } from './components/BallLogo';
-import { CalendarPage } from './components/CalendarPage';
-import { DataPage } from './components/DataPage';
 import { DemoBanner } from './components/DemoBanner';
 import { SharedInviteBanner } from './components/SharedInviteBanner';
 import { WorkspaceBanner } from './components/WorkspaceBanner';
-import { ExerciseEditor } from './components/ExerciseEditor';
-import { ExerciseList } from './components/ExerciseList';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ImportDialog } from './components/ImportDialog';
-import { LibraryPage } from './components/LibraryPage';
-import { MatchPlanPage } from './components/MatchPlanPage';
-import { RosterPage } from './components/RosterPage';
-import { SessionEditor } from './components/SessionEditor';
 import { SessionList } from './components/SessionList';
-import { SessionPrint } from './components/SessionPrint';
 import { ThemeToggle } from './components/ThemeToggle';
 import { useHashRoute } from './hooks/useHashRoute';
+
+// Cada pantalla se descarga recién cuando se abre, así la app arranca más rápido.
+const CalendarPage = lazy(() => import('./components/CalendarPage').then((m) => ({ default: m.CalendarPage })));
+const DataPage = lazy(() => import('./components/DataPage').then((m) => ({ default: m.DataPage })));
+const ExerciseEditor = lazy(() => import('./components/ExerciseEditor').then((m) => ({ default: m.ExerciseEditor })));
+const ExerciseList = lazy(() => import('./components/ExerciseList').then((m) => ({ default: m.ExerciseList })));
+const LibraryPage = lazy(() => import('./components/LibraryPage').then((m) => ({ default: m.LibraryPage })));
+const MatchPlanPage = lazy(() => import('./components/MatchPlanPage').then((m) => ({ default: m.MatchPlanPage })));
+const RosterPage = lazy(() => import('./components/RosterPage').then((m) => ({ default: m.RosterPage })));
+const SessionEditor = lazy(() => import('./components/SessionEditor').then((m) => ({ default: m.SessionEditor })));
+const SessionPrint = lazy(() => import('./components/SessionPrint').then((m) => ({ default: m.SessionPrint })));
 
 export default function App() {
   const route = useHashRoute();
@@ -68,16 +71,18 @@ export default function App() {
           <DemoBanner />
           {/* La key reinicia el error al navegar a otra pantalla. */}
           <ErrorBoundary key={window.location.hash}>
-            {route.name === 'sessions' && <SessionList />}
-            {route.name === 'session' && <SessionEditor id={route.id} />}
-            {route.name === 'session-print' && <SessionPrint id={route.id} />}
-            {route.name === 'roster' && <RosterPage />}
-            {route.name === 'calendar' && <CalendarPage />}
-            {route.name === 'library' && <LibraryPage />}
-            {route.name === 'data' && <DataPage />}
-            {route.name === 'match' && <MatchPlanPage id={route.id} />}
-            {route.name === 'exercises' && <ExerciseList />}
-            {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
+            <Suspense fallback={<p className="muted page-loading">Cargando…</p>}>
+              {route.name === 'sessions' && <SessionList />}
+              {route.name === 'session' && <SessionEditor id={route.id} />}
+              {route.name === 'session-print' && <SessionPrint id={route.id} />}
+              {route.name === 'roster' && <RosterPage />}
+              {route.name === 'calendar' && <CalendarPage />}
+              {route.name === 'library' && <LibraryPage />}
+              {route.name === 'data' && <DataPage />}
+              {route.name === 'match' && <MatchPlanPage id={route.id} />}
+              {route.name === 'exercises' && <ExerciseList />}
+              {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
+            </Suspense>
           </ErrorBoundary>
         </main>
         <Credits footer />

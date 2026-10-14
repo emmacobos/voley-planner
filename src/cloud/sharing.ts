@@ -1,10 +1,16 @@
 import { collection, doc, onSnapshot, writeBatch } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
 import { reload, sendEmailVerification } from 'firebase/auth';
-import { create } from 'zustand';
 import { useAppStore } from '../store';
 import { auth, db } from './firebase';
 import { startSync, stopSync } from './sync';
+import { normalizeEmail, useSharing } from './state';
+import type { Share, SharedWorkspace, ShareRole } from './state';
+
+export { ROLE_LABEL, normalizeEmail, useSharing } from './state';
+export type { Share, SharedWorkspace, ShareRole } from './state';
+
+const WORKSPACE_KEY = 'voley-planner-workspace';
 
 /**
  * Compartir con el cuerpo técnico.
@@ -17,47 +23,6 @@ import { startSync, stopSync } from './sync';
  * `users/{uid}` a quien tenga una invitación con su email verificado.
  */
 
-export type ShareRole = 'ver' | 'editar';
-
-export const ROLE_LABEL: Record<ShareRole, string> = { ver: 'Puede ver', editar: 'Puede editar' };
-
-export interface Share {
-  email: string;
-  role: ShareRole;
-  createdAt: string;
-}
-
-export interface SharedWorkspace {
-  ownerUid: string;
-  ownerName: string;
-  ownerEmail: string;
-  role: ShareRole;
-}
-
-interface SharingState {
-  /** Con quién compartí mis datos. */
-  shares: Share[];
-  /** Quién me compartió sus datos. */
-  sharedWithMe: SharedWorkspace[];
-  /** Datos compartidos que estoy viendo (null: los míos). */
-  workspace: SharedWorkspace | null;
-  /** El email de la cuenta no está verificado: no se pueden ver datos compartidos. */
-  needsVerification: boolean;
-  /** No se pudieron leer las invitaciones (se reintenta solo). */
-  invitesError: boolean;
-}
-
-export const useSharing = create<SharingState>(() => ({
-  shares: [],
-  sharedWithMe: [],
-  workspace: null,
-  needsVerification: false,
-  invitesError: false,
-}));
-
-const WORKSPACE_KEY = 'voley-planner-workspace';
-
-export const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
 interface Me {
   uid: string;

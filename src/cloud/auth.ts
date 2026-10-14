@@ -10,30 +10,16 @@ import {
 } from 'firebase/auth';
 import { clearIndexedDbPersistence, terminate, waitForPendingWrites } from 'firebase/firestore';
 import { FirebaseError } from 'firebase/app';
-import { create } from 'zustand';
 import { DATA_KEYS, hasData, useAppStore } from '../store';
 import type { AppData } from '../store';
 import { auth, db } from './firebase';
 import { forgetWorkspace, openWorkspace, savedWorkspace, startSharing, stopSharing } from './sharing';
 import { flush, startSync, stopSync, uploadAll } from './sync';
+import { useAuth } from './state';
+import type { AccountUser } from './state';
 
-export interface AccountUser {
-  uid: string;
-  email: string | null;
-  name: string | null;
-  photoURL: string | null;
-}
+export { authErrorMessage, useAuth } from './state';
 
-interface AuthState {
-  /** false hasta que Firebase informa si hay una sesión abierta. */
-  ready: boolean;
-  user: AccountUser | null;
-  /** Datos locales sin cuenta esperando que la usuaria decida si subirlos. */
-  importCounts: Record<keyof AppData, number> | null;
-  busy: boolean;
-}
-
-export const useAuth = create<AuthState>(() => ({ ready: false, user: null, importCounts: null, busy: false }));
 
 /** Escucha la sesión de Firebase y conecta la sincronización. Se llama una vez al iniciar. */
 export function initAuth() {
@@ -134,23 +120,3 @@ export async function logOut() {
   window.location.reload();
 }
 
-const AUTH_ERRORS: Record<string, string> = {
-  'auth/invalid-credential': 'El email o la contraseña no son correctos.',
-  'auth/wrong-password': 'El email o la contraseña no son correctos.',
-  'auth/user-not-found': 'No hay una cuenta con ese email.',
-  'auth/invalid-email': 'El email no es válido.',
-  'auth/email-already-in-use': 'Ya existe una cuenta con ese email. Probá entrar o recuperar la contraseña.',
-  'auth/weak-password': 'La contraseña tiene que tener al menos 6 caracteres.',
-  'auth/missing-password': 'Escribí la contraseña.',
-  'auth/too-many-requests': 'Demasiados intentos. Esperá unos minutos y probá de nuevo.',
-  'auth/network-request-failed': 'No hay conexión a internet.',
-  'auth/popup-closed-by-user': 'Se cerró la ventana de Google antes de terminar.',
-  'auth/cancelled-popup-request': 'Se cerró la ventana de Google antes de terminar.',
-  'auth/unauthorized-domain': 'Este sitio no está autorizado en Firebase (Authentication → Dominios autorizados).',
-  'auth/operation-not-allowed': 'Este método de acceso no está habilitado en Firebase.',
-};
-
-export function authErrorMessage(err: unknown): string {
-  if (err instanceof FirebaseError) return AUTH_ERRORS[err.code] ?? `No se pudo completar (${err.code}).`;
-  return 'No se pudo completar. Probá de nuevo.';
-}

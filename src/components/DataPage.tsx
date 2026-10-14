@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ChangeEvent } from 'react';
-import { useAuth } from '../cloud/auth';
+import { useAuth } from '../cloud/state';
 import { describeBackup, makeBackup, mergeBackup, parseBackup } from '../domain/backup';
 import type { Backup, BackupData } from '../domain/backup';
 import { todayISO } from '../domain/sessions';
