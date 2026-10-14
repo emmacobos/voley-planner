@@ -252,6 +252,26 @@ export interface TrainingSession {
   updatedAt: string;
 }
 
+/** Scouting del rival y plan de juego de un partido. */
+export interface MatchPlan {
+  /** Sistema con el que juega el rival. */
+  rivalSystem?: GameSystem;
+  /** Jugadoras clave del rival (número, puesto y qué hacen). */
+  keyPlayers: string;
+  strengths: string;
+  weaknesses: string;
+  /** A dónde y cómo sacar. */
+  serve: string;
+  /** Bloqueo y defensa. */
+  defense: string;
+  /** Claves del partido para el equipo. */
+  keys: string;
+  /** Pizarra del plan (rotaciones del rival, jugadas, etc.). */
+  frames: Frame[];
+  /** Nuestro sistema para las formaciones de la pizarra del plan. */
+  system?: GameSystem;
+}
+
 /** Partido del calendario. */
 export interface Match {
   id: string;
@@ -268,6 +288,7 @@ export interface Match {
   notes: string;
   /** Resultado en sets, por ejemplo "3-1" (se carga después). */
   result: string;
+  plan?: MatchPlan;
   createdAt: string;
   updatedAt: string;
 }

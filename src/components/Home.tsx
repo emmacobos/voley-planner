@@ -54,7 +54,7 @@ export function HomeGreeting({ sessions, exercisesById }: { sessions: TrainingSe
             : `Esta semana tenés ${week} ${week === 1 ? 'sesión planificada' : 'sesiones planificadas'}.`}
         </p>
         {nextMatch && inDays !== null && inDays <= 14 && (
-          <a className="next-match" href="#/calendario">
+          <a className="next-match" href={`#/partidos/${nextMatch.id}`}>
             🏐 Próximo partido vs <b>{nextMatch.opponent || 'rival'}</b>{' '}
             {inDays === 0 ? 'hoy' : inDays === 1 ? 'mañana' : `en ${inDays} días`}
             {nextMatch.time && ` · ${nextMatch.time} h`} · {nextMatch.home ? 'Local' : 'Visitante'}

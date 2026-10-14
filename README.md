@@ -99,6 +99,11 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    sesiones y minutos tiene y su **objetivo** (microciclo), por plantel. Cada
    partido guarda rival, local/visitante, lugar, torneo, resultado y notas; el
    inicio avisa cuándo es el próximo partido.
+   **Plan de partido:** desde la ficha del partido (o el aviso del inicio)
+   abrís el plan: scouting del rival (sistema, jugadoras clave, fortalezas y
+   debilidades), nuestro plan (saque, bloqueo y defensa, claves), el historial
+   contra ese rival y una pizarra con modo presentación para la charla previa.
+   Si ya jugaste contra ese rival, ofrece copiar el plan anterior.
 9. **Exportar PDF:** abre una versión para imprimir con toda la sesión y las
    pizarras; en el diálogo de impresión elegí "Guardar como PDF".
 

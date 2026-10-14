@@ -201,7 +201,17 @@ export function CalendarPage() {
             setOpenMatch(null);
           }}
           onClose={closeMatch}
-        />
+        >
+          <button
+            className="plan-link"
+            onClick={() => {
+              setOpenMatch(null);
+              navigate(`/partidos/${match.id}`);
+            }}
+          >
+            Abrir el plan de partido (scouting del rival y pizarra) →
+          </button>
+        </MatchDialog>
       )}
     </div>
   );

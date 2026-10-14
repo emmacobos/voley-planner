@@ -242,6 +242,23 @@ export function buildDemoData(today: Date = new Date()): DemoData {
     competition: 'Liga metropolitana',
     notes: 'Sacan fuerte desde zona 1: trabajar la recepción en R1.',
     result: '',
+    plan: {
+      rivalSystem: '5-1',
+      keyPlayers: '#7 punta zurda: ataca la diagonal larga desde zona 4.\n#11 opuesta: saque en suspensión, el más peligroso.',
+      strengths: 'Saque fuerte y bloqueo alto por zona 4.',
+      weaknesses: 'Recepción de la #2 en zona 1 y defensa de la finta corta.',
+      serve: 'Sacar a zona 1, a la #2, sobre todo cuando su armadora está adelante (R4, R3, R2).',
+      defense: 'Bloqueo doble a la #7 cerrando la diagonal; zona 5 profunda.',
+      keys: '1. Recepción alta en R1.\n2. Sacar a zona 1.\n3. Cubrir siempre a la atacante.',
+      frames: [
+        frame('plan', 'Su recepción en R1: sacar a zona 1', 'saque-A', [
+          ...formationTokens('B', 1, 'k1-recepcion'),
+          { id: id('plan-pelota'), kind: 'ball', x: -0.6, y: 7.5 },
+          { id: id('plan-saque'), kind: 'arrow', style: 'ball', x1: -0.4, y1: 7.5, x2: 14.2, y2: 1.6, curve: -2 },
+          { id: id('plan-texto'), kind: 'text', x: 13.5, y: 10.3, text: 'Sacar a zona 1', size: 'M', color: '#F5B82E' },
+        ]),
+      ],
+    },
     createdAt: now,
     updatedAt: now,
   };

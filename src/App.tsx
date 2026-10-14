@@ -8,6 +8,7 @@ import { ExerciseList } from './components/ExerciseList';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ImportDialog } from './components/ImportDialog';
 import { LibraryPage } from './components/LibraryPage';
+import { MatchPlanPage } from './components/MatchPlanPage';
 import { RosterPage } from './components/RosterPage';
 import { SessionEditor } from './components/SessionEditor';
 import { SessionList } from './components/SessionList';
@@ -33,7 +34,7 @@ export default function App() {
             <NavIcon d="M9 3h6v3H9zM7 4.5H5.5A1.5 1.5 0 0 0 4 6v14a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 20V6a1.5 1.5 0 0 0-1.5-1.5H17M8 11h8M8 15h5" />
             Sesiones
           </a>
-          <a className={route.name === 'calendar' ? 'active' : ''} href="#/calendario">
+          <a className={route.name === 'calendar' || route.name === 'match' ? 'active' : ''} href="#/calendario">
             <NavIcon d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 2v4M16 2v4M3 10h18M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2" />
             Calendario
           </a>
@@ -70,6 +71,7 @@ export default function App() {
             {route.name === 'calendar' && <CalendarPage />}
             {route.name === 'library' && <LibraryPage />}
             {route.name === 'data' && <DataPage />}
+            {route.name === 'match' && <MatchPlanPage id={route.id} />}
             {route.name === 'exercises' && <ExerciseList />}
             {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
           </ErrorBoundary>

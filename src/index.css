@@ -2611,6 +2611,88 @@ input.num {
   gap: 0.5rem;
 }
 
+/* Plan de partido */
+
+.match-title {
+  flex: 1;
+  margin: 0;
+}
+
+.match-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0 1rem;
+  color: var(--muted);
+}
+
+.result-badge {
+  margin-left: 0.4rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--pill);
+  color: var(--pill-text);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.result-badge.ganado {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.result-badge.perdido {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.reuse-plan {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+
+.reuse-plan p {
+  margin: 0;
+}
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 1.4rem;
+}
+
+.plan-grid h2,
+.plan-board-title {
+  margin: 0 0 0.6rem;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.plan-link {
+  width: 100%;
+  margin-top: 1rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+}
+
 /* Tus datos: copia de seguridad */
 
 .data-grid {
