@@ -133,8 +133,11 @@ export function flush() {
   refreshStatus();
 }
 
-function onStoreChange(state: AppData, prev: AppData) {
+function onStoreChange(state: AppData & { ownerUid?: string | null }, prev: AppData & { ownerUid?: string | null }) {
   if (applyingRemote || !uid) return;
+  // Seguro: si los datos del navegador pasan a ser de otra cuenta (o se vacían
+  // al salir), nunca se sube eso como cambios a la cuenta que se sincroniza.
+  if (state.ownerUid !== prev.ownerUid || state.ownerUid !== uid) return;
   if (readOnly) {
     // Solo lectura: se vuelve a lo que hay en la nube.
     const revert: Partial<Record<DataKey, unknown[]>> = {};

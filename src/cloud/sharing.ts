@@ -4,7 +4,7 @@ import { reload, sendEmailVerification } from 'firebase/auth';
 import { create } from 'zustand';
 import { useAppStore } from '../store';
 import { auth, db } from './firebase';
-import { startSync } from './sync';
+import { startSync, stopSync } from './sync';
 
 /**
  * Compartir con el cuerpo técnico.
@@ -172,6 +172,9 @@ export async function stopSharingWith(email: string) {
 export function openWorkspace(workspace: SharedWorkspace | null) {
   if (!me) return;
   const target = workspace?.ownerUid ?? me.uid;
+  // Primero se desconecta la cuenta anterior: si no, vaciar los datos del
+  // navegador se subiría como un borrado de todos sus datos en la nube.
+  stopSync();
   // Si los datos del navegador ya son de esa cuenta (al recargar), se conservan.
   if (useAppStore.getState().ownerUid !== target) useAppStore.getState().resetData(target);
   useSharing.setState({ workspace });
