@@ -177,6 +177,9 @@ export const INTENSITIES: { value: Intensity; label: string }[] = [
   { value: 'alta', label: 'Alta' },
 ];
 
+/** Sistema de juego con el que se arman las formaciones del ejercicio. */
+export type GameSystem = '5-1' | '4-2' | '6-0';
+
 export interface Exercise {
   id: string;
   name: string;
@@ -188,6 +191,8 @@ export interface Exercise {
   squadId: string | null;
   playerIds: string[];
   frames: Frame[];
+  /** Sin valor es 5-1. */
+  system?: GameSystem;
   createdAt: string;
   updatedAt: string;
 }

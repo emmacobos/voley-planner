@@ -14,7 +14,7 @@ const SYNC_LABEL: Record<SyncState, string> = {
   error: 'Error al guardar',
 };
 
-/** Cuenta, al pie del menú lateral: entrar, estado de sincronización y salir. */
+/** Cuenta, arriba a la derecha: entrar, estado de sincronización y salir. */
 export function AccountMenu() {
   const { ready, user } = useAuth();
   const sync = useSyncStatus();

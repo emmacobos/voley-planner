@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { distanceToNet } from './court';
 import { PHASES, formationTokens, phaseSituation } from './formations';
 import { checkRotation } from './rotationRules';
-import { assignLineup, roleTokenId } from './rotations';
+import { assignLineup, assignLineup42, assignLineup60, roleTokenId } from './rotations';
 import type { Player, PlayerToken, Team, Zone } from './types';
 
 const ZONES: Zone[] = [1, 2, 3, 4, 5, 6];
@@ -95,5 +95,71 @@ describe('phaseSituation', () => {
     expect(phaseSituation('k1-recepcion', 'A')).toBe('saque-B');
     expect(phaseSituation('k2-saque', 'A')).toBe('saque-A');
     expect(phaseSituation('defensa-adelante', 'B')).toBe('juego');
+  });
+});
+
+describe('sistemas 4-2 y 6-0', () => {
+  const front = (t: PlayerToken) => [2, 3, 4].includes(t.zone!);
+
+  for (const team of TEAMS) {
+    for (const rot of ZONES) {
+      it(`4-2 recepción R${rot} respeta las reglas y arma el armador de adelante (equipo ${team})`, () => {
+        const tokens = formationTokens(team, rot, 'k1-recepcion', { system: '4-2' });
+        expect(checkRotation(tokens, team).faults).toEqual([]);
+        const setters = tokens.filter((t) => t.role === 'armador');
+        expect(setters).toHaveLength(2);
+        expect(setters.filter(front)).toHaveLength(1);
+        // El armador de adelante está pegado a la red.
+        expect(distanceToNet(team, setters.find(front)!.x)).toBeLessThan(1.5);
+        expect(has(tokens, 'libero')).toBe(1);
+      });
+
+      for (const setterZone of [2, 3] as const) {
+        it(`6-0 recepción en W R${rot} con armador en zona ${setterZone} (equipo ${team})`, () => {
+          const tokens = formationTokens(team, rot, 'k1-recepcion', { system: '6-0', setterZone });
+          expect(checkRotation(tokens, team).faults).toEqual([]);
+          const setter = tokens.filter((t) => t.role === 'armador');
+          expect(setter).toHaveLength(1);
+          expect(setter[0].zone).toBe(setterZone);
+          expect(has(tokens, 'libero')).toBe(0);
+        });
+      }
+    }
+  }
+
+  it('todas las formaciones de cada sistema tienen 6 jugadores dentro de la vista', () => {
+    for (const system of ['4-2', '6-0'] as const) {
+      for (const { value } of PHASES) {
+        for (const rot of ZONES) {
+          const tokens = formationTokens('A', rot, value, { system });
+          expect(tokens).toHaveLength(6);
+          expect(new Set(tokens.map((t) => t.zone)).size).toBe(6);
+          for (const t of tokens) {
+            expect(t.x).toBeGreaterThanOrEqual(-3);
+            expect(t.x).toBeLessThanOrEqual(9);
+          }
+        }
+      }
+    }
+  });
+
+  it('en el 4-2 los ids siguen a cada armador al rotar', () => {
+    // R1: el armador 1 está en zona 1 (atrás), así que arma el armador 2 desde zona 4.
+    const tokens = formationTokens('A', 1, 'k1-ataque', { system: '4-2' });
+    const s2 = tokens.find((t) => t.id === roleTokenId('A', 'S2'))!;
+    expect(s2.zone).toBe(4);
+    expect(s2.label).toBe('A2');
+    expect(distanceToNet('A', s2.x)).toBeLessThan(1);
+  });
+
+  it('el 4-2 usa dos armadores del plantel y el 6-0 a los seis primeros sin líbero', () => {
+    const roster42 = [...roster, { id: 's2', squadId: 'q', name: 'Armadora 2', number: 8, position: 'armador' as const }];
+    const t42 = formationTokens('A', 2, 'base', { system: '4-2', lineup: assignLineup42(roster42) });
+    expect(t42.find((t) => t.id === 'A-S1')!.playerId).toBe('s');
+    expect(t42.find((t) => t.id === 'A-S2')!.playerId).toBe('s2');
+    const lineup60 = assignLineup60(roster);
+    expect(Object.values(lineup60).map((p) => p!.id)).not.toContain('l');
+    const t60 = formationTokens('A', 1, 'base', { system: '6-0', lineup: lineup60 });
+    expect(t60.find((t) => t.id === 'A-J1')!.label).toBe('1');
   });
 });

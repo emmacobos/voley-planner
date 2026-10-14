@@ -5,10 +5,17 @@ import type { ArrowKind } from '../domain/arrows';
 import { TEXT_COLORS } from '../domain/shadows';
 import { NET_X } from '../domain/court';
 import { newId } from '../domain/ids';
-import { PHASES, formationTokenIds, formationTokens, phaseSituation } from '../domain/formations';
-import type { AttackSide, Phase } from '../domain/formations';
+import {
+  GAME_SYSTEMS,
+  formationTokenIds,
+  formationTokens,
+  phaseSituation,
+  phasesFor,
+  rotationLabel,
+} from '../domain/formations';
+import type { AttackSide, Phase, SetterZone } from '../domain/formations';
 import { frameRuleStatus } from '../domain/rotationRules';
-import { assignLineup } from '../domain/rotations';
+import { assignLineup, assignLineup42, assignLineup60 } from '../domain/rotations';
 import type {
   ArrowElement,
   BlockShadowElement,
@@ -16,6 +23,7 @@ import type {
   TextElement,
   TextSize,
   Frame,
+  GameSystem,
   Player,
   PlayerToken,
   PointElement,
@@ -26,6 +34,7 @@ import type {
 import { POSITIONS, SITUATIONS } from '../domain/types';
 import { downloadSvgAsPng, slugify } from '../utils/exportPng';
 import { Board, DEFAULT_BEND } from './Board';
+import { FloatingPanel } from './FloatingPanel';
 import type { Tool } from './boardTheme';
 
 interface BoardEditorProps {
@@ -38,6 +47,9 @@ interface BoardEditorProps {
   /** Jugadores asignados al ejercicio (para armar las formaciones). */
   exercisePlayers: Player[];
   title: string;
+  /** Sistema de juego del ejercicio (5-1 si no tiene). */
+  system?: GameSystem;
+  onSystemChange?: (system: GameSystem) => void;
 }
 
 const TRANSITION_MS = 1200;
@@ -61,7 +73,16 @@ const ADD_BUTTONS: { kind: AddKind; label: string }[] = [
   { kind: 'cart', label: '+ Carro' },
 ];
 
-export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlayers, title }: BoardEditorProps) {
+export function BoardEditor({
+  frames,
+  onChange,
+  allPlayers,
+  roster,
+  exercisePlayers,
+  title,
+  system = '5-1',
+  onSystemChange,
+}: BoardEditorProps) {
   const [current, setCurrent] = useState(0);
   const [tool, setTool] = useState<Tool>('select');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -69,11 +90,13 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
   const [rotationTeam, setRotationTeam] = useState<Team>('A');
   const [rotation, setRotation] = useState<Zone>(1);
   const [attackSide, setAttackSide] = useState<AttackSide>('zona4');
+  const [setterZone, setSetterZone] = useState<SetterZone>(3);
   const [past, setPast] = useState<Frame[][]>([]);
   const [future, setFuture] = useState<Frame[][]>([]);
   const [progress, setProgress] = useState<number | null>(null);
   const [speed, setSpeed] = useState(1);
   const svgRef = useRef<SVGSVGElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(0);
 
   const index = Math.max(0, Math.min(current, frames.length - 1));
@@ -164,10 +187,12 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
     }
   };
 
-  /** Coloca al equipo en una formación del 5-1 y ajusta el momento del paso. */
+  /** Coloca al equipo en una formación del sistema de juego y ajusta el momento del paso. */
   const placeFormation = (phase: Phase) => {
-    const lineup = rotationTeam === 'A' ? assignLineup(exercisePlayers.length ? exercisePlayers : roster) : {};
-    const tokens = formationTokens(rotationTeam, rotation, phase, { lineup, attackSide });
+    const pool = exercisePlayers.length ? exercisePlayers : roster;
+    const assign = system === '4-2' ? assignLineup42 : system === '6-0' ? assignLineup60 : assignLineup;
+    const lineup = rotationTeam === 'A' ? assign(pool) : {};
+    const tokens = formationTokens(rotationTeam, rotation, phase, { system, lineup, attackSide, setterZone });
     const replaced = formationTokenIds(rotationTeam);
     const keep = (e: BoardElement) =>
       !(e.kind === 'player' && e.team === rotationTeam && (e.zone !== undefined || replaced.has(e.id)));
@@ -336,24 +361,40 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
           </div>
         </div>
 
-        <Board
-          svgRef={svgRef}
-          elements={elements}
-          players={allPlayers}
-          selectedId={selectedId}
-          tool={tool}
-          readOnly={playing}
-          showZones={showZones}
-          onSelect={setSelectedId}
-          onUpdate={updateElement}
-          onAddArrow={addArrow}
-          onAddElement={addDrawn}
-          onDelete={removeElement}
-          onComment={(id) => {
-            setSelectedId(id);
-            setFocusField({ id, field: 'comment' });
-          }}
-        />
+        <div className="board-stage" ref={stageRef}>
+          <Board
+            svgRef={svgRef}
+            elements={elements}
+            players={allPlayers}
+            selectedId={selectedId}
+            tool={tool}
+            readOnly={playing}
+            showZones={showZones}
+            onSelect={setSelectedId}
+            onUpdate={updateElement}
+            onAddArrow={addArrow}
+            onAddElement={addDrawn}
+            onDelete={removeElement}
+            onComment={(id) => {
+              setSelectedId(id);
+              setFocusField({ id, field: 'comment' });
+            }}
+          />
+          {selected && !playing && (
+            <FloatingPanel element={selected} stageRef={stageRef} svgRef={svgRef} onClose={() => setSelectedId(null)}>
+              <SelectedPanel
+                element={selected}
+                roster={roster}
+                onUpdate={updateElement}
+                focusField={focusField?.id === selected.id ? focusField.field : null}
+                onFocused={() => setFocusField(null)}
+              />
+              <button className="danger full" onClick={removeSelected}>
+                Eliminar (Supr)
+              </button>
+            </FloatingPanel>
+          )}
+        </div>
 
         <div className="frames">
           <button className="primary play-button" onClick={playing ? () => setProgress(null) : play} disabled={frames.length < 2}>
@@ -416,7 +457,7 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
           <ol>
             <li>
               <b>El paso 1 es la posición inicial.</b> Ubicá jugadores, pelota y elementos (o usá una formación del
-              sistema 5-1).
+              sistema de juego: 5-1, 4-2 o 6-0).
             </li>
             <li>
               <b>Tocá "+ Paso"</b> para copiar el paso actual en uno nuevo, y en ese paso <b>mové</b> lo que cambia: los
@@ -468,7 +509,18 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
         </section>
 
         <section>
-          <h3>Sistema 5-1</h3>
+          <h3>Sistema de juego</h3>
+          <label className="field system-select">
+            Sistema
+            <select value={system} onChange={(e) => onSystemChange?.(e.target.value as GameSystem)} disabled={playing}>
+              {GAME_SYSTEMS.map((g) => (
+                <option key={g.value} value={g.value}>
+                  {g.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="hint system-description">{GAME_SYSTEMS.find((g) => g.value === system)!.description}</p>
           <div className="segmented team-switch" role="group" aria-label="Equipo">
             {(['A', 'B'] as Team[]).map((t) => (
               <button
@@ -481,7 +533,7 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
               </button>
             ))}
           </div>
-          <div className="rotation-label">Rotación (armador en la zona {rotation})</div>
+          <div className="rotation-label">{rotationLabel(system, rotation)}</div>
           <div className="rotation-picker" role="group" aria-label="Rotación">
             {ZONES.map((z) => (
               <button
@@ -496,12 +548,21 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
             ))}
           </div>
           <div className="button-grid formation-buttons">
-            {PHASES.map((p) => (
+            {phasesFor(system, setterZone).map((p) => (
               <button key={p.value} onClick={() => placeFormation(p.value)} disabled={playing} title={p.description}>
                 {p.label}
               </button>
             ))}
           </div>
+          {system === '6-0' && (
+            <label className="field">
+              Arma el jugador que está en
+              <select value={setterZone} onChange={(e) => setSetterZone(Number(e.target.value) as SetterZone)}>
+                <option value={3}>zona 3</option>
+                <option value={2}>zona 2</option>
+              </select>
+            </label>
+          )}
           <label className="field">
             En defensa, el rival ataca por
             <select value={attackSide} onChange={(e) => setAttackSide(e.target.value as AttackSide)}>
@@ -510,8 +571,12 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
             </select>
           </label>
           <p className="hint">
-            En el equipo A se usan los jugadores del ejercicio según su posición (incluido el líbero). Armá cada fase en
-            un paso nuevo para animar la jugada: por ejemplo K1 recepción → K1 ataque.
+            {system === '6-0'
+              ? 'En el equipo A se usan los jugadores del ejercicio por número (sin líbero).'
+              : system === '4-2'
+                ? 'En el equipo A se usan los jugadores del ejercicio según su posición: dos armadores (si hay uno solo, el opuesto hace de segundo), puntas, centrales y líbero.'
+                : 'En el equipo A se usan los jugadores del ejercicio según su posición (incluido el líbero).'}{' '}
+            Armá cada fase en un paso nuevo para animar la jugada: por ejemplo K1 recepción → K1 ataque.
           </p>
         </section>
 
@@ -544,21 +609,6 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
           </p>
         </section>
 
-        {selected && !playing && (
-          <section>
-            <h3>Elemento seleccionado</h3>
-            <SelectedPanel
-              element={selected}
-              roster={roster}
-              onUpdate={updateElement}
-              focusField={focusField?.id === selected.id ? focusField.field : null}
-              onFocused={() => setFocusField(null)}
-            />
-            <button className="danger full" onClick={removeSelected}>
-              Eliminar (Supr)
-            </button>
-          </section>
-        )}
       </aside>
     </div>
   );

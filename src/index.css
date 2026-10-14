@@ -257,10 +257,26 @@ textarea {
   min-height: 100vh;
 }
 
-main {
+.app-body {
   flex: 1;
   min-width: 0;
-  padding: 2rem 2.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  min-width: 0;
+  padding: 0.75rem 2.5rem 3rem;
+  max-width: 1500px;
+}
+
+/* Barra superior: tema y cuenta a la derecha */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem 2.5rem 0;
   max-width: 1500px;
 }
 
@@ -339,50 +355,45 @@ main {
   box-shadow: inset 3px 0 0 var(--ball);
 }
 
-/* Pie del menú: tema y cuenta */
-
-.sidebar-bottom {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+/* Cuenta (en la barra superior) */
 
 .account {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 0.6rem;
   position: relative;
 }
 
 .account-hint {
-  color: #f5c46b;
+  color: var(--warn);
   font-size: 0.82rem;
   padding: 0 0.25rem;
 }
 
 .account-login {
-  width: 100%;
-  background: #fff;
-  color: var(--navy);
-  border-color: #fff;
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
   font-weight: 700;
+  border-radius: 999px;
+  padding-inline: 1.4rem;
 }
 
 .account-card {
-  width: 100%;
   justify-content: flex-start;
-  gap: 0.65rem;
-  padding: 0.6rem 0.75rem;
-  border-radius: var(--radius);
-  border: none;
-  background: var(--navy-2);
-  color: #fff;
+  gap: 0.6rem;
+  padding: 0.3rem 0.9rem 0.3rem 0.3rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
   text-align: left;
+  max-width: 280px;
 }
 
 .account-card:hover:not(:disabled) {
-  background: var(--navy-3);
+  background: var(--surface-2);
 }
 
 .account-text {
@@ -400,8 +411,8 @@ main {
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   flex-shrink: 0;
   display: inline-flex;
@@ -419,7 +430,7 @@ main {
   gap: 6px;
   font-size: 0.78rem;
   font-weight: 500;
-  color: #b7c3d4;
+  color: var(--muted);
   white-space: normal;
 }
 
@@ -432,23 +443,23 @@ main {
 }
 
 .sync-saved {
-  color: #7ee0a8;
+  color: var(--ok);
 }
 
 .sync-saving,
 .sync-loading,
 .sync-offline {
-  color: #f5c46b;
+  color: var(--warn);
 }
 
 .sync-error {
-  color: #fca5a5;
+  color: var(--danger);
 }
 
 .account-dropdown {
   position: absolute;
-  left: 0;
-  bottom: calc(100% + 8px);
+  right: 0;
+  top: calc(100% + 8px);
   width: 260px;
   background: var(--surface);
   color: var(--text);
@@ -1125,6 +1136,89 @@ main {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+/* Tarjeta del elemento seleccionado, flotando sobre la pizarra */
+.board-stage {
+  position: relative;
+}
+
+.floating-panel {
+  position: absolute;
+  z-index: 5;
+  width: 280px;
+  color: var(--text);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 6px rgb(14 26 43 / 0.16), 0 16px 40px rgb(14 26 43 / 0.28);
+  padding: 0.7rem 0.9rem 0.85rem;
+}
+
+/* Flechita que apunta al elemento */
+.floating-panel::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--pointer-y) - 8px);
+  border: 8px solid transparent;
+}
+
+.floating-panel.side-right::before {
+  left: -16px;
+  border-right-color: var(--surface);
+}
+
+.floating-panel.side-left::before {
+  right: -16px;
+  border-left-color: var(--surface);
+}
+
+.floating-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 3px solid var(--ball);
+}
+
+.floating-panel-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.floating-panel .floating-close {
+  width: 28px;
+  height: 28px;
+  font-size: 1.25rem;
+  line-height: 1;
+  border-radius: 50%;
+}
+
+.floating-panel .stack {
+  gap: 0.5rem;
+}
+
+.floating-panel textarea {
+  min-height: 0;
+}
+
+.floating-panel > .danger {
+  margin-top: 0.6rem;
+}
+
+@media (max-width: 700px) {
+  /* En el celular la tarjeta va debajo de la pizarra para no taparla. */
+  .floating-panel {
+    position: static;
+    width: auto;
+    margin-top: 0.75rem;
+    visibility: visible !important;
+  }
+
+  .floating-panel::before {
+    display: none;
+  }
 }
 
 .board {
@@ -2115,20 +2209,18 @@ input.num {
 /* Botón de tema */
 
 .theme-toggle {
-  width: 100%;
-  justify-content: flex-start;
-  gap: 0.75rem;
-  padding: 0.6rem 0.75rem;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  color: #b7c3d4;
-  font-weight: 500;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-weight: 600;
 }
 
 .theme-toggle:hover:not(:disabled) {
-  background: var(--navy-2);
-  color: #fff;
+  background: var(--surface-2);
 }
 
 /* Pantallas medianas y celulares */
@@ -2184,22 +2276,8 @@ input.num {
     box-shadow: inset 0 -3px 0 var(--ball);
   }
 
-  .sidebar-bottom {
-    margin-top: 0;
-    margin-left: auto;
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .account {
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .account-card,
-  .account-login,
-  .theme-toggle {
-    width: auto;
+  .topbar {
+    padding: 0.75rem 1rem 0;
   }
 
   .theme-label {
@@ -2210,15 +2288,8 @@ input.num {
     display: none;
   }
 
-  .account-dropdown {
-    left: auto;
-    right: 0;
-    bottom: auto;
-    top: calc(100% + 8px);
-  }
-
   main {
-    padding: 1.25rem 1rem 2rem;
+    padding: 0.75rem 1rem 2rem;
   }
 
   h1 {
@@ -2247,6 +2318,7 @@ input.num {
   }
 
   .sidebar,
+  .topbar,
   .no-print {
     display: none !important;
   }

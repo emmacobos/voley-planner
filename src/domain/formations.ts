@@ -1,17 +1,50 @@
 import { COURT_WIDTH, toCourt, zoneBasePosition } from './court';
 import {
   ROLE_LABEL,
+  ROLE_LABEL_42,
   ROLE_ORDER,
+  ROLE_ORDER_42,
+  ROLE_ORDER_60,
   ROLE_POSITION,
   isFrontRow,
   roleTokenId,
+  zonesFor,
   zonesForRotation,
 } from './rotations';
-import type { Lineup, LineupRole, RoleKey } from './rotations';
-import type { PlayerToken, Situation, Team, Zone } from './types';
+import type { LineupRole, RoleKey, SystemLineup, SystemRole } from './rotations';
+import type { GameSystem, PlayerToken, Position, Situation, Team, Zone } from './types';
+
+export const GAME_SYSTEMS: { value: GameSystem; label: string; description: string }[] = [
+  {
+    value: '5-1',
+    label: '5-1',
+    description: 'Un armador que arma en las 6 rotaciones (penetra cuando está atrás), opuesto, 2 puntas, 2 centrales y líbero.',
+  },
+  {
+    value: '4-2',
+    label: '4-2',
+    description:
+      'Dos armadores enfrentados: arma siempre el que está adelante, así hay 2 atacantes en la red. 2 puntas, 2 centrales y líbero.',
+  },
+  {
+    value: '6-0',
+    label: '6-0',
+    description: 'Seis jugadores universales, sin especialistas ni líbero: arma el que pasa por la zona elegida.',
+  },
+];
+
+/** En el 6-0, zona desde la que arma el jugador que pasa por ella. */
+export type SetterZone = 2 | 3;
+
+/** Título de la rotación (se nombra por la zona del primer rol del sistema). */
+export function rotationLabel(system: GameSystem, rotation: Zone): string {
+  if (system === '4-2') return `Rotación (armador 1 en la zona ${rotation})`;
+  if (system === '6-0') return `Rotación (jugador 1 en la zona ${rotation})`;
+  return `Rotación (armador en la zona ${rotation})`;
+}
 
 /**
- * Formaciones del sistema 5-1. Las posiciones se expresan relativas al equipo:
+ * Formaciones de los sistemas de juego. Las posiciones se expresan relativas al equipo:
  * `depth` = metros desde la red, `lateral` = metros desde su línea lateral
  * izquierda (mirando hacia la red).
  */
@@ -37,6 +70,19 @@ export const PHASES: { value: Phase; label: string; description: string }[] = [
   { value: 'defensa-perimetral', label: 'Defensa perimetral', description: 'Bloqueo doble y 6 atrás (2-0-4)' },
   { value: 'defensa-adelante', label: 'Defensa 6 adelante', description: 'Bloqueo doble y zona 6 detrás del bloqueo (2-1-3)' },
 ];
+
+/** Las fases con la descripción que corresponde a cada sistema. */
+export function phasesFor(system: GameSystem, setterZone: SetterZone = 3): typeof PHASES {
+  return PHASES.map((p) => {
+    if (system === '4-2' && p.value === 'k1-recepcion')
+      return { ...p, description: 'Recepción de 3 (2 puntas + líbero); arma el armador que está adelante' };
+    if (system === '6-0' && p.value === 'k1-recepcion')
+      return { ...p, description: `Recepción en W con 5 receptores; el de zona ${setterZone} espera en la red para armar` };
+    if (system === '6-0' && p.value === 'k1-ataque')
+      return { ...p, description: `Arma el jugador de zona ${setterZone} y atacan los otros dos de adelante` };
+    return p;
+  });
+}
 
 /** En qué momento del juego queda el paso al colocar cada formación. */
 export function phaseSituation(phase: Phase, team: Team): Situation {
@@ -117,6 +163,19 @@ function defenseSpot(phase: keyof typeof DEFENSE, slot: Slot, side: AttackSide):
   return s(spot.depth, COURT_WIDTH - spot.lateral);
 }
 
+/** 6-0: puesto según la zona (no hay cambios de puesto). */
+const ZONE_SLOT: Record<Zone, Slot> = { 4: 'FL', 3: 'FM', 2: 'FR', 5: 'BL', 6: 'BM', 1: 'BR' };
+
+/**
+ * Recepción en W del 6-0 según la zona del armador: el armador espera en la red
+ * y los otros 5 reciben (3 adelante y 2 atrás), respetando las reglas de posición.
+ */
+const RECEPTION_60: Record<SetterZone, Record<Zone, Spot>> = {
+  3: { 3: s(0.8, 4.8), 4: s(4.0, 1.2), 6: s(4.5, 4.5), 2: s(4.0, 7.8), 5: s(7.0, 2.8), 1: s(7.0, 6.2) },
+  2: { 2: s(0.8, 7.0), 4: s(4.0, 1.2), 3: s(4.2, 4.5), 1: s(4.5, 7.8), 5: s(7.0, 2.8), 6: s(7.0, 6.0) },
+};
+const SETTER_SPOT_60: Record<SetterZone, Spot> = { 3: s(0.6, 4.8), 2: s(0.6, 6.2) };
+
 /**
  * Puesto de especialidad de cada rol. Adelante: punta a la izquierda, central
  * al medio, armador u opuesto a la derecha. Atrás: líbero (o central) en 5,
@@ -140,23 +199,28 @@ function liberoReplaces(phase: Phase, zones: Record<RoleKey, Zone>): RoleKey | n
 }
 
 export interface FormationOptions {
-  lineup?: Lineup;
+  system?: GameSystem;
+  lineup?: SystemLineup;
   attackSide?: AttackSide;
+  /** Solo 6-0. */
+  setterZone?: SetterZone;
 }
 
-/** Crea las fichas de un equipo en la formación pedida. */
-export function formationTokens(
-  team: Team,
-  rotation: Zone,
-  phase: Phase,
-  { lineup = {}, attackSide = 'zona4' }: FormationOptions = {},
-): PlayerToken[] {
+interface Placed {
+  role: SystemRole;
+  zone: Zone;
+  spot: Spot | null;
+  position?: Position;
+  label: string;
+}
+
+/** Ubica los roles del 5-1 (también lo usa el 4-2, que es un 5-1 con el opuesto armando). */
+function place51(rotation: Zone, phase: Phase, attackSide: AttackSide): { role: LineupRole; zone: Zone; spot: Spot | null }[] {
   const zones = zonesForRotation(rotation);
   const replaced = liberoReplaces(phase, zones);
   const roles: { role: LineupRole; zone: Zone }[] = ROLE_ORDER.map((role) =>
     role === replaced ? { role: 'L', zone: zones[role] } : { role, zone: zones[role] },
   );
-
   return roles.map(({ role, zone }) => {
     let spot: Spot | null = null;
     switch (phase) {
@@ -174,15 +238,82 @@ export function formationTokens(
       default:
         spot = defenseSpot(phase, slotFor(role, zone), attackSide);
     }
+    return { role, zone, spot };
+  });
+}
+
+/**
+ * 4-2: arma el armador que está adelante. Equivale a un 5-1 en una rotación con
+ * el armador adelante, donde el otro armador ocupa el lugar del opuesto.
+ */
+function place42(rotation: Zone, phase: Phase, attackSide: AttackSide): Placed[] {
+  const firstFront = isFrontRow(zonesFor(ROLE_ORDER_42, rotation).S1);
+  const rotation51 = (firstFront ? rotation : ((rotation + 2) % 6) + 1) as Zone;
+  const as42: Record<LineupRole, SystemRole> = firstFront
+    ? { S: 'S1', OH1: 'OH1', MB2: 'MB2', OPP: 'S2', OH2: 'OH2', MB1: 'MB1', L: 'L' }
+    : { S: 'S2', OH1: 'OH2', MB2: 'MB1', OPP: 'S1', OH2: 'OH1', MB1: 'MB2', L: 'L' };
+  return place51(rotation51, phase, attackSide).map(({ role, zone, spot }) => {
+    const role42 = as42[role] as keyof typeof ROLE_LABEL_42;
+    return {
+      role: role42,
+      zone,
+      spot,
+      position: role === 'OPP' ? 'armador' : ROLE_POSITION[role],
+      label: ROLE_LABEL_42[role42],
+    };
+  });
+}
+
+/** 6-0: cada jugador ocupa el puesto de su zona y arma el de la zona elegida. */
+function place60(rotation: Zone, phase: Phase, attackSide: AttackSide, setterZone: SetterZone): Placed[] {
+  const zones = zonesFor(ROLE_ORDER_60, rotation);
+  return ROLE_ORDER_60.map((role) => {
+    const zone = zones[role];
+    const setter = zone === setterZone;
+    let spot: Spot | null = null;
+    switch (phase) {
+      case 'base':
+        break;
+      case 'k1-recepcion':
+        spot = RECEPTION_60[setterZone][zone];
+        break;
+      case 'k1-ataque':
+        spot = setter ? SETTER_SPOT_60[setterZone] : ATAQUE[ZONE_SLOT[zone]];
+        break;
+      case 'k2-saque':
+        spot = zone === 1 ? SERVER_SPOT : SAQUE[ZONE_SLOT[zone]];
+        break;
+      default:
+        spot = defenseSpot(phase, ZONE_SLOT[zone], attackSide);
+    }
+    return { role, zone, spot, position: setter ? 'armador' : undefined, label: role };
+  });
+}
+
+/** Crea las fichas de un equipo en la formación pedida. */
+export function formationTokens(
+  team: Team,
+  rotation: Zone,
+  phase: Phase,
+  { system = '5-1', lineup = {}, attackSide = 'zona4', setterZone = 3 }: FormationOptions = {},
+): PlayerToken[] {
+  const placed: Placed[] =
+    system === '4-2'
+      ? place42(rotation, phase, attackSide)
+      : system === '6-0'
+        ? place60(rotation, phase, attackSide, setterZone)
+        : place51(rotation, phase, attackSide).map((p) => ({ ...p, position: ROLE_POSITION[p.role], label: ROLE_LABEL[p.role] }));
+
+  return placed.map(({ role, zone, spot, position, label }) => {
     const player = lineup[role];
     return {
       id: roleTokenId(team, role),
       kind: 'player',
       team,
       zone,
-      role: ROLE_POSITION[role],
+      role: position,
       playerId: player?.id,
-      label: player ? String(player.number) : ROLE_LABEL[role],
+      label: player ? String(player.number) : label,
       ...(spot ? toCourt(team, spot.depth, spot.lateral) : zoneBasePosition(team, zone)),
     };
   });
@@ -190,5 +321,6 @@ export function formationTokens(
 
 /** Ids de las fichas que coloca una formación (para reemplazarlas). */
 export function formationTokenIds(team: Team): Set<string> {
-  return new Set([...ROLE_ORDER, 'L' as const].map((r) => roleTokenId(team, r)));
+  const roles: SystemRole[] = [...ROLE_ORDER, ...ROLE_ORDER_42, ...ROLE_ORDER_60, 'L'];
+  return new Set(roles.map((r) => roleTokenId(team, r)));
 }

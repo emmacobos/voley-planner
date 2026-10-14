@@ -38,23 +38,26 @@ export default function App() {
             Planteles
           </a>
         </nav>
-        <div className="sidebar-bottom">
-          <ThemeToggle />
-          <AccountMenu />
-        </div>
       </aside>
       <ImportDialog />
-      <main>
-        {/* La key reinicia el error al navegar a otra pantalla. */}
-        <ErrorBoundary key={window.location.hash}>
-          {route.name === 'sessions' && <SessionList />}
-          {route.name === 'session' && <SessionEditor id={route.id} />}
-          {route.name === 'session-print' && <SessionPrint id={route.id} />}
-          {route.name === 'roster' && <RosterPage />}
-          {route.name === 'exercises' && <ExerciseList />}
-          {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
-        </ErrorBoundary>
-      </main>
+      <div className="app-body">
+        {/* Tema y cuenta, siempre a la vista arriba a la derecha. */}
+        <header className="topbar">
+          <ThemeToggle />
+          <AccountMenu />
+        </header>
+        <main>
+          {/* La key reinicia el error al navegar a otra pantalla. */}
+          <ErrorBoundary key={window.location.hash}>
+            {route.name === 'sessions' && <SessionList />}
+            {route.name === 'session' && <SessionEditor id={route.id} />}
+            {route.name === 'session-print' && <SessionPrint id={route.id} />}
+            {route.name === 'roster' && <RosterPage />}
+            {route.name === 'exercises' && <ExerciseList />}
+            {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
+          </ErrorBoundary>
+        </main>
+      </div>
     </div>
   );
 }

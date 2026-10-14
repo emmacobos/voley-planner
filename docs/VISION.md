@@ -40,10 +40,10 @@ de entrenamiento y, más adelante, ciclos de temporada.
   plantel).
 - Pelota, conos, carros de pelotas y entrenadores.
 - Flechas de desplazamiento y de trayectoria de la pelota.
-- **Rotaciones predefinidas** (sistema 5-1, las 6 rotaciones) para cada
+- **Rotaciones predefinidas** (sistemas 5-1, 4-2 y 6-0, las 6 rotaciones) para cada
   equipo, con formaciones de K1 (recepción y ataque), K2 (saque) y defensa
-  (perimetral y 6 adelante, según por dónde ataca el rival). El líbero entra
-  por el central zaguero.
+  (perimetral y 6 adelante, según por dónde ataca el rival). En 5-1 y 4-2 el
+  líbero entra por el central zaguero; el 6-0 juega sin líbero.
 - **Validación de reglas de rotación**: avisa si hay falta de posición. Se
   controla solo al equipo que recibe en el momento del saque (con las reglas
   nuevas, el equipo que saca no tiene faltas de posición, y con la pelota en
@@ -75,7 +75,7 @@ reales lo antes posible.
 
 ### Etapa 1 — MVP: pizarra + biblioteca de ejercicios ✅
 - Pizarra de cancha completa con todos los elementos.
-- Rotaciones 5-1 con formaciones K1, K2 y defensas, y validación de faltas
+- Rotaciones 5-1, 4-2 y 6-0 con formaciones K1, K2 y defensas, y validación de faltas
   de posición según el momento de cada paso.
 - Pasos y animación con reproducción, velocidad y deshacer.
 - Varios planteles con nombre (nombre, número y posición de cada jugador) y

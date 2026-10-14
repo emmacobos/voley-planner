@@ -1,7 +1,7 @@
 # 🏐 Voley Planner
 
 Pizarra táctica para planificar entrenamientos de voleibol: cancha completa con
-los dos equipos, rotaciones del 5-1 con control de faltas de posición, jugadas
+los dos equipos, rotaciones de los sistemas 5-1, 4-2 y 6-0 con control de faltas de posición, jugadas
 animadas paso a paso, una biblioteca de ejercicios (analíticos, sintéticos y
 globales) y sesiones de entrenamiento por bloques que se exportan a PDF.
 
@@ -19,11 +19,18 @@ La visión completa del producto y la hoja de ruta están en
    duración, intensidad, objetivo y notas, y marcá los jugadores que
    participan.
 3. **Pizarra:**
-   - *Sistema 5-1*: elegí equipo y rotación y colocá una formación: zonas
-     (base), K1 recepción, K1 ataque, K2 saque, defensa perimetral o defensa
-     6 adelante (con el ataque rival por zona 4 o zona 2). En el equipo A usa
-     los jugadores del ejercicio según su posición, y el líbero entra por el
-     central zaguero.
+   - *Sistema de juego*: elegí el sistema (**5-1**, **4-2** o **6-0**, se
+     guarda en el ejercicio), el equipo y la rotación, y colocá una formación:
+     zonas (base), K1 recepción, K1 ataque, K2 saque, defensa perimetral o
+     defensa 6 adelante (con el ataque rival por zona 4 o zona 2). En el equipo
+     A usa los jugadores del ejercicio según su posición.
+     - *5-1*: un armador que arma en las 6 rotaciones (penetra desde atrás),
+       opuesto, 2 puntas, 2 centrales; el líbero entra por el central zaguero.
+     - *4-2*: dos armadores enfrentados; arma siempre el que está adelante y
+       el otro juega atrás como opuesto. Si hay un solo armador, el opuesto
+       hace de segundo. Líbero por el central zaguero.
+     - *6-0*: seis jugadores universales, sin líbero; arma el que pasa por la
+       zona 3 o la zona 2 (se elige) y en recepción los otros 5 forman la W.
    - *Agregar* suma jugadores, pelota, conos, entrenadores y carros.
    - *Mover* para arrastrar; *Flecha desplazamiento*, *Flecha pelota*,
      *Flecha curva* y *Curva punteada* para dibujar arrastrando sobre la
@@ -38,6 +45,9 @@ La visión completa del producto y la hoja de ruta están en
      acompaña al bloqueo.
    - *Texto*: tocá la cancha para escribir. Se puede mover, tiene tres
      tamaños (chico, mediano, grande) y cuatro colores.
+   - Al tocar un elemento se abre su **tarjeta** al lado, sobre la pizarra,
+     con todo lo que se puede cambiar (en el celular aparece debajo de la
+     pizarra). Se cierra con la ✕ o con Esc.
    - Al seleccionar un jugador aparece, al lado del tachito, el **globito de
      comentario**: lo que escribas (por ejemplo "Se desplaza a 1") se ve
      debajo del jugador en la pizarra. Cada paso tiene su propio comentario.
@@ -60,7 +70,7 @@ La visión completa del producto y la hoja de ruta están en
 7. **Exportar PDF:** abre una versión para imprimir con toda la sesión y las
    pizarras; en el diálogo de impresión elegí "Guardar como PDF".
 
-En el menú lateral podés pasar a **modo oscuro** (se recuerda en cada
+Arriba a la derecha están tu **cuenta** y el botón de **modo oscuro** (se recuerda en cada
 navegador; la primera vez toma la preferencia del sistema). La pantalla de
 Sesiones muestra el **resumen de la semana**: sesiones, minutos planificados,
 reparto por tipo de ejercicio y la próxima sesión.

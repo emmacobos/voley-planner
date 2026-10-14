@@ -1,6 +1,6 @@
 import { useTheme } from '../theme';
 
-/** Botón del menú para pasar de modo claro a oscuro y viceversa. */
+/** Botón de la barra superior para pasar de modo claro a oscuro y viceversa. */
 export function ThemeToggle() {
   const { theme, toggle } = useTheme();
   const dark = theme === 'dark';
