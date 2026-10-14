@@ -27,6 +27,10 @@ Correr lint, tests y build antes de cada commit.
 - Con cuenta, `src/cloud/sync.ts` sincroniza el store con Firestore en
   `users/{uid}/{squads|players|exercises|sessions|matches|weeks|templates}/{id}` (un documento por entidad). Una colección
   nueva tiene que sumarse a `DATA_KEYS` en `src/store.ts`.
+- Compartir con el cuerpo técnico (`src/cloud/sharing.ts`): `users/{uid}/shares/{email}` (a quién comparte
+  la dueña) e `invites/{email}/from/{uid}` (lo que ve la persona invitada, rol `ver` o `editar`). Las reglas
+  dan acceso a quien tiene invitación y email verificado. Para probar en local contra los emuladores:
+  `VITE_FIREBASE_EMULATOR=1 npm run dev` con `firebase emulators:start --only auth,firestore` (puertos 9099 y 8089).
 - Proyecto Firebase `voley-planner` (plan Spark). Las reglas están en `firestore.rules` y se
   publican a mano en la consola de Firebase: si cambian, avisarle a la usuaria.
 

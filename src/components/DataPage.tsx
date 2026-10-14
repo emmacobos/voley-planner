@@ -6,6 +6,7 @@ import type { Backup, BackupData } from '../domain/backup';
 import { todayISO } from '../domain/sessions';
 import { DATA_KEYS, useAppStore } from '../store';
 import { lastBackupAt, rememberBackup } from '../utils/backupReminder';
+import { TeamSharing } from './TeamSharing';
 import type { AppData } from '../store';
 
 const currentData = (): BackupData => {
@@ -120,6 +121,8 @@ export function DataPage() {
             </div>
           )}
         </section>
+
+        <TeamSharing />
       </div>
     </div>
   );

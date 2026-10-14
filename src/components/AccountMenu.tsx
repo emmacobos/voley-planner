@@ -4,6 +4,7 @@ import { useSyncStatus } from '../cloud/sync';
 import type { SyncState } from '../cloud/sync';
 import { hasData, useAppStore } from '../store';
 import { AuthDialog } from './AuthDialog';
+import { ROLE_LABEL, openWorkspace, useSharing } from '../cloud/sharing';
 
 const SYNC_LABEL: Record<SyncState, string> = {
   off: '',
@@ -12,6 +13,7 @@ const SYNC_LABEL: Record<SyncState, string> = {
   saved: 'Guardado en la nube',
   offline: 'Sin conexión: se guarda al volver',
   error: 'Error al guardar',
+  readonly: 'Solo lectura',
 };
 
 /** Cuenta, arriba a la derecha: entrar, estado de sincronización y salir. */
@@ -22,6 +24,8 @@ export function AccountMenu() {
   const [dialog, setDialog] = useState(false);
   const [open, setOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const sharedWithMe = useSharing((s) => s.sharedWithMe);
+  const workspace = useSharing((s) => s.workspace);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -78,6 +82,30 @@ export function AccountMenu() {
         <div className="account-dropdown">
           <p className="account-name">{user.name ?? 'Mi cuenta'}</p>
           {user.email && <p className="muted small">{user.email}</p>}
+          {sharedWithMe.length > 0 && (
+            <div className="workspace-switch" role="group" aria-label="Datos que ves">
+              <p className="muted small">Datos que ves</p>
+              <button className={!workspace ? 'active' : ''} onClick={() => openWorkspace(null)} aria-pressed={!workspace}>
+                Mis datos
+              </button>
+              {sharedWithMe.map((w) => (
+                <button
+                  key={w.ownerUid}
+                  className={workspace?.ownerUid === w.ownerUid ? 'active' : ''}
+                  aria-pressed={workspace?.ownerUid === w.ownerUid}
+                  onClick={() => {
+                    openWorkspace(w);
+                    setOpen(false);
+                  }}
+                >
+                  {w.ownerName} <span className="muted small">· {ROLE_LABEL[w.role]}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          <a className="account-link" href="#/datos" onClick={() => setOpen(false)}>
+            Compartir con el cuerpo técnico
+          </a>
           {sync.state === 'error' && (
             <p className="form-error small">No se pudieron guardar algunos cambios. Recargá la página para reintentar.</p>
           )}

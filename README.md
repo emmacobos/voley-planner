@@ -124,6 +124,16 @@ o **Reemplazar todo**. Sirve también para pasar los datos a otra compu. Si
 usás la app sin cuenta y hace más de un mes que no bajás una copia, el inicio
 te lo recuerda.
 
+### Cuerpo técnico
+
+Con tu cuenta, en **Tus datos → Cuerpo técnico** invitás por email a tu
+asistente o preparador físico con permiso **Puede ver** o **Puede editar**
+(se cambia o se quita cuando quieras). La persona entra con esa cuenta —si
+usa email y contraseña, primero verifica su email— y elige ver tus datos
+desde su menú de cuenta o desde *Tus datos*. Mientras los ve, un aviso arriba
+indica de quién son; con solo lectura, los cambios no se guardan. Si dejás de
+compartir, vuelve automáticamente a sus propios datos.
+
 ### Tu cuenta
 
 La app se puede usar sin cuenta: los datos quedan solo en ese navegador. Con

@@ -1,3 +1,4 @@
+import { FirebaseError } from 'firebase/app';
 import { collection, deleteDoc, doc, onSnapshot, setDoc, writeBatch } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
 import { create } from 'zustand';
@@ -16,9 +17,11 @@ import { diffCollection, mergeRemote } from './diff';
  * - Subida: cada cambio del store se compara con el estado anterior y los
  *   documentos modificados se escriben con un pequeño retraso, para no hacer
  *   una escritura por cada tecla.
+ * - Datos compartidos: se puede sincronizar con la cuenta de otra persona del
+ *   cuerpo técnico. En modo solo lectura, los cambios locales se deshacen.
  */
 
-export type SyncState = 'off' | 'loading' | 'saving' | 'saved' | 'offline' | 'error';
+export type SyncState = 'off' | 'loading' | 'saving' | 'saved' | 'offline' | 'error' | 'readonly';
 
 interface SyncStatus {
   state: SyncState;
@@ -33,6 +36,10 @@ const MAX_WAIT_MS = 4000;
 type Pending = { key: DataKey; id: string; data: unknown | null };
 
 let uid: string | null = null;
+let readOnly = false;
+let onDenied: (() => void) | undefined;
+/** Último estado recibido de la nube (para deshacer cambios en solo lectura). */
+const remoteState = new Map<DataKey, unknown[]>();
 let unsubscribers: Unsubscribe[] = [];
 let applyingRemote = false;
 let loaded = new Set<DataKey>();
@@ -48,6 +55,7 @@ function refreshStatus() {
   if (useSyncStatus.getState().state === 'error') return;
   let state: SyncState;
   if (loaded.size < DATA_KEYS.length) state = 'loading';
+  else if (readOnly) state = 'readonly';
   else if (pending.size + inFlight > 0) state = navigator.onLine ? 'saving' : 'offline';
   else state = 'saved';
   useSyncStatus.setState({ state });
@@ -55,6 +63,13 @@ function refreshStatus() {
 
 function fail(err: unknown) {
   console.error(err);
+  // Se perdió el acceso a datos compartidos: volver a los propios.
+  if (err instanceof FirebaseError && err.code === 'permission-denied' && onDenied) {
+    const denied = onDenied;
+    onDenied = undefined;
+    denied();
+    return;
+  }
   useSyncStatus.setState({ state: 'error', error: err instanceof Error ? err.message : String(err) });
 }
 
@@ -80,6 +95,7 @@ function applyRemote(key: DataKey, remote: Item[]) {
   }
   const local = useAppStore.getState()[key] as unknown as Item[];
   const sorted = [...mergeRemote(remote, local, pendingForKey)].sort(SORTERS[key]);
+  remoteState.set(key, sorted);
   applyingRemote = true;
   try {
     useAppStore.setState({ [key]: sorted } as unknown as Partial<AppData>);
@@ -119,6 +135,20 @@ export function flush() {
 
 function onStoreChange(state: AppData, prev: AppData) {
   if (applyingRemote || !uid) return;
+  if (readOnly) {
+    // Solo lectura: se vuelve a lo que hay en la nube.
+    const revert: Partial<Record<DataKey, unknown[]>> = {};
+    for (const key of DATA_KEYS) {
+      if (state[key] !== prev[key]) revert[key] = remoteState.get(key) ?? prev[key];
+    }
+    applyingRemote = true;
+    try {
+      useAppStore.setState(revert as Partial<AppData>);
+    } finally {
+      applyingRemote = false;
+    }
+    return;
+  }
   let changed = false;
   for (const key of DATA_KEYS) {
     if (state[key] === prev[key]) continue;
@@ -130,10 +160,20 @@ function onStoreChange(state: AppData, prev: AppData) {
   if (changed) schedule();
 }
 
-/** Empieza a sincronizar el store con la cuenta indicada. */
-export function startSync(userId: string) {
+export interface SyncOptions {
+  /** Datos compartidos con permiso de solo ver. */
+  readOnly?: boolean;
+  /** Se llama si la nube niega el acceso (por ejemplo, dejaron de compartir). */
+  onDenied?: () => void;
+}
+
+/** Empieza a sincronizar el store con la cuenta indicada (la propia o una compartida). */
+export function startSync(userId: string, options: SyncOptions = {}) {
   stopSync();
   uid = userId;
+  readOnly = options.readOnly ?? false;
+  onDenied = options.onDenied;
+  remoteState.clear();
   loaded = new Set();
   useSyncStatus.setState({ state: 'loading', error: null });
   for (const key of DATA_KEYS) {
@@ -160,6 +200,8 @@ export function stopSync() {
   for (const u of unsubscribers) u();
   unsubscribers = [];
   uid = null;
+  readOnly = false;
+  onDenied = undefined;
   window.removeEventListener('online', refreshStatus);
   window.removeEventListener('offline', refreshStatus);
   window.removeEventListener('pagehide', flush);

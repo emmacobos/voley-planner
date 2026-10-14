@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { connectAuthEmulator, getAuth } from 'firebase/auth';
+import { connectFirestoreEmulator, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 
 /**
  * Configuración pública del proyecto de Firebase. No es secreta: la seguridad
@@ -29,3 +29,9 @@ export const db = initializeFirestore(app, {
   // Los campos opcionales (por ejemplo el teléfono de un jugador) pueden ser undefined.
   ignoreUndefinedProperties: true,
 });
+
+// Solo para probar en desarrollo contra los emuladores de Firebase (VITE_FIREBASE_EMULATOR=1).
+if (import.meta.env.DEV && import.meta.env.VITE_FIREBASE_EMULATOR) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, '127.0.0.1', 8089);
+}

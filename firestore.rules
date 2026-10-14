@@ -1,9 +1,52 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Cada usuario solo puede leer y escribir sus propios datos.
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Email verificado de quien hace el pedido (en minúsculas).
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    function verified() {
+      return signedIn() && request.auth.token.email != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function invitePath(userId) {
+      return /databases/$(database)/documents/invites/$(myEmail())/from/$(userId);
+    }
+
+    // Cuerpo técnico: quien tiene una invitación puede ver los datos; con rol "editar", también cambiarlos.
+    function canRead(userId) {
+      return isOwner(userId) || (verified() && exists(invitePath(userId)));
+    }
+
+    function canEdit(userId) {
+      return isOwner(userId) || (verified() && exists(invitePath(userId)) && get(invitePath(userId)).data.role == 'editar');
+    }
+
+    // A quién compartió cada cuenta: lo cambia solo la dueña.
+    match /users/{userId}/shares/{email} {
+      allow read: if canRead(userId);
+      allow write: if isOwner(userId);
+    }
+
+    // Datos de cada cuenta (planteles, jugadores, ejercicios, sesiones, partidos, semanas, plantillas).
+    match /users/{userId}/{collection}/{docId} {
+      allow read: if canRead(userId);
+      allow write: if collection != 'shares' && canEdit(userId);
+    }
+
+    // Invitaciones: las crea la dueña de los datos y las lee la persona invitada.
+    match /invites/{email}/from/{ownerId} {
+      allow read: if isOwner(ownerId) || (verified() && myEmail() == email);
+      allow write: if isOwner(ownerId);
     }
   }
 }

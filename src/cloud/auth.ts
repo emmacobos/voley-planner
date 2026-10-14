@@ -14,6 +14,7 @@ import { create } from 'zustand';
 import { DATA_KEYS, hasData, useAppStore } from '../store';
 import type { AppData } from '../store';
 import { auth, db } from './firebase';
+import { forgetWorkspace, openWorkspace, savedWorkspace, startSharing, stopSharing } from './sharing';
 import { flush, startSync, stopSync, uploadAll } from './sync';
 
 export interface AccountUser {
@@ -40,6 +41,7 @@ export function initAuth() {
     const store = useAppStore.getState();
     if (!fbUser) {
       stopSync();
+      stopSharing();
       // Si los datos del navegador eran de una cuenta (por ejemplo, venció la
       // sesión), no se dejan visibles sin entrar.
       if (store.ownerUid) store.resetData(null);
@@ -54,9 +56,14 @@ export function initAuth() {
       photoURL: fbUser.photoURL,
     };
     useAuth.setState({ ready: true, user });
+    startSharing(user);
 
+    const workspace = savedWorkspace();
     if (store.ownerUid === user.uid) {
       startSync(user.uid);
+    } else if (workspace && store.ownerUid === workspace.ownerUid) {
+      // Estaba viendo datos compartidos por otra cuenta.
+      openWorkspace(workspace);
     } else if (store.ownerUid === null && hasData(store)) {
       // Primera vez que entra en este navegador y hay datos sin cuenta: preguntar.
       const counts = Object.fromEntries(DATA_KEYS.map((k) => [k, store[k].length])) as Record<keyof AppData, number>;
@@ -117,6 +124,7 @@ export const resetPassword = (email: string) => sendPasswordResetEmail(auth, ema
  */
 export async function logOut() {
   flush();
+  forgetWorkspace();
   await Promise.race([waitForPendingWrites(db), new Promise((r) => setTimeout(r, 8000))]);
   stopSync();
   await signOut(auth);
