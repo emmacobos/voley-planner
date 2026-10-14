@@ -26,7 +26,7 @@ export function GettingStarted() {
     {
       done: exercises > 0,
       title: 'Creá tu primer ejercicio',
-      detail: 'Dibujalo en la pizarra, usá las formaciones del 5-1 y animalo paso a paso.',
+      detail: 'Dibujalo en la pizarra, usá las formaciones del 5-1, 4-2 o 6-0 y animalo paso a paso.',
       action: { label: '+ Nuevo ejercicio', run: () => navigate(`/ejercicios/${createExercise()}`) },
     },
     {

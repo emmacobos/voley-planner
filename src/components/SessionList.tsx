@@ -167,9 +167,12 @@ export function SessionList() {
     <div className="page">
       <div className="page-header">
         <h1>Sesiones de entrenamiento</h1>
-        <button className="primary" onClick={() => navigate(`/sesiones/${createSession()}`)}>
-          + Nueva sesión
-        </button>
+        {/* Sin sesiones, la guía de primeros pasos indica qué hacer primero. */}
+        {sessions.length > 0 && (
+          <button className="primary" onClick={() => navigate(`/sesiones/${createSession()}`)}>
+            + Nueva sesión
+          </button>
+        )}
       </div>
 
       {sessions.length === 0 ? (

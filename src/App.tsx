@@ -38,6 +38,7 @@ export default function App() {
             Planteles
           </a>
         </nav>
+        <Credits />
       </aside>
       <ImportDialog />
       <div className="app-body">
@@ -57,8 +58,19 @@ export default function App() {
             {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
           </ErrorBoundary>
         </main>
+        <Credits footer />
       </div>
     </div>
+  );
+}
+
+/** Créditos de la autora: al pie del menú (y al final de la página en el celular). */
+function Credits({ footer = false }: { footer?: boolean }) {
+  return (
+    <p className={footer ? 'credits credits-footer' : 'credits'}>
+      <span className="credits-label">Creada por</span>
+      <span className="credits-name">Emma Cobos</span>
+    </p>
   );
 }
 
