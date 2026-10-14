@@ -1,6 +1,7 @@
 import { AccountMenu } from './components/AccountMenu';
 import { BallLogo } from './components/BallLogo';
 import { CalendarPage } from './components/CalendarPage';
+import { DataPage } from './components/DataPage';
 import { DemoBanner } from './components/DemoBanner';
 import { ExerciseEditor } from './components/ExerciseEditor';
 import { ExerciseList } from './components/ExerciseList';
@@ -44,6 +45,10 @@ export default function App() {
             <NavIcon d="M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M17.5 11.5a2.5 2.5 0 1 0 0-5M17 14.6c2.3.3 3.9 2 4.5 4.9" />
             Planteles
           </a>
+          <a className={route.name === 'data' ? 'active' : ''} href="#/datos">
+            <NavIcon d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+            Tus datos
+          </a>
         </nav>
         <Credits />
       </aside>
@@ -64,6 +69,7 @@ export default function App() {
             {route.name === 'roster' && <RosterPage />}
             {route.name === 'calendar' && <CalendarPage />}
             {route.name === 'library' && <LibraryPage />}
+            {route.name === 'data' && <DataPage />}
             {route.name === 'exercises' && <ExerciseList />}
             {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
           </ErrorBoundary>

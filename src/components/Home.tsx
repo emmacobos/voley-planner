@@ -7,6 +7,7 @@ import type { BlockKind, Exercise, TrainingSession } from '../domain/types';
 import { navigate } from '../hooks/useHashRoute';
 import { useAppStore } from '../store';
 import { NewSessionButton } from './NewSessionButton';
+import { backupIsDue } from '../utils/backupReminder';
 
 /** Colores de cada tipo de bloque (los mismos que en el editor de sesiones). */
 const BLOCK_COLORS: Record<BlockKind, string> = {
@@ -86,6 +87,8 @@ export function HomeOverview({ sessions, exercisesById }: { sessions: TrainingSe
     .filter((s) => s.date >= today)
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
   const [tip] = useState(() => TIPS[new Date().getDate() % TIPS.length]);
+  const user = useAuth((s) => s.user);
+  const [remindBackup] = useState(backupIsDue);
 
   return (
     <div className="home-grid">
@@ -157,9 +160,16 @@ export function HomeOverview({ sessions, exercisesById }: { sessions: TrainingSe
             <span>jugadores</span>
           </div>
         </div>
-        <p className="home-tip">
-          💡 <b>Tip:</b> {tip}
-        </p>
+        {!user && remindBackup ? (
+          <p className="home-tip">
+            💾 <b>Tus datos están solo en este navegador.</b> <a href="#/datos">Descargá una copia de seguridad</a> o entrá
+            con tu cuenta para guardarlos en la nube.
+          </p>
+        ) : (
+          <p className="home-tip">
+            💡 <b>Tip:</b> {tip}
+          </p>
+        )}
       </section>
     </div>
   );

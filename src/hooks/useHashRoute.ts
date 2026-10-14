@@ -8,12 +8,14 @@ export type Route =
   | { name: 'exercise'; id: string }
   | { name: 'roster' }
   | { name: 'calendar' }
-  | { name: 'library' };
+  | { name: 'library' }
+  | { name: 'data' };
 
 function parse(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   if (parts[0] === 'plantel') return { name: 'roster' };
   if (parts[0] === 'calendario') return { name: 'calendar' };
+  if (parts[0] === 'datos') return { name: 'data' };
   if (parts[0] === 'ejercicios' && parts[1] === 'modelos') return { name: 'library' };
   if (parts[0] === 'ejercicios') return parts[1] ? { name: 'exercise', id: parts[1] } : { name: 'exercises' };
   if (parts[0] === 'sesiones' && parts[1]) {

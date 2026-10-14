@@ -110,6 +110,15 @@ reparto por tipo de ejercicio y la próxima sesión.
 Atajos: `Ctrl+Z` deshacer, `Ctrl+Shift+Z` rehacer, `Supr` eliminar el
 elemento seleccionado, `Esc` deseleccionar.
 
+### Copia de seguridad
+
+En **Tus datos** descargás un archivo `.json` con todo (planteles, jugadores,
+ejercicios, sesiones, partidos y plantillas) y lo restaurás cuando quieras:
+**Sumar a lo que tengo** (agrega lo que falta y se queda con lo más reciente)
+o **Reemplazar todo**. Sirve también para pasar los datos a otra compu. Si
+usás la app sin cuenta y hace más de un mes que no bajás una copia, el inicio
+te lo recuerda.
+
 ### Tu cuenta
 
 La app se puede usar sin cuenta: los datos quedan solo en ese navegador. Con

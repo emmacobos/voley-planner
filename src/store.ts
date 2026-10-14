@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { BackupKey } from './domain/backup';
 import { buildDemoData, isDemoId } from './domain/demo';
 import type { LibraryExercise } from './domain/library';
 import { newId } from './domain/ids';
@@ -19,6 +20,9 @@ export interface AppData {
 
 export const DATA_KEYS = ['squads', 'players', 'exercises', 'sessions', 'matches', 'weeks', 'templates'] as const;
 export type DataKey = (typeof DATA_KEYS)[number];
+
+/** Las copias de seguridad tienen que incluir todas las colecciones (y solo esas). */
+export const BACKUP_COVERS_ALL_DATA: [DataKey, BackupKey] extends [BackupKey, DataKey] ? true : never = true;
 
 export const EMPTY_DATA: AppData = {
   squads: [],
@@ -42,6 +46,8 @@ interface AppState extends AppData {
   ownerUid: string | null;
   /** Reemplaza todos los datos (por ejemplo al salir de la cuenta). */
   resetData: (ownerUid: string | null) => void;
+  /** Reemplaza los datos por los de una copia de seguridad. */
+  restoreData: (data: AppData) => void;
   addSquad: (name: string) => string;
   renameSquad: (id: string, name: string) => void;
   /** Elimina el plantel y sus jugadores. */
@@ -125,6 +131,7 @@ export const useAppStore = create<AppState>()(
       ownerUid: null,
 
       resetData: (ownerUid) => set({ ...EMPTY_DATA, ownerUid }),
+      restoreData: (data) => set(Object.fromEntries(DATA_KEYS.map((k) => [k, data[k] ?? []])) as Partial<AppState>),
 
       addSquad: (name) => {
         const id = newId();
