@@ -5,7 +5,18 @@ import { buildDemoData, isDemoId } from './domain/demo';
 import type { LibraryExercise } from './domain/library';
 import { newId } from './domain/ids';
 import { defaultBlocks, todayISO } from './domain/sessions';
-import type { Exercise, Frame, Match, Player, SessionBlock, SessionTemplate, Squad, TrainingSession, WeekPlan } from './domain/types';
+import type {
+  Exercise,
+  Frame,
+  Match,
+  Player,
+  SeasonPhase,
+  SessionBlock,
+  SessionTemplate,
+  Squad,
+  TrainingSession,
+  WeekPlan,
+} from './domain/types';
 
 /** Datos del usuario (lo que se sincroniza con la nube). */
 export interface AppData {
@@ -16,9 +27,10 @@ export interface AppData {
   matches: Match[];
   weeks: WeekPlan[];
   templates: SessionTemplate[];
+  phases: SeasonPhase[];
 }
 
-export const DATA_KEYS = ['squads', 'players', 'exercises', 'sessions', 'matches', 'weeks', 'templates'] as const;
+export const DATA_KEYS = ['squads', 'players', 'exercises', 'sessions', 'matches', 'weeks', 'templates', 'phases'] as const;
 export type DataKey = (typeof DATA_KEYS)[number];
 
 /** Las copias de seguridad tienen que incluir todas las colecciones (y solo esas). */
@@ -32,6 +44,7 @@ export const EMPTY_DATA: AppData = {
   matches: [],
   weeks: [],
   templates: [],
+  phases: [],
 };
 
 export function hasData(data: AppData): boolean {
@@ -77,6 +90,10 @@ interface AppState extends AppData {
   removeMatch: (id: string) => void;
   /** Objetivo de la semana (vacío lo borra). */
   setWeekObjective: (weekStart: string, squadId: string | null, objective: string) => void;
+  /** Crea una etapa de la temporada y devuelve su id. */
+  createPhase: (phase: Omit<SeasonPhase, 'id' | 'createdAt' | 'updatedAt'>) => string;
+  updatePhase: (id: string, patch: Partial<Omit<SeasonPhase, 'id'>>) => void;
+  removePhase: (id: string) => void;
   /** Suma el plantel, los ejercicios y la sesión de ejemplo. */
   loadDemo: () => void;
   /** Borra todo lo que vino con el ejemplo. */
@@ -128,6 +145,7 @@ export const useAppStore = create<AppState>()(
       matches: [],
       weeks: [],
       templates: [],
+      phases: [],
       ownerUid: null,
 
       resetData: (ownerUid) => set({ ...EMPTY_DATA, ownerUid }),
@@ -356,6 +374,15 @@ export const useAppStore = create<AppState>()(
           return { weeks: objective.trim() ? [...rest, { id, weekStart, squadId, objective }] : rest };
         }),
 
+      createPhase: (phase) => {
+        const id = newId();
+        set((s) => ({ phases: [...s.phases, { ...phase, id, createdAt: now(), updatedAt: now() }] }));
+        return id;
+      },
+      updatePhase: (id, patch) =>
+        set((s) => ({ phases: s.phases.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: now() } : p)) })),
+      removePhase: (id) => set((s) => ({ phases: s.phases.filter((p) => p.id !== id) })),
+
       loadDemo: () => {
         if (hasDemo(get())) return;
         const demo = buildDemoData();
@@ -366,6 +393,7 @@ export const useAppStore = create<AppState>()(
           sessions: [...demo.sessions, ...s.sessions],
           matches: [...s.matches, ...demo.matches],
           weeks: [...s.weeks, ...demo.weeks],
+          phases: [...s.phases, ...demo.phases],
         }));
       },
 
@@ -389,6 +417,7 @@ export const useAppStore = create<AppState>()(
             squads: s.squads.filter(keep),
             players: s.players.filter(keep),
             matches: s.matches.filter(keep).map(unSquad),
+            phases: s.phases.filter(keep).map(unSquad),
             weeks: s.weeks.filter((x) => !isDemoId(x.squadId ?? '')),
             exercises: s.exercises
               .filter(keep)
@@ -416,7 +445,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'voley-planner',
-      version: 5,
+      version: 6,
       migrate: (persisted, version) => {
         let state = persisted as Partial<AppState>;
         if (version < 2) {
@@ -444,6 +473,10 @@ export const useAppStore = create<AppState>()(
         if (version < 5) {
           // v5 agrega las plantillas de sesión.
           state = { ...state, templates: [] };
+        }
+        if (version < 6) {
+          // v6 agrega las etapas de la temporada.
+          state = { ...state, phases: [] };
         }
         return state as AppState;
       },

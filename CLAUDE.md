@@ -27,7 +27,7 @@ Correr lint, tests y build antes de cada commit (y `test:e2e` si se toca la piza
 - Todo se guarda en `localStorage` (Zustand `persist`, clave `voley-planner`). Si cambia la forma
   del estado, subir `version` en `src/store.ts` y agregar el paso en `migrate` para no perder datos.
 - Con cuenta, `src/cloud/sync.ts` sincroniza el store con Firestore en
-  `users/{uid}/{squads|players|exercises|sessions|matches|weeks|templates}/{id}` (un documento por entidad). Una colección
+  `users/{uid}/{squads|players|exercises|sessions|matches|weeks|templates|phases}/{id}` (un documento por entidad). Una colección
   nueva tiene que sumarse a `DATA_KEYS` en `src/store.ts`.
 - Compartir con el cuerpo técnico (`src/cloud/sharing.ts`): `users/{uid}/shares/{email}` (a quién comparte
   la dueña) e `invites/{email}/from/{uid}` (lo que ve la persona invitada, rol `ver` o `editar`). Las reglas

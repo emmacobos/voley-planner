@@ -1,5 +1,5 @@
 /** Colecciones que entran en una copia de seguridad (las mismas que se guardan en la nube). */
-export const BACKUP_KEYS = ['squads', 'players', 'exercises', 'sessions', 'matches', 'weeks', 'templates'] as const;
+export const BACKUP_KEYS = ['squads', 'players', 'exercises', 'sessions', 'matches', 'weeks', 'templates', 'phases'] as const;
 export type BackupKey = (typeof BACKUP_KEYS)[number];
 
 type Item = { id: string; updatedAt?: string };
@@ -56,7 +56,8 @@ export function mergeBackup(current: BackupData, incoming: BackupData): BackupDa
   const result = {} as BackupData;
   for (const key of BACKUP_KEYS) {
     const byId = new Map((current[key] ?? []).map((x) => [x.id, x]));
-    for (const item of incoming[key]) {
+    // Copias viejas (por ejemplo, las automáticas) pueden no tener las colecciones nuevas.
+    for (const item of incoming[key] ?? []) {
       const mine = byId.get(item.id);
       if (!mine || (item.updatedAt ?? '') > (mine.updatedAt ?? '')) byId.set(item.id, item);
     }
@@ -74,7 +75,9 @@ export function describeBackup(data: BackupData): string {
     ['sessions', 'sesión', 'sesiones'],
     ['matches', 'partido', 'partidos'],
     ['templates', 'plantilla', 'plantillas'],
+    ['phases', 'etapa', 'etapas'],
   ];
-  const parts = labels.filter(([k]) => data[k].length).map(([k, one, many]) => `${data[k].length} ${data[k].length === 1 ? one : many}`);
+  const count = (k: BackupKey) => data[k]?.length ?? 0;
+  const parts = labels.filter(([k]) => count(k)).map(([k, one, many]) => `${count(k)} ${count(k) === 1 ? one : many}`);
   return parts.length ? parts.join(', ') : 'nada';
 }

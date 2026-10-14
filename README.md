@@ -134,7 +134,16 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    *rotación a trabajar*. La primera vez se abre un tutorial paso a paso
    (después, con **¿Cómo se usa?**). El ejemplo trae un partido jugado con
    estadísticas.
-10. **Exportar PDF:** abre una versión para imprimir con toda la sesión y las
+10. **Temporada:** el año dividido en etapas de varias semanas
+   (pretemporada, competencia, puesta a punto…), cada una con su objetivo y
+   sus contenidos prioritarios, en una línea de tiempo con el día de hoy. Cada
+   etapa muestra sesiones, horas, partidos (ganados y perdidos) y los minutos
+   de cada contenido (saque, recepción, armado, ataque, bloqueo, defensa,
+   contraataque, físico, juego); avisa si una prioridad todavía no se trabajó.
+   **Lo trabajado en el mes** muestra lo mismo mes a mes. Los contenidos de
+   cada ejercicio se marcan en *Qué se trabaja* (si no, se deducen del nombre
+   y el objetivo).
+11. **Exportar PDF:** abre una versión para imprimir con toda la sesión y las
    pizarras; en el diálogo de impresión elegí "Guardar como PDF".
 
 Arriba a la derecha están tu **cuenta** y el botón de **modo oscuro** (se recuerda en cada

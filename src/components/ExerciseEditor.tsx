@@ -2,6 +2,7 @@ import { navigate } from '../hooks/useHashRoute';
 import { useAppStore } from '../store';
 import { EXERCISE_TYPES, INTENSITIES, positionLabel } from '../domain/types';
 import type { ExerciseType, Intensity } from '../domain/types';
+import { CONTENTS, exerciseContents } from '../domain/season';
 import { BoardEditor } from './BoardEditor';
 
 export function ExerciseEditor({ id }: { id: string }) {
@@ -23,6 +24,7 @@ export function ExerciseEditor({ id }: { id: string }) {
   const roster = allPlayers.filter((p) => p.squadId === exercise.squadId);
   const exercisePlayers = roster.filter((p) => exercise.playerIds.includes(p.id));
   const sortedRoster = [...roster].sort((a, b) => a.number - b.number);
+  const contents = exerciseContents(exercise);
 
   const togglePlayer = (pid: string) =>
     update({
@@ -113,6 +115,30 @@ export function ExerciseEditor({ id }: { id: string }) {
               ))}
             </select>
           </label>
+          <div className="field span-3">
+            Qué se trabaja
+            <div className="chips">
+              {CONTENTS.map((c) => {
+                const on = contents.includes(c.value);
+                return (
+                  <button
+                    key={c.value}
+                    type="button"
+                    className={`chip${on ? ' on' : ''}`}
+                    aria-pressed={on}
+                    onClick={() => update({ contents: on ? contents.filter((x) => x !== c.value) : [...contents, c.value] })}
+                  >
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+            {!exercise.contents?.length && (
+              <span className="hint">
+                {contents.length ? 'Deducido del nombre y el objetivo; tocá para ajustarlo.' : 'Marcalo para medir cuánto se entrena cada cosa en la temporada.'}
+              </span>
+            )}
+          </div>
           <div className="field span-3">
             Jugadores del ejercicio
             {squads.length === 0 ? (

@@ -4912,3 +4912,194 @@ input.num {
 .page-loading {
   padding: 2rem 0;
 }
+
+/* ===== Temporada ===== */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.3rem;
+}
+
+.chips .chip {
+  min-height: 32px;
+  font-weight: 600;
+}
+
+.season-empty p {
+  max-width: 62ch;
+}
+
+.season-now {
+  margin: 0 0 1rem;
+}
+
+.timeline {
+  position: relative;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.timeline-month {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  padding: 0.3rem 0.3rem 0;
+  border-left: 1px dashed var(--line);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.timeline-phase {
+  position: absolute;
+  height: 2.1rem;
+  min-height: 0;
+  padding: 0 0.6rem;
+  justify-content: flex-start;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-phase:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.timeline-today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #c99a4e;
+}
+
+.timeline-today em {
+  position: absolute;
+  bottom: 0.2rem;
+  left: 4px;
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #8a6a2f;
+}
+
+.month-head,
+.phase-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.month-head h2,
+.phase-head h2 {
+  margin: 0.1rem 0;
+}
+
+.phase-card {
+  border-top: 5px solid;
+}
+
+.phase-kind {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.phase-head p {
+  margin: 0;
+}
+
+.phase-objective {
+  margin: 0.6rem 0;
+  font-weight: 500;
+}
+
+.phase-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.2rem;
+  margin: 0.4rem 0 0.8rem;
+  color: var(--text-2);
+}
+
+.work-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.work-row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 13rem) minmax(0, 1fr) 7rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.work-row.focus span {
+  font-weight: 700;
+}
+
+.work-row span i {
+  font-style: normal;
+  color: #c99a4e;
+}
+
+.work-track {
+  height: 0.8rem;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.work-track i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.work-row b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.work-row b small {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.work-missing {
+  margin: 0.4rem 0 0;
+  color: var(--warn);
+  font-size: 0.88rem;
+}
+
+.modal.phase-dialog {
+  width: 100%;
+  max-width: 620px;
+}
+
+@media (max-width: 700px) {
+  .work-row {
+    grid-template-columns: minmax(0, 1fr) 6rem;
+  }
+
+  .work-row .work-track {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+}

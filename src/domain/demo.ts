@@ -4,6 +4,7 @@ import { todayISO } from './sessions';
 import { nextRotation, replay, setFinished, setsResult } from './stats';
 import type {
   MatchStats,
+  SeasonPhase,
   StatEvent,
   BoardElement,
   Exercise,
@@ -32,6 +33,7 @@ export interface DemoData {
   sessions: TrainingSession[];
   matches: Match[];
   weeks: WeekPlan[];
+  phases: SeasonPhase[];
 }
 
 const PLAYERS: [string, number, Position][] = [
@@ -382,7 +384,37 @@ export function buildDemoData(today: Date = new Date()): DemoData {
     objective: 'Recepción y K1 antes del partido del sábado',
   };
 
+  // Temporada: pretemporada (ya hecha) y competencia (en curso).
+  const day = (offset: number) => todayISO(new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset));
+  const phases: SeasonPhase[] = [
+    {
+      id: id('etapa-pretemporada'),
+      squadId: squad.id,
+      name: 'Pretemporada',
+      kind: 'pretemporada',
+      start: day(-63),
+      end: day(-22),
+      objective: 'Base física, técnica individual y recepción.',
+      focus: ['fisico', 'recepcion', 'saque'],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: id('etapa-competencia'),
+      squadId: squad.id,
+      name: 'Primera rueda',
+      kind: 'competencia',
+      start: day(-21),
+      end: day(70),
+      objective: 'Sistema 5-1 aceitado: K1 en todas las rotaciones y saque táctico.',
+      focus: ['recepcion', 'ataque', 'juego'],
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+
   return {
+    phases,
     matches: [pastMatch, match],
     weeks: [week],
     squads: [squad],

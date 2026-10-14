@@ -38,3 +38,14 @@ describe('copia de seguridad', () => {
     ]);
   });
 });
+
+describe('copias viejas', () => {
+  it('suma una copia que no tiene las colecciones nuevas', () => {
+    const current = Object.fromEntries(BACKUP_KEYS.map((k) => [k, []])) as unknown as BackupData;
+    const old = { squads: [{ id: 'a' }] } as unknown as BackupData;
+    const merged = mergeBackup(current, old);
+    expect(merged.squads).toHaveLength(1);
+    expect(merged.phases).toEqual([]);
+    expect(describeBackup(old)).toBe('1 plantel');
+  });
+});

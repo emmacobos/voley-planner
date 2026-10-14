@@ -9,6 +9,7 @@ export type Route =
   | { name: 'roster' }
   | { name: 'player'; id: string }
   | { name: 'calendar' }
+  | { name: 'season' }
   | { name: 'library' }
   | { name: 'data' }
   | { name: 'match'; id: string }
@@ -20,6 +21,7 @@ function parse(hash: string): Route {
   if (parts[0] === 'ver' && parts[1]) return { name: 'shared-play', code: parts[1] };
   if (parts[0] === 'plantel') return parts[1] ? { name: 'player', id: parts[1] } : { name: 'roster' };
   if (parts[0] === 'calendario') return { name: 'calendar' };
+  if (parts[0] === 'temporada') return { name: 'season' };
   if (parts[0] === 'datos') return { name: 'data' };
   if (parts[0] === 'partidos' && parts[1]) {
     return parts[2] === 'estadisticas' ? { name: 'match-stats', id: parts[1] } : { name: 'match', id: parts[1] };

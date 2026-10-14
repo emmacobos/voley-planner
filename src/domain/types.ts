@@ -206,6 +206,38 @@ export interface Exercise {
   frames: Frame[];
   /** Sin valor es 5-1. */
   system?: GameSystem;
+  /** Qué se trabaja (si falta, se deduce del nombre y el objetivo). */
+  contents?: Content[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type Content =
+  | 'saque'
+  | 'recepcion'
+  | 'armado'
+  | 'ataque'
+  | 'bloqueo'
+  | 'defensa'
+  | 'contraataque'
+  | 'fisico'
+  | 'juego';
+
+export type PhaseKind = 'pretemporada' | 'competencia' | 'puesta-a-punto' | 'transicion' | 'otro';
+
+/** Etapa de la temporada (macrociclo): varias semanas con un objetivo. */
+export interface SeasonPhase {
+  id: string;
+  /** Plantel, o null si vale para todos. */
+  squadId: string | null;
+  name: string;
+  kind: PhaseKind;
+  /** Fechas AAAA-MM-DD, incluidas. */
+  start: string;
+  end: string;
+  objective: string;
+  /** Contenidos que se quieren priorizar en la etapa. */
+  focus: Content[];
   createdAt: string;
   updatedAt: string;
 }

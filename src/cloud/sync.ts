@@ -14,7 +14,7 @@ export type { SyncState } from './state';
 /**
  * Sincronización entre el store local y Firestore.
  *
- * Estructura en Firestore: `users/{uid}/{squads|players|exercises|sessions|matches|weeks|templates}/{id}`,
+ * Estructura en Firestore: `users/{uid}/{squads|players|exercises|sessions|matches|weeks|templates|phases}/{id}`,
  * un documento por entidad.
  *
  * - Bajada: un listener por colección reemplaza los datos del store.
@@ -82,6 +82,7 @@ const SORTERS: Record<DataKey, (a: Item, b: Item) => number> = {
   matches: byText('date'),
   weeks: byText('weekStart'),
   templates: byText('name'),
+  phases: byText('start'),
 };
 
 function applyRemote(key: DataKey, remote: Item[]) {
