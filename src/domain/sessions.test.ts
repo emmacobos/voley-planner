@@ -9,6 +9,7 @@ import {
   sessionDuration,
   sessionIntensity,
   todayISO,
+  weekSummary,
 } from './sessions';
 import type { Exercise, ExerciseType, Intensity, TrainingSession } from './types';
 
@@ -108,5 +109,25 @@ describe('formatDate', () => {
     const text = formatDate('2026-10-14');
     expect(text.charAt(0)).toBe(text.charAt(0).toUpperCase());
     expect(text).toMatch(/14 de octubre de 2026/);
+  });
+});
+
+describe('weekSummary', () => {
+  const at = (date: string, blocks = defaultBlocks()) => ({ ...session(blocks), id: date, date });
+  const b = newBlock('juego', 'Juego', 0);
+  b.items = [{ id: 'x', exerciseId: 'g', durationMin: 40 }];
+
+  it('toma la semana de lunes a domingo', () => {
+    // Miércoles 14/10/2026 → semana del lunes 12 al domingo 18.
+    const w = weekSummary([at('2026-10-11'), at('2026-10-12'), at('2026-10-18', [b]), at('2026-10-19')], lookup, new Date(2026, 9, 14));
+    expect(w.start).toBe('2026-10-12');
+    expect(w.end).toBe('2026-10-18');
+    expect(w.sessions.map((s) => s.date)).toEqual(['2026-10-12', '2026-10-18']);
+    expect(w.minutes).toBe(90 + 40);
+    expect(w.byType).toEqual({ analitico: 0, sintetico: 0, global: 40 });
+  });
+
+  it('un domingo pertenece a la semana que termina ese día', () => {
+    expect(weekSummary([], lookup, new Date(2026, 9, 18)).start).toBe('2026-10-12');
   });
 });

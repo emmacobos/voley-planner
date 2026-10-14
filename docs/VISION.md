@@ -129,7 +129,7 @@ Decisiones tomadas:
 - Generar automáticamente la secuencia completa de una rotación (recepción →
   ataque → cobertura) como pasos animados.
 - Defensa contra ataque por zona 3 y por zaguero.
-- Trayectorias curvas y zonas sombreadas.
+- Zonas sombreadas en la pizarra.
 - Plantillas de ejercicios clásicos.
 - Compartir un ejercicio con un link de solo lectura.
 

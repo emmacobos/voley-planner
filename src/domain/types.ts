@@ -81,6 +81,8 @@ export interface ArrowElement {
   y1: number;
   x2: number;
   y2: number;
+  /** Curvatura en metros (0 o ausente: recta). Ver `domain/arrows.ts`. */
+  curve?: number;
 }
 
 export type PointElement =

@@ -26,7 +26,9 @@ La visión completa del producto y la hoja de ruta están en
      central zaguero.
    - *Agregar* suma jugadores, pelota, conos, entrenadores y carros.
    - *Mover* para arrastrar; *Flecha desplazamiento* / *Flecha pelota* para
-     dibujar arrastrando sobre la cancha.
+     dibujar arrastrando sobre la cancha. Para **curvar una flecha**,
+     seleccionala y arrastrá el punto amarillo del medio (o usá el control
+     *Curva*).
    - El panel *Reglas de rotación* avisa si hay faltas de posición. Se
      controla solo al momento del saque y solo al equipo que recibe; cada paso
      tiene un *Momento* (saque de A, saque de B o pelota en juego) que se
@@ -42,6 +44,11 @@ La visión completa del producto y la hoja de ruta están en
    duración total, la intensidad promedio y los minutos por tipo de ejercicio.
 7. **Exportar PDF:** abre una versión para imprimir con toda la sesión y las
    pizarras; en el diálogo de impresión elegí "Guardar como PDF".
+
+En el menú lateral podés pasar a **modo oscuro** (se recuerda en cada
+navegador; la primera vez toma la preferencia del sistema). La pantalla de
+Sesiones muestra el **resumen de la semana**: sesiones, minutos planificados,
+reparto por tipo de ejercicio y la próxima sesión.
 
 Atajos: `Ctrl+Z` deshacer, `Ctrl+Shift+Z` rehacer, `Supr` eliminar el
 elemento seleccionado, `Esc` deseleccionar.

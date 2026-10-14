@@ -9,12 +9,12 @@ const SYNC_LABEL: Record<SyncState, string> = {
   off: '',
   loading: 'Cargando…',
   saving: 'Guardando…',
-  saved: '✓ Guardado',
+  saved: 'Guardado en la nube',
   offline: 'Sin conexión: se guarda al volver',
-  error: '⚠ Error al guardar',
+  error: 'Error al guardar',
 };
 
-/** Botón de cuenta en la barra superior: entrar, estado de sincronización y salir. */
+/** Cuenta, al pie del menú lateral: entrar, estado de sincronización y salir. */
 export function AccountMenu() {
   const { ready, user } = useAuth();
   const sync = useSyncStatus();
@@ -33,7 +33,7 @@ export function AccountMenu() {
     return () => document.removeEventListener('mousedown', close);
   }, [open]);
 
-  if (!ready) return null;
+  if (!ready) return <div className="account" />;
 
   if (!user) {
     return (
@@ -60,15 +60,19 @@ export function AccountMenu() {
 
   return (
     <div className="account" ref={menuRef}>
-      <span className={`sync-status sync-${sync.state}`} title={sync.error ?? undefined}>
-        {SYNC_LABEL[sync.state]}
-      </span>
-      <button className="account-button" onClick={() => setOpen((o) => !o)} aria-expanded={open} title={label}>
+      <button className="account-card" onClick={() => setOpen((o) => !o)} aria-expanded={open} title={label}>
         {user.photoURL ? (
-          <img src={user.photoURL} alt="" referrerPolicy="no-referrer" />
+          <img src={user.photoURL} alt="" referrerPolicy="no-referrer" className="avatar" />
         ) : (
           <span className="avatar">{label.charAt(0).toUpperCase()}</span>
         )}
+        <span className="account-text">
+          <span className="account-label">{user.name ?? 'Mi cuenta'}</span>
+          <span className={`sync-status sync-${sync.state}`} title={sync.error ?? undefined}>
+            <span className="sync-dot" aria-hidden="true" />
+            {SYNC_LABEL[sync.state]}
+          </span>
+        </span>
       </button>
       {open && (
         <div className="account-dropdown">

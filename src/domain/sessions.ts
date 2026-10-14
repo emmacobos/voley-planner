@@ -93,3 +93,33 @@ export function todayISO(now = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
+
+export interface WeekSummary {
+  /** Lunes y domingo de la semana (AAAA-MM-DD). */
+  start: string;
+  end: string;
+  sessions: TrainingSession[];
+  minutes: number;
+  byType: Record<ExerciseType, number>;
+}
+
+/** Resumen de la semana (lunes a domingo) que contiene `today`. */
+export function weekSummary(
+  sessions: TrainingSession[],
+  exercises: ExerciseLookup,
+  today: Date = new Date(),
+): WeekSummary {
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
+  const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+  const start = todayISO(monday);
+  const end = todayISO(sunday);
+  const inWeek = sessions
+    .filter((s) => s.date >= start && s.date <= end)
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  const byType: Record<ExerciseType, number> = { analitico: 0, sintetico: 0, global: 0 };
+  for (const s of inWeek) {
+    const m = minutesByType(s, exercises);
+    for (const k of Object.keys(byType) as ExerciseType[]) byType[k] += m[k];
+  }
+  return { start, end, sessions: inWeek, minutes: inWeek.reduce((sum, s) => sum + sessionDuration(s), 0), byType };
+}

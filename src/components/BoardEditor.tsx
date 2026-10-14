@@ -20,7 +20,6 @@ import type {
 import { POSITIONS, SITUATIONS } from '../domain/types';
 import { downloadSvgAsPng, slugify } from '../utils/exportPng';
 import { Board } from './Board';
-import { TEAM_COLORS } from './boardTheme';
 import type { Tool } from './boardTheme';
 
 interface BoardEditorProps {
@@ -247,18 +246,33 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
         <div className="toolbar">
           <div className="segmented" role="group" aria-label="Herramienta">
             <button className={tool === 'select' ? 'active' : ''} onClick={() => setTool('select')} title="Seleccionar y mover (Esc)">
-              ✋ Mover
+              <Icon d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12m0-1.5v-2a1.5 1.5 0 0 1 3 0V12m0-1v-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.2a6 6 0 0 1-4.8-2.4L4.3 16a1.5 1.5 0 0 1 2.4-1.8L8 16" />
+              Mover
             </button>
-            <button className={tool === 'arrow-move' ? 'active' : ''} onClick={() => setTool('arrow-move')} title="Arrastrá sobre la cancha para dibujar">
-              ⇢ Flecha desplazamiento
+            <button
+              className={tool === 'arrow-move' ? 'active' : ''}
+              onClick={() => setTool('arrow-move')}
+              title="Arrastrá sobre la cancha para dibujar. Para curvarla, seleccionala y arrastrá su punto del medio."
+            >
+              <Icon d="M4 18c4-1 7-5 9-9m0 0-4 .5M13 9l1 4" dashed />
+              Flecha desplazamiento
             </button>
-            <button className={tool === 'arrow-ball' ? 'active' : ''} onClick={() => setTool('arrow-ball')} title="Arrastrá sobre la cancha para dibujar">
-              ➝ Flecha pelota
+            <button
+              className={tool === 'arrow-ball' ? 'active' : ''}
+              onClick={() => setTool('arrow-ball')}
+              title="Arrastrá sobre la cancha para dibujar. Para curvarla, seleccionala y arrastrá su punto del medio."
+            >
+              <Icon d="M4 18c4-1 7-5 9-9m0 0-4 .5M13 9l1 4" />
+              Flecha pelota
             </button>
           </div>
           <div className="toolbar-group">
-            <button onClick={undo} disabled={!past.length || playing} title="Deshacer (Ctrl+Z)">↶</button>
-            <button onClick={redo} disabled={!future.length || playing} title="Rehacer (Ctrl+Shift+Z)">↷</button>
+            <button className="icon-button" onClick={undo} disabled={!past.length || playing} title="Deshacer (Ctrl+Z)" aria-label="Deshacer">
+              <Icon d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3" />
+            </button>
+            <button className="icon-button" onClick={redo} disabled={!future.length || playing} title="Rehacer (Ctrl+Shift+Z)" aria-label="Rehacer">
+              <Icon d="m15 14 5-5-5-5M20 9H10a6 6 0 0 0 0 12h3" />
+            </button>
             <label className="check">
               <input type="checkbox" checked={showZones} onChange={(e) => setShowZones(e.target.checked)} /> Zonas
             </label>
@@ -282,8 +296,9 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
         />
 
         <div className="frames">
-          <button className="primary" onClick={playing ? () => setProgress(null) : play} disabled={frames.length < 2}>
-            {playing ? '■ Detener' : '▶ Reproducir'}
+          <button className="primary play-button" onClick={playing ? () => setProgress(null) : play} disabled={frames.length < 2}>
+            {playing ? <Icon d="M7 6h10v12H7z" filled /> : <Icon d="M7 4.5v15l13-7.5z" filled />}
+            {playing ? 'Detener' : 'Reproducir'}
           </button>
           <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))} aria-label="Velocidad">
             <option value={0.5}>0.5×</option>
@@ -305,7 +320,7 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
               </button>
             ))}
           </div>
-          <button onClick={addFrame} disabled={playing} title="Duplica el paso actual para mover los elementos">
+          <button className="add-frame" onClick={addFrame} disabled={playing} title="Duplica el paso actual para mover los elementos">
             + Paso
           </button>
           <button onClick={removeFrame} disabled={playing || frames.length <= 1}>
@@ -351,18 +366,31 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
 
         <section>
           <h3>Sistema 5-1</h3>
-          <div className="row">
-            <select value={rotationTeam} onChange={(e) => setRotationTeam(e.target.value as Team)} aria-label="Equipo">
-              <option value="A">Equipo A</option>
-              <option value="B">Equipo B</option>
-            </select>
-            <select value={rotation} onChange={(e) => setRotation(Number(e.target.value) as Zone)} aria-label="Rotación">
-              {ZONES.map((z) => (
-                <option key={z} value={z}>
-                  R{z} (armador en {z})
-                </option>
-              ))}
-            </select>
+          <div className="segmented team-switch" role="group" aria-label="Equipo">
+            {(['A', 'B'] as Team[]).map((t) => (
+              <button
+                key={t}
+                className={rotationTeam === t ? `active team-${t}` : ''}
+                onClick={() => setRotationTeam(t)}
+                aria-pressed={rotationTeam === t}
+              >
+                Equipo {t}
+              </button>
+            ))}
+          </div>
+          <div className="rotation-label">Rotación (armador en la zona {rotation})</div>
+          <div className="rotation-picker" role="group" aria-label="Rotación">
+            {ZONES.map((z) => (
+              <button
+                key={z}
+                className={rotation === z ? 'active' : ''}
+                onClick={() => setRotation(z)}
+                aria-pressed={rotation === z}
+                title={`R${z}: armador en la zona ${z}`}
+              >
+                R{z}
+              </button>
+            ))}
           </div>
           <div className="button-grid formation-buttons">
             {PHASES.map((p) => (
@@ -387,14 +415,17 @@ export function BoardEditor({ frames, onChange, allPlayers, roster, exercisePlay
         <section>
           <h3>Reglas de rotación</h3>
           {checks.map((c) => (
-            <div key={c.team} className="rule-check">
-              <strong style={{ color: TEAM_COLORS[c.team] }}>Equipo {c.team}: </strong>
+            <div
+              key={c.team}
+              className={`rule-check ${!c.checked || !c.applicable ? 'rule-off' : c.faults.length ? 'rule-fault' : 'rule-ok'}`}
+            >
+              <strong className={`team-name team-name-${c.team}`}>Equipo {c.team}: </strong>
               {!c.checked ? (
                 <span className="muted">{c.reason}</span>
               ) : !c.applicable ? (
                 <span className="muted">necesita 6 jugadores con zona asignada.</span>
               ) : c.faults.length === 0 ? (
-                <span className="ok">✓ sin faltas de posición</span>
+                <span className="ok">sin faltas de posición</span>
               ) : (
                 <ul className="faults">
                   {c.faults.map((f) => (
@@ -434,14 +465,34 @@ function SelectedPanel({
   onUpdate: (el: BoardElement) => void;
 }) {
   if (element.kind === 'arrow') {
+    const curve = element.curve ?? 0;
     return (
-      <label className="field">
-        Tipo de flecha
-        <select value={element.style} onChange={(e) => onUpdate({ ...element, style: e.target.value as ArrowElement['style'] })}>
-          <option value="move">Desplazamiento</option>
-          <option value="ball">Trayectoria de pelota</option>
-        </select>
-      </label>
+      <div className="stack">
+        <label className="field">
+          Tipo de flecha
+          <select value={element.style} onChange={(e) => onUpdate({ ...element, style: e.target.value as ArrowElement['style'] })}>
+            <option value="move">Desplazamiento</option>
+            <option value="ball">Trayectoria de pelota</option>
+          </select>
+        </label>
+        <label className="field">
+          Curva
+          <input
+            type="range"
+            min={-5}
+            max={5}
+            step={0.1}
+            value={curve}
+            onChange={(e) => onUpdate({ ...element, curve: Number(e.target.value) || undefined })}
+          />
+        </label>
+        <p className="hint">También podés curvarla arrastrando el punto amarillo del medio de la flecha.</p>
+        {curve !== 0 && (
+          <button className="full" onClick={() => onUpdate({ ...element, curve: undefined })}>
+            Enderezar flecha
+          </button>
+        )}
+      </div>
     );
   }
   if (element.kind !== 'player') {
@@ -508,5 +559,22 @@ function SelectedPanel({
         </label>
       </div>
     </div>
+  );
+}
+
+/** Ícono de trazo (24×24). */
+function Icon({ d, filled = false, dashed = false }: { d: string; filled?: boolean; dashed?: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="icon">
+      <path
+        d={d}
+        fill={filled ? 'currentColor' : 'none'}
+        stroke={filled ? 'none' : 'currentColor'}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={dashed ? '3 3' : undefined}
+      />
+    </svg>
   );
 }

@@ -9,6 +9,7 @@ import {
   clampToView,
   toCourt,
 } from '../domain/court';
+import { arrowPath, curveThrough, midPoint } from '../domain/arrows';
 import type {
   ArrowElement,
   ArrowStyle,
@@ -19,7 +20,7 @@ import type {
   Zone,
 } from '../domain/types';
 import { positionShort } from '../domain/types';
-import { LIBERO_COLORS, TEAM_COLORS } from './boardTheme';
+import { COURT_COLORS, DISPLAY_FONT, LIBERO_COLORS, SELECTION_COLOR, TEAM_COLORS } from './boardTheme';
 import type { Tool } from './boardTheme';
 
 
@@ -36,8 +37,11 @@ interface BoardProps {
   onAddArrow: (arrow: Omit<ArrowElement, 'id'>) => void;
 }
 
+/** Qué parte de una flecha se arrastra: entera, un extremo o el punto medio (curva). */
+type ArrowPart = 'whole' | 'start' | 'end' | 'mid';
+
 type Drag =
-  | { type: 'element'; id: string; part: 'whole' | 'start' | 'end'; ox: number; oy: number; dx: number; dy: number }
+  | { type: 'element'; id: string; part: ArrowPart; ox: number; oy: number; dx: number; dy: number }
   | { type: 'arrow'; style: ArrowStyle; x1: number; y1: number; x2: number; y2: number };
 
 const ZONES: Zone[] = [1, 2, 3, 4, 5, 6];
@@ -65,6 +69,7 @@ function applyDrag(el: BoardElement, drag: Drag | null): BoardElement {
   if (!drag || drag.type !== 'element' || drag.id !== el.id) return el;
   const { dx, dy, part } = drag;
   if (el.kind === 'arrow') {
+    if (part === 'mid') return { ...el, curve: curveThrough(el, { x: drag.ox + dx, y: drag.oy + dy }) };
     return {
       ...el,
       ...(part !== 'end' ? { x1: el.x1 + dx, y1: el.y1 + dy } : {}),
@@ -95,7 +100,7 @@ export function Board({
   const startElementDrag = (
     e: ReactPointerEvent<SVGElement>,
     id: string,
-    part: 'whole' | 'start' | 'end' = 'whole',
+    part: ArrowPart = 'whole',
   ) => {
     if (readOnly || tool !== 'select') return;
     e.stopPropagation();
@@ -164,7 +169,7 @@ export function Board({
       className={`board tool-${tool}${readOnly ? ' read-only' : ''}`}
       viewBox={`${VIEW.minX} ${VIEW.minY} ${VIEW.width} ${VIEW.height}`}
       xmlns="http://www.w3.org/2000/svg"
-      fontFamily="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+      fontFamily="Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif"
       onPointerDown={onBackgroundDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -175,7 +180,7 @@ export function Board({
           <path d="M0,0 L10,5 L0,10 z" fill="#ffffff" />
         </marker>
         <marker id="head-ball" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="#111827" />
+          <path d="M0,0 L10,5 L0,10 z" fill="#0E1A2B" />
         </marker>
       </defs>
 
@@ -247,15 +252,16 @@ export function Board({
 }
 
 function Halo({ r }: { r: number }) {
-  return <circle r={r} fill="none" stroke="#facc15" strokeWidth={0.08} strokeDasharray="0.15 0.1" />;
+  return <circle r={r} fill="none" stroke={SELECTION_COLOR} strokeWidth={0.09} strokeDasharray="0.15 0.1" />;
 }
 
 function Court({ showZones }: { showZones: boolean }) {
   const line = { stroke: '#ffffff', strokeWidth: 0.05 };
   return (
     <g pointerEvents="none">
-      <rect x={VIEW.minX} y={VIEW.minY} width={VIEW.width} height={VIEW.height} fill="#2f7d6d" />
-      <rect x={0} y={0} width={COURT_LENGTH} height={COURT_WIDTH} fill="#f4a259" />
+      <rect x={VIEW.minX} y={VIEW.minY} width={VIEW.width} height={VIEW.height} fill={COURT_COLORS.freeZone} />
+      <rect x={0} y={0} width={COURT_LENGTH} height={COURT_WIDTH} fill={COURT_COLORS.court} />
+      <rect x={NET_X - ATTACK_LINE_DIST} y={0} width={ATTACK_LINE_DIST * 2} height={COURT_WIDTH} fill={COURT_COLORS.frontZone} />
       <rect x={0} y={0} width={COURT_LENGTH} height={COURT_WIDTH} fill="none" {...line} />
       <line x1={NET_X - ATTACK_LINE_DIST} y1={0} x2={NET_X - ATTACK_LINE_DIST} y2={COURT_WIDTH} {...line} />
       <line x1={NET_X + ATTACK_LINE_DIST} y1={0} x2={NET_X + ATTACK_LINE_DIST} y2={COURT_WIDTH} {...line} />
@@ -264,20 +270,20 @@ function Court({ showZones }: { showZones: boolean }) {
           ZONES.map((z) => {
             const c = toCourt(team, ZONE_LABEL[z].depth, ZONE_LABEL[z].lateral);
             return (
-              <text key={`${team}${z}`} x={c.x} y={c.y} textAnchor="middle" dominantBaseline="central" fontSize={0.9} fontWeight={700} fill="#ffffff" opacity={0.45}>
+              <text key={`${team}${z}`} x={c.x} y={c.y} textAnchor="middle" dominantBaseline="central" fontFamily={DISPLAY_FONT} fontSize={0.95} fontWeight={700} fill="#ffffff" opacity={0.4}>
                 {z}
               </text>
             );
           }),
         )}
-      <line x1={NET_X} y1={-0.7} x2={NET_X} y2={COURT_WIDTH + 0.7} stroke="#1f2937" strokeWidth={0.14} />
-      <circle cx={NET_X} cy={-0.8} r={0.15} fill="#1f2937" />
-      <circle cx={NET_X} cy={COURT_WIDTH + 0.8} r={0.15} fill="#1f2937" />
-      <text x={NET_X / 2} y={-1.6} textAnchor="middle" fontSize={0.6} fontWeight={700} fill={TEAM_COLORS.A} stroke="#ffffff" strokeWidth={0.12} paintOrder="stroke">
-        Equipo A
+      <line x1={NET_X} y1={-0.7} x2={NET_X} y2={COURT_WIDTH + 0.7} stroke={COURT_COLORS.net} strokeWidth={0.14} />
+      <circle cx={NET_X} cy={-0.8} r={0.16} fill={COURT_COLORS.net} />
+      <circle cx={NET_X} cy={COURT_WIDTH + 0.8} r={0.16} fill={COURT_COLORS.net} />
+      <text x={NET_X / 2} y={-1.4} textAnchor="middle" fontFamily={DISPLAY_FONT} fontSize={0.66} fontWeight={700} letterSpacing={0.06} fill="#ffffff">
+        EQUIPO A
       </text>
-      <text x={NET_X + NET_X / 2} y={-1.6} textAnchor="middle" fontSize={0.6} fontWeight={700} fill={TEAM_COLORS.B} stroke="#ffffff" strokeWidth={0.12} paintOrder="stroke">
-        Equipo B
+      <text x={NET_X + NET_X / 2} y={-1.4} textAnchor="middle" fontFamily={DISPLAY_FONT} fontSize={0.66} fontWeight={700} letterSpacing={0.06} fill="#ffffff">
+        EQUIPO B
       </text>
     </g>
   );
@@ -290,30 +296,34 @@ function Arrow({
 }: {
   arrow: ArrowElement;
   selected: boolean;
-  onPointerDown?: (e: ReactPointerEvent<SVGElement>, part: 'whole' | 'start' | 'end') => void;
+  onPointerDown?: (e: ReactPointerEvent<SVGElement>, part: ArrowPart) => void;
 }) {
   const isMove = arrow.style === 'move';
   const { x1, y1, x2, y2 } = arrow;
+  const d = arrowPath(arrow);
+  const mid = midPoint(arrow);
   return (
     <g className={onPointerDown ? 'el' : undefined}>
-      <line
-        x1={x1}
-        y1={y1}
-        x2={x2}
-        y2={y2}
-        stroke={selected ? '#facc15' : isMove ? '#ffffff' : '#111827'}
+      <path
+        d={d}
+        fill="none"
+        stroke={selected ? SELECTION_COLOR : isMove ? '#ffffff' : '#0E1A2B'}
         strokeWidth={0.08}
+        strokeLinecap="round"
         strokeDasharray={isMove ? '0.25 0.15' : undefined}
         markerEnd={`url(#head-${arrow.style})`}
         pointerEvents="none"
       />
       {onPointerDown && (
-        <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="transparent" strokeWidth={0.45} onPointerDown={(e) => onPointerDown(e, 'whole')} />
+        <path d={d} fill="none" stroke="transparent" strokeWidth={0.45} onPointerDown={(e) => onPointerDown(e, 'whole')} />
       )}
       {selected && onPointerDown && (
         <>
           <circle className="handle" cx={x1} cy={y1} r={0.18} onPointerDown={(e) => onPointerDown(e, 'start')} />
           <circle className="handle" cx={x2} cy={y2} r={0.18} onPointerDown={(e) => onPointerDown(e, 'end')} />
+          <circle className="handle handle-curve" cx={mid.x} cy={mid.y} r={0.2} onPointerDown={(e) => onPointerDown(e, 'mid')}>
+            <title>Arrastrá para curvar la flecha</title>
+          </circle>
         </>
       )}
     </g>
