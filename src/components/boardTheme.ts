@@ -31,7 +31,7 @@ export const COURT_COLORS = {
 };
 
 /** Color de selección (amarillo pelota). */
-export const SELECTION_COLOR = '#F5B82E';
+export const SELECTION_COLOR = '#C99A4E';
 
 export const DISPLAY_FONT = "'Barlow Condensed', 'Arial Narrow', sans-serif";
 

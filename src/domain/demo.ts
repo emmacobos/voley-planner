@@ -255,7 +255,7 @@ export function buildDemoData(today: Date = new Date()): DemoData {
           ...formationTokens('B', 1, 'k1-recepcion'),
           { id: id('plan-pelota'), kind: 'ball', x: -0.6, y: 7.5 },
           { id: id('plan-saque'), kind: 'arrow', style: 'ball', x1: -0.4, y1: 7.5, x2: 14.2, y2: 1.6, curve: -2 },
-          { id: id('plan-texto'), kind: 'text', x: 13.5, y: 10.3, text: 'Sacar a zona 1', size: 'M', color: '#F5B82E' },
+          { id: id('plan-texto'), kind: 'text', x: 13.5, y: 10.3, text: 'Sacar a zona 1', size: 'M', color: '#DFB97D' },
         ]),
       ],
     },

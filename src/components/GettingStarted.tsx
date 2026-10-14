@@ -5,7 +5,7 @@ import { hasDemo, useAppStore } from '../store';
 /** Dibujos de cada paso: camiseta, pizarra y calendario. */
 const ART: ReactNode[] = [
   <svg key="plantel" width="120" height="110" viewBox="0 0 120 110" aria-hidden="true">
-    <path d="M38 10 L20 22 L8 44 L24 52 L30 42 L30 100 L90 100 L90 42 L96 52 L112 44 L100 22 L82 10 Q60 26 38 10Z" fill="#F5B82E" />
+    <path d="M38 10 L20 22 L8 44 L24 52 L30 42 L30 100 L90 100 L90 42 L96 52 L112 44 L100 22 L82 10 Q60 26 38 10Z" fill="#DFB97D" />
     <text x="60" y="82" textAnchor="middle" fontFamily="'Barlow Condensed', 'Arial Narrow', sans-serif" fontWeight="800" fontSize="40" fill="#0E1A2B">
       7
     </text>
@@ -21,7 +21,7 @@ const ART: ReactNode[] = [
   </svg>,
   <svg key="sesion" width="120" height="110" viewBox="0 0 120 110" aria-hidden="true">
     <rect x="14" y="18" width="92" height="82" rx="12" fill="#fff" />
-    <rect x="14" y="18" width="92" height="22" rx="10" fill="#F5B82E" />
+    <rect x="14" y="18" width="92" height="22" rx="10" fill="#DFB97D" />
     <rect x="28" y="52" width="64" height="9" rx="4" fill="#d97706" />
     <rect x="28" y="67" width="46" height="9" rx="4" fill="#7c3aed" />
     <rect x="28" y="82" width="56" height="9" rx="4" fill="#15935e" />
@@ -31,7 +31,7 @@ const ART: ReactNode[] = [
 ];
 
 const ART_BACKGROUND = [
-  'linear-gradient(135deg, #1F4FB8, #0E1A2B)',
+  'linear-gradient(135deg, #3a2f1f, #0d0d0d)',
   'linear-gradient(135deg, #C99A68, #E8D3AE)',
   'linear-gradient(135deg, #15935E, #0f6b41)',
 ];

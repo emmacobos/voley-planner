@@ -36,7 +36,7 @@ export const TEXT_COLORS: { value: string; label: string }[] = [
   { value: '#0E1A2B', label: 'Azul marino' },
   { value: '#FFFFFF', label: 'Blanco' },
   { value: '#C0262D', label: 'Rojo' },
-  { value: '#F5B82E', label: 'Amarillo' },
+  { value: '#DFB97D', label: 'Dorado' },
 ];
 
 /** Líneas del texto (siempre al menos una). */

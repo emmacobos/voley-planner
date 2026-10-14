@@ -545,7 +545,7 @@ function coverAttacker(): LibraryExercise {
         ...ataca,
         b.ball(8.4, 1.2),
         b.shadow(9.2, 1.2, 6, 1.6),
-        b.text(4.5, 10.3, 'Cubrir al atacante', '#F5B82E'),
+        b.text(4.5, 10.3, 'Cubrir al atacante', '#DFB97D'),
       ]),
     ],
     '5-1',

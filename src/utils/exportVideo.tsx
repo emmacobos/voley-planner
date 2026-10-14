@@ -94,12 +94,12 @@ export async function exportPlayVideo({
   const ctx = canvas.getContext('2d')!;
 
   const drawBand = (index: number) => {
-    ctx.fillStyle = '#0E1A2B';
+    ctx.fillStyle = '#111111';
     ctx.fillRect(0, BOARD_HEIGHT, WIDTH, BAND);
-    ctx.fillStyle = '#F5B82E';
+    ctx.fillStyle = '#DFB97D';
     ctx.fillRect(0, BOARD_HEIGHT, WIDTH, 5);
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#F5B82E';
+    ctx.fillStyle = '#DFB97D';
     ctx.font = "700 30px 'Barlow Condensed', 'Arial Narrow', sans-serif";
     const step = `PASO ${index + 1}/${frames.length}`;
     ctx.fillText(step, 32, BOARD_HEIGHT + BAND / 2 + 2);
