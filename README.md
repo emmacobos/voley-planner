@@ -12,6 +12,14 @@ La visión completa del producto y la hoja de ruta están en
 
 ## Cómo usarla
 
+La primera vez, el inicio muestra una **portada** con una jugada animada, lo que
+hace la app y los **primeros pasos** (plantel → ejercicio → sesión) con su
+progreso. **▶ Ver un ejemplo** carga un plantel, tres ejercicios (uno con una
+jugada K1 animada) y una sesión de muestra para recorrer la app; se borran
+todos juntos con **Borrar el ejemplo** sin tocar lo que cargaste vos. Cuando
+ya tenés sesiones, el inicio te saluda con la fecha, la **próxima sesión** (con
+sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
+
 1. **Planteles:** creá un plantel por equipo o categoría (por ejemplo
    "Primera femenina" y "Sub 18") y cargá a sus jugadores con nombre, número y
    posición.

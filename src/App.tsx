@@ -1,5 +1,6 @@
 import { AccountMenu } from './components/AccountMenu';
 import { BallLogo } from './components/BallLogo';
+import { DemoBanner } from './components/DemoBanner';
 import { ExerciseEditor } from './components/ExerciseEditor';
 import { ExerciseList } from './components/ExerciseList';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -48,6 +49,7 @@ export default function App() {
           <AccountMenu />
         </header>
         <main>
+          <DemoBanner />
           {/* La key reinicia el error al navegar a otra pantalla. */}
           <ErrorBoundary key={window.location.hash}>
             {route.name === 'sessions' && <SessionList />}

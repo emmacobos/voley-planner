@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { buildDemoData, isDemoId } from './domain/demo';
 import { newId } from './domain/ids';
 import { defaultBlocks, todayISO } from './domain/sessions';
 import type { Exercise, Frame, Player, Squad, TrainingSession } from './domain/types';
@@ -44,6 +45,15 @@ interface AppState extends AppData {
   updateSession: (id: string, patch: Partial<Omit<TrainingSession, 'id'>>) => void;
   duplicateSession: (id: string) => string | undefined;
   removeSession: (id: string) => void;
+  /** Suma el plantel, los ejercicios y la sesión de ejemplo. */
+  loadDemo: () => void;
+  /** Borra todo lo que vino con el ejemplo. */
+  removeDemo: () => void;
+}
+
+/** ¿Hay datos de ejemplo cargados? */
+export function hasDemo(data: AppData): boolean {
+  return DATA_KEYS.some((k) => data[k].some((item) => isDemoId(item.id)));
 }
 
 /** Quita jugadores de los convocados y de los bloques de una sesión. */
@@ -214,6 +224,36 @@ export const useAppStore = create<AppState>()(
       },
 
       removeSession: (id) => set((s) => ({ sessions: s.sessions.filter((ses) => ses.id !== id) })),
+
+      loadDemo: () => {
+        if (hasDemo(get())) return;
+        const demo = buildDemoData();
+        set((s) => ({
+          squads: [...s.squads, ...demo.squads],
+          players: [...s.players, ...demo.players],
+          exercises: [...demo.exercises, ...s.exercises],
+          sessions: [...demo.sessions, ...s.sessions],
+        }));
+      },
+
+      removeDemo: () =>
+        set((s) => {
+          const demoPlayers = new Set(s.players.filter((p) => isDemoId(p.id)).map((p) => p.id));
+          return {
+            squads: s.squads.filter((x) => !isDemoId(x.id)),
+            players: s.players.filter((x) => !isDemoId(x.id)),
+            exercises: s.exercises
+              .filter((x) => !isDemoId(x.id))
+              .map((x) => (x.playerIds.some((p) => demoPlayers.has(p)) ? { ...x, playerIds: x.playerIds.filter((p) => !demoPlayers.has(p)) } : x)),
+            // Lo propio que usaba jugadoras o ejercicios de ejemplo los pierde.
+            sessions: s.sessions
+              .filter((x) => !isDemoId(x.id))
+              .map((x) => {
+                const clean = withoutPlayers(x, demoPlayers);
+                return { ...clean, blocks: clean.blocks.map((b) => ({ ...b, items: b.items.filter((i) => !isDemoId(i.exerciseId)) })) };
+              }),
+          };
+        }),
     }),
     {
       name: 'voley-planner',

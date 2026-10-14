@@ -1,9 +1,11 @@
 import { navigate } from '../hooks/useHashRoute';
-import { useAppStore } from '../store';
+import { hasData, useAppStore } from '../store';
 import { formatDate, formatMinutes, minutesByType, sessionDuration, todayISO, weekSummary } from '../domain/sessions';
 import { EXERCISE_TYPES } from '../domain/types';
 import type { Exercise, ExerciseType, TrainingSession } from '../domain/types';
 import { GettingStarted } from './GettingStarted';
+import { HomeGreeting, HomeOverview } from './Home';
+import { Welcome } from './Welcome';
 
 const parseDate = (date: string) => new Date(`${date}T00:00:00`);
 
@@ -98,9 +100,9 @@ export function SessionList() {
   const sessions = useAppStore((s) => s.sessions);
   const squads = useAppStore((s) => s.squads);
   const exercises = useAppStore((s) => s.exercises);
-  const createSession = useAppStore((s) => s.createSession);
   const duplicateSession = useAppStore((s) => s.duplicateSession);
   const removeSession = useAppStore((s) => s.removeSession);
+  const anyData = useAppStore(hasData);
 
   const exercisesById = new Map(exercises.map((e) => [e.id, e]));
   const today = todayISO();
@@ -163,22 +165,30 @@ export function SessionList() {
     );
   };
 
+  // Sin nada cargado: portada de bienvenida y primeros pasos.
+  if (!anyData) {
+    return (
+      <div className="page">
+        <Welcome />
+        <GettingStarted />
+      </div>
+    );
+  }
+
   return (
     <div className="page">
-      <div className="page-header">
-        <h1>Sesiones de entrenamiento</h1>
-        {/* Sin sesiones, la guía de primeros pasos indica qué hacer primero. */}
-        {sessions.length > 0 && (
-          <button className="primary" onClick={() => navigate(`/sesiones/${createSession()}`)}>
-            + Nueva sesión
-          </button>
-        )}
-      </div>
-
       {sessions.length === 0 ? (
-        <GettingStarted />
+        <>
+          <div className="page-header">
+            <h1>Sesiones de entrenamiento</h1>
+          </div>
+          {/* Sin sesiones, la guía de primeros pasos indica qué hacer primero. */}
+          <GettingStarted />
+        </>
       ) : (
         <>
+          <HomeGreeting sessions={sessions} exercisesById={exercisesById} />
+          <HomeOverview sessions={sessions} exercisesById={exercisesById} />
           <WeekPanel sessions={sessions} exercisesById={exercisesById} />
           <h3 className="list-title">Próximas</h3>
           {upcoming.length ? (
