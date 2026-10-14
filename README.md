@@ -114,7 +114,20 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    debilidades), nuestro plan (saque, bloqueo y defensa, claves), el historial
    contra ese rival y una pizarra con modo presentación para la charla previa.
    Si ya jugaste contra ese rival, ofrece copiar el plan anterior.
-9. **Exportar PDF:** abre una versión para imprimir con toda la sesión y las
+9. **Estadísticas de partido:** desde el plan del partido, **Anotar
+   estadísticas**. Durante el partido, alguien del banco anota cada acción en
+   3 toques: **quién** (la jugadora), **qué hizo** (saque, recepción, ataque,
+   bloqueo o defensa) y **cómo salió** (por ejemplo ace, perfecta, punto,
+   error). La app lleva sola el marcador, quién saca y la rotación (avanza al
+   recuperar el saque; se corrige tocando la R). *Error del rival*, *Punto del
+   rival* y *Deshacer* completan lo que no es de una jugadora. En **Resumen**
+   (de todo el partido o de cada set) están el side-out y el break, la tabla
+   por jugadora (puntos, errores, saque, recepción positiva, eficacia de
+   ataque, bloqueo y defensa), cada rotación con su side-out y break, y la
+   *rotación a trabajar*. La primera vez se abre un tutorial paso a paso
+   (después, con **¿Cómo se usa?**). El ejemplo trae un partido jugado con
+   estadísticas.
+10. **Exportar PDF:** abre una versión para imprimir con toda la sesión y las
    pizarras; en el diálogo de impresión elegí "Guardar como PDF".
 
 Arriba a la derecha están tu **cuenta** y el botón de **modo oscuro** (se recuerda en cada

@@ -53,7 +53,12 @@ export function MatchPlanPage({ id }: { id: string }) {
           ← Calendario
         </button>
         <h1 className="match-title">vs {match.opponent || 'rival sin nombre'}</h1>
-        <button onClick={() => setEditing(true)}>Editar datos del partido</button>
+        <div className="row">
+          <button className="primary" onClick={() => navigate(`/partidos/${match.id}/estadisticas`)}>
+            {match.stats?.events.length ? 'Estadísticas' : 'Anotar estadísticas'}
+          </button>
+          <button onClick={() => setEditing(true)}>Editar datos del partido</button>
+        </div>
       </div>
       <p className="match-meta">
         {formatDate(match.date)}

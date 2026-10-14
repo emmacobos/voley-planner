@@ -294,8 +294,27 @@ export interface Match {
   /** Resultado en sets, por ejemplo "3-1" (se carga después). */
   result: string;
   plan?: MatchPlan;
+  /** Estadísticas anotadas durante el partido. */
+  stats?: MatchStats;
   createdAt: string;
   updatedAt: string;
+}
+
+export type StatSkill = 'saque' | 'recepcion' | 'ataque' | 'bloqueo' | 'defensa';
+
+/** Lo que se anota durante el partido, en orden. */
+export type StatEvent =
+  /** Una acción de una jugadora: fundamento y resultado (ver `SKILLS` en domain/stats). */
+  | { id: string; type: 'accion'; playerId: string | null; skill: StatSkill; result: string }
+  /** Punto que no fue de una jugadora nuestra: error del rival (punto nuestro) o punto del rival. */
+  | { id: string; type: 'rival'; result: 'error' | 'punto' }
+  /** Empieza un set: rotación inicial (armador en la zona…) y quién saca. */
+  | { id: string; type: 'set'; rotation: number; serving: 'nosotros' | 'rival' }
+  /** Corrección manual de la rotación. */
+  | { id: string; type: 'rotacion'; rotation: number };
+
+export interface MatchStats {
+  events: StatEvent[];
 }
 
 /** Objetivo de una semana (microciclo) para un plantel o para todos. */

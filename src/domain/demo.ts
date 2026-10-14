@@ -1,7 +1,10 @@
 import { formationTokens } from './formations';
 import { assignLineup, roleTokenId } from './rotations';
 import { todayISO } from './sessions';
+import { nextRotation, replay, setFinished, setsResult } from './stats';
 import type {
+  MatchStats,
+  StatEvent,
   BoardElement,
   Exercise,
   Frame,
@@ -107,6 +110,97 @@ function playFrames(players: Player[]): Frame[] {
     ]),
     frame('3', 'Ataque cruzado al fondo', 'juego', [...attack, ...defendB, ball(15.5, 7.2)]),
   ];
+}
+
+/**
+ * Estadísticas de un partido de ejemplo, simuladas con números fijos (siempre
+ * da lo mismo). La recepción en R4 sale floja a propósito, para que el resumen
+ * muestre una "rotación a trabajar".
+ */
+function demoStats(players: Player[]): MatchStats {
+  let seed = 23;
+  const rand = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+  const pick = <T,>(list: T[]) => list[Math.floor(rand() * list.length)];
+  const byNumber = (n: number) => players.find((p) => p.number === n)!.id;
+  const servers = [1, 2, 3, 4, 5, 6].map(byNumber);
+  const receivers = [7, 3, 4].map(byNumber);
+  const hitters = [2, 3, 4, 5, 6].map(byNumber);
+  const blockers = [2, 5, 6].map(byNumber);
+  const events: StatEvent[] = [];
+  let n = 0;
+  type WithoutId<T> = T extends unknown ? Omit<T, 'id'> : never;
+  const push = (e: WithoutId<StatEvent>) => events.push({ ...e, id: `${DEMO_PREFIX}st-${n++}` } as StatEvent);
+  const chance = (p: number) => rand() < p;
+
+  let setsUs = 0;
+  let setsThem = 0;
+  for (let number = 1; setsUs < 3 && setsThem < 3; number++) {
+    let serving: 'nosotros' | 'rival' = number % 2 ? 'nosotros' : 'rival';
+    let rotation = 1;
+    push({ type: 'set', rotation, serving });
+    const score = { number, us: 0, them: 0 };
+    let turn = 0;
+    while (!setFinished(score)) {
+      let winner: 'nosotros' | 'rival' | null = null;
+      if (serving === 'nosotros') {
+        const r = rand();
+        const result = r < 0.08 ? 'ace' : r < 0.18 ? 'error' : r < 0.38 ? 'complica' : 'en-juego';
+        push({ type: 'accion', playerId: servers[turn++ % 6], skill: 'saque', result });
+        if (result === 'ace') winner = 'nosotros';
+        if (result === 'error') winner = 'rival';
+      } else {
+        const weak = rotation === 4;
+        const r = rand();
+        const result = r < (weak ? 0.18 : 0.06) ? 'error' : r < (weak ? 0.4 : 0.42) ? 'perfecta' : r < (weak ? 0.62 : 0.75) ? 'buena' : 'mala';
+        push({ type: 'accion', playerId: pick(receivers), skill: 'recepcion', result });
+        if (result === 'error') winner = 'rival';
+      }
+      // La jugada sigue: ataques, bloqueos y defensas hasta que alguien gana el punto.
+      for (let i = 0; !winner && i < 6; i++) {
+        if (chance(0.45)) {
+          const r = rand();
+          const result = r < 0.42 ? 'punto' : r < 0.52 ? 'error' : r < 0.6 ? 'bloqueado' : 'en-juego';
+          push({ type: 'accion', playerId: pick(hitters), skill: 'ataque', result });
+          if (result === 'punto') winner = 'nosotros';
+          else if (result !== 'en-juego') winner = 'rival';
+        } else if (chance(0.25)) {
+          const result = chance(0.35) ? 'punto' : chance(0.2) ? 'error' : 'toque';
+          push({ type: 'accion', playerId: pick(blockers), skill: 'bloqueo', result });
+          if (result === 'punto') winner = 'nosotros';
+          if (result === 'error') winner = 'rival';
+        } else {
+          const r = rand();
+          if (r < 0.4) {
+            push({ type: 'rival', result: 'punto' });
+            winner = 'rival';
+          } else if (r < 0.6) {
+            push({ type: 'rival', result: 'error' });
+            winner = 'nosotros';
+          } else {
+            push({ type: 'accion', playerId: byNumber(7), skill: 'defensa', result: 'levantada' });
+          }
+        }
+      }
+      if (!winner) {
+        push({ type: 'rival', result: 'punto' });
+        winner = 'rival';
+      }
+      if (winner === 'nosotros') {
+        score.us++;
+        if (serving === 'rival') rotation = nextRotation(rotation);
+        serving = 'nosotros';
+      } else {
+        score.them++;
+        serving = 'rival';
+      }
+    }
+    if (score.us > score.them) setsUs++;
+    else setsThem++;
+  }
+  return { events };
 }
 
 /** Arma un plantel, tres ejercicios y una sesión de ejemplo. */
@@ -262,6 +356,24 @@ export function buildDemoData(today: Date = new Date()): DemoData {
     createdAt: now,
     updatedAt: now,
   };
+  // Un partido ya jugado (el sábado anterior), con estadísticas cargadas.
+  const lastSaturday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (((today.getDay() + 1) % 7) || 7));
+  const pastStats = demoStats(players);
+  const pastMatch: Match = {
+    id: id('partido-jugado'),
+    squadId: squad.id,
+    date: todayISO(lastSaturday),
+    time: '19:00',
+    opponent: 'Deportivo Muestra',
+    home: false,
+    venue: 'Club Deportivo Muestra',
+    competition: 'Liga metropolitana',
+    notes: 'Partido de ejemplo con estadísticas: abrí el partido y tocá "Estadísticas".',
+    result: setsResult(replay(pastStats).sets),
+    stats: pastStats,
+    createdAt: now,
+    updatedAt: now,
+  };
   const monday = new Date(sessionDay.getFullYear(), sessionDay.getMonth(), sessionDay.getDate() - ((sessionDay.getDay() + 6) % 7));
   const week: WeekPlan = {
     id: `${todayISO(monday)}_${squad.id}`,
@@ -271,7 +383,7 @@ export function buildDemoData(today: Date = new Date()): DemoData {
   };
 
   return {
-    matches: [match],
+    matches: [pastMatch, match],
     weeks: [week],
     squads: [squad],
     players,

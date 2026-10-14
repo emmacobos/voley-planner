@@ -19,6 +19,7 @@ const LibraryPage = lazy(() => import('./components/LibraryPage').then((m) => ({
 const MatchPlanPage = lazy(() => import('./components/MatchPlanPage').then((m) => ({ default: m.MatchPlanPage })));
 const RosterPage = lazy(() => import('./components/RosterPage').then((m) => ({ default: m.RosterPage })));
 const SessionEditor = lazy(() => import('./components/SessionEditor').then((m) => ({ default: m.SessionEditor })));
+const MatchStatsPage = lazy(() => import('./components/MatchStatsPage').then((m) => ({ default: m.MatchStatsPage })));
 const SessionPrint = lazy(() => import('./components/SessionPrint').then((m) => ({ default: m.SessionPrint })));
 
 export default function App() {
@@ -39,7 +40,7 @@ export default function App() {
             <NavIcon d="M9 3h6v3H9zM7 4.5H5.5A1.5 1.5 0 0 0 4 6v14a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 20V6a1.5 1.5 0 0 0-1.5-1.5H17M8 11h8M8 15h5" />
             Sesiones
           </a>
-          <a className={route.name === 'calendar' || route.name === 'match' ? 'active' : ''} href="#/calendario">
+          <a className={route.name === 'calendar' || route.name.startsWith('match') ? 'active' : ''} href="#/calendario">
             <NavIcon d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 2v4M16 2v4M3 10h18M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2" />
             Calendario
           </a>
@@ -80,6 +81,7 @@ export default function App() {
               {route.name === 'library' && <LibraryPage />}
               {route.name === 'data' && <DataPage />}
               {route.name === 'match' && <MatchPlanPage id={route.id} />}
+              {route.name === 'match-stats' && <MatchStatsPage id={route.id} />}
               {route.name === 'exercises' && <ExerciseList />}
               {route.name === 'exercise' && <ExerciseEditor id={route.id} />}
             </Suspense>

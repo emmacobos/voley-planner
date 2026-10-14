@@ -8,7 +8,7 @@ export function DemoBanner() {
   return (
     <div className="demo-banner no-print" role="status">
       <p>
-        <b>Estás viendo datos de ejemplo:</b> un plantel, tres ejercicios y cuatro sesiones (tres ya hechas, con asistencia). Tocá y cambiá lo que quieras.
+        <b>Estás viendo datos de ejemplo:</b> un plantel, tres ejercicios, cuatro sesiones (tres ya hechas, con asistencia) y dos partidos (uno jugado, con estadísticas). Tocá y cambiá lo que quieras.
       </p>
       <button
         onClick={() => {
