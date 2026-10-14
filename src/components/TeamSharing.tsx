@@ -6,6 +6,7 @@ import {
   ROLE_LABEL,
   openWorkspace,
   recheckVerification,
+  retryInvites,
   sendVerification,
   shareWith,
   stopSharingWith,
@@ -17,7 +18,7 @@ import { AuthDialog } from './AuthDialog';
 /** Compartir los datos con el cuerpo técnico y ver lo que otros compartieron. */
 export function TeamSharing() {
   const user = useAuth((s) => s.user);
-  const { shares, sharedWithMe, workspace, needsVerification } = useSharing();
+  const { shares, sharedWithMe, workspace, needsVerification, invitesError } = useSharing();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<ShareRole>('editar');
   const [busy, setBusy] = useState(false);
@@ -64,7 +65,7 @@ export function TeamSharing() {
     void run(async () => {
       await shareWith(email, role);
       setEmail('');
-    }, `Listo. Cuando ${email.trim()} entre con esa cuenta, va a poder elegir ver tus datos desde su menú.`);
+    }, `Listo. Cuando ${email.trim()} entre con esa cuenta, le va a aparecer un aviso arriba para ver tus datos.`);
   };
 
   return (
@@ -142,8 +143,16 @@ export function TeamSharing() {
             </button>
           </div>
         </div>
+      ) : invitesError ? (
+        <div className="verify-box">
+          <p>No se pudieron buscar los datos que te compartieron. Se vuelve a intentar solo; si sigue, recargá la página.</p>
+          <button onClick={retryInvites}>Intentar de nuevo</button>
+        </div>
       ) : sharedWithMe.length === 0 ? (
-        <p className="muted">Nadie te compartió sus datos todavía.</p>
+        <p className="muted">
+          Nadie te compartió sus datos todavía. Para que aparezcan acá, tienen que invitar a <b>{user.email}</b> (el email
+          con el que entraste).
+        </p>
       ) : (
         <ul className="share-list">
           <li className={!workspace ? 'current' : ''}>

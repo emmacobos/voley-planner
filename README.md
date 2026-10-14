@@ -129,8 +129,10 @@ te lo recuerda.
 Con tu cuenta, en **Tus datos → Cuerpo técnico** invitás por email a tu
 asistente o preparador físico con permiso **Puede ver** o **Puede editar**
 (se cambia o se quita cuando quieras). La persona entra con esa cuenta —si
-usa email y contraseña, primero verifica su email— y elige ver tus datos
-desde su menú de cuenta o desde *Tus datos*. Mientras los ve, un aviso arriba
+usa email y contraseña, primero verifica su email— y le aparece un aviso
+arriba para **ver tus datos** (también desde su menú de cuenta o desde *Tus
+datos*). Los datos compartidos no se mezclan con los propios: se pasa de unos
+a otros con un clic. Mientras los ve, un aviso arriba
 indica de quién son; con solo lectura, los cambios no se guardan. Si dejás de
 compartir, vuelve automáticamente a sus propios datos.
 

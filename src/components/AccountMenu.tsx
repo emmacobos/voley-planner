@@ -84,7 +84,7 @@ export function AccountMenu() {
           {user.email && <p className="muted small">{user.email}</p>}
           {sharedWithMe.length > 0 && (
             <div className="workspace-switch" role="group" aria-label="Datos que ves">
-              <p className="muted small">Datos que ves</p>
+              <p className="muted small">Datos que ves (te compartieron sus datos)</p>
               <button className={!workspace ? 'active' : ''} onClick={() => openWorkspace(null)} aria-pressed={!workspace}>
                 Mis datos
               </button>

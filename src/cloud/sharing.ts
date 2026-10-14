@@ -43,6 +43,8 @@ interface SharingState {
   workspace: SharedWorkspace | null;
   /** El email de la cuenta no está verificado: no se pueden ver datos compartidos. */
   needsVerification: boolean;
+  /** No se pudieron leer las invitaciones (se reintenta solo). */
+  invitesError: boolean;
 }
 
 export const useSharing = create<SharingState>(() => ({
@@ -50,6 +52,7 @@ export const useSharing = create<SharingState>(() => ({
   sharedWithMe: [],
   workspace: null,
   needsVerification: false,
+  invitesError: false,
 }));
 
 const WORKSPACE_KEY = 'voley-planner-workspace';
@@ -64,6 +67,9 @@ interface Me {
 
 let me: Me | null = null;
 let unsubscribers: Unsubscribe[] = [];
+let invitesUnsubscribe: Unsubscribe | undefined;
+let retryTimer: ReturnType<typeof setTimeout> | undefined;
+let retries = 0;
 
 /** Escucha mis invitaciones y las que recibí. Se llama al entrar. */
 export function startSharing(user: Me) {
@@ -78,34 +84,54 @@ export function startSharing(user: Me) {
 }
 
 function listenInvites() {
+  invitesUnsubscribe?.();
+  invitesUnsubscribe = undefined;
+  clearTimeout(retryTimer);
   if (!me?.email) return;
-  unsubscribers.push(
-    onSnapshot(
-      collection(db, 'invites', normalizeEmail(me.email), 'from'),
-      (snap) => {
-        const sharedWithMe = snap.docs.map((d) => d.data() as SharedWorkspace);
-        useSharing.setState({ sharedWithMe, needsVerification: false });
-        // Si me cambiaron el permiso o me quitaron el acceso mientras miro sus datos.
-        const current = useSharing.getState().workspace;
-        if (!current || snap.metadata.fromCache) return;
-        const updated = sharedWithMe.find((w) => w.ownerUid === current.ownerUid);
-        if (!updated) {
-          openWorkspace(null);
-          alert(`${current.ownerName} dejó de compartir sus datos con vos. Volviste a tus datos.`);
-        } else if (updated.role !== current.role) {
-          openWorkspace(updated);
-        }
-      },
-      () => useSharing.setState({ sharedWithMe: [], needsVerification: !auth.currentUser?.emailVerified }),
-    ),
+  invitesUnsubscribe = onSnapshot(
+    collection(db, 'invites', normalizeEmail(me.email), 'from'),
+    (snap) => {
+      retries = 0;
+      const sharedWithMe = snap.docs.map((d) => d.data() as SharedWorkspace);
+      useSharing.setState({ sharedWithMe, needsVerification: false, invitesError: false });
+      // Si me cambiaron el permiso o me quitaron el acceso mientras miro sus datos.
+      const current = useSharing.getState().workspace;
+      if (!current || snap.metadata.fromCache) return;
+      const updated = sharedWithMe.find((w) => w.ownerUid === current.ownerUid);
+      if (!updated) {
+        openWorkspace(null);
+        alert(`${current.ownerName} dejó de compartir sus datos con vos. Volviste a tus datos.`);
+      } else if (updated.role !== current.role) {
+        openWorkspace(updated);
+      }
+    },
+    (err) => {
+      console.error(err);
+      const needsVerification = !auth.currentUser?.emailVerified;
+      useSharing.setState({ sharedWithMe: [], needsVerification, invitesError: !needsVerification });
+      // Un listener que falla queda cerrado: se vuelve a intentar al rato.
+      if (!needsVerification && retries < 5) {
+        retries++;
+        retryTimer = setTimeout(listenInvites, 5000 * retries);
+      }
+    },
   );
+}
+
+/** Vuelve a buscar las invitaciones (por ejemplo, después de un error). */
+export function retryInvites() {
+  retries = 0;
+  listenInvites();
 }
 
 export function stopSharing() {
   for (const u of unsubscribers) u();
   unsubscribers = [];
+  invitesUnsubscribe?.();
+  invitesUnsubscribe = undefined;
+  clearTimeout(retryTimer);
   me = null;
-  useSharing.setState({ shares: [], sharedWithMe: [], workspace: null, needsVerification: false });
+  useSharing.setState({ shares: [], sharedWithMe: [], workspace: null, needsVerification: false, invitesError: false });
 }
 
 /** Invita (o cambia el permiso de) una persona del cuerpo técnico. */

@@ -3,6 +3,7 @@ import { BallLogo } from './components/BallLogo';
 import { CalendarPage } from './components/CalendarPage';
 import { DataPage } from './components/DataPage';
 import { DemoBanner } from './components/DemoBanner';
+import { SharedInviteBanner } from './components/SharedInviteBanner';
 import { WorkspaceBanner } from './components/WorkspaceBanner';
 import { ExerciseEditor } from './components/ExerciseEditor';
 import { ExerciseList } from './components/ExerciseList';
@@ -63,6 +64,7 @@ export default function App() {
         </header>
         <main>
           <WorkspaceBanner />
+          <SharedInviteBanner />
           <DemoBanner />
           {/* La key reinicia el error al navegar a otra pantalla. */}
           <ErrorBoundary key={window.location.hash}>
