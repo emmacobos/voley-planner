@@ -4,11 +4,14 @@ export type Tool = 'select' | 'arrow-move' | 'arrow-ball' | 'arrow-curve' | 'arr
 
 export const TEAM_COLORS: Record<Team, string> = { A: '#1F4FB8', B: '#C0262D' };
 
-/** Cancha naranja con zona libre azul, como en las transmisiones de la FIVB. */
+/**
+ * Colores de cancha estilo VNL: zona libre turquesa, zona de defensa salmón
+ * y zona de ataque (de la línea de 3 m a la red) naranja más intenso.
+ */
 export const COURT_COLORS = {
-  freeZone: '#1D4E89',
-  court: '#E9843F',
-  frontZone: '#E07A35',
+  freeZone: '#27A7A6',
+  court: '#F3A07C',
+  frontZone: '#EC7A3C',
   net: '#0E1A2B',
 };
 
