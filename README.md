@@ -124,6 +124,11 @@ o **Reemplazar todo**. Sirve también para pasar los datos a otra compu. Si
 usás la app sin cuenta y hace más de un mes que no bajás una copia, el inicio
 te lo recuerda.
 
+Además, cada vez que abrís la app se guarda una **copia automática** de lo que
+tiene ese navegador (las últimas 5), antes de conectarse a la nube. Aparecen en
+*Tus datos → Copias automáticas de este navegador* y se pueden sumar de nuevo a
+tus datos o descargar.
+
 ### Cuerpo técnico
 
 Con tu cuenta, en **Tus datos → Cuerpo técnico** invitás por email a tu

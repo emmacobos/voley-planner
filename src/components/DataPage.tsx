@@ -6,6 +6,8 @@ import type { Backup, BackupData } from '../domain/backup';
 import { todayISO } from '../domain/sessions';
 import { DATA_KEYS, useAppStore } from '../store';
 import { lastBackupAt, rememberBackup } from '../utils/backupReminder';
+import { readSnapshots, removeSnapshot } from '../utils/localSnapshots';
+import type { LocalSnapshot } from '../utils/localSnapshots';
 import { TeamSharing } from './TeamSharing';
 import type { AppData } from '../store';
 
@@ -27,6 +29,8 @@ export function DataPage() {
   const [pending, setPending] = useState<Backup | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [snapshots, setSnapshots] = useState(readSnapshots);
+  const ownerUid = useAppStore((s) => s.ownerUid);
 
   const download = () => {
     const backup = makeBackup(currentData());
@@ -52,6 +56,21 @@ export function DataPage() {
       setPending(null);
       setError(err instanceof Error ? err.message : 'No se pudo leer el archivo.');
     }
+  };
+
+  const recover = (snap: LocalSnapshot) => {
+    if (!confirm(`¿Sumar a tus datos lo que tiene la copia del ${formatWhen(snap.at)} (${describeBackup(snap.data)})?`)) return;
+    restoreData(mergeBackup(currentData(), snap.data) as unknown as AppData);
+    setDone('Listo: la copia automática se sumó a tus datos.');
+  };
+
+  const downloadSnapshot = (snap: LocalSnapshot) => {
+    const blob = new Blob([JSON.stringify(makeBackup(snap.data, new Date(snap.at)), null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `voley-planner-copia-automatica-${snap.at.slice(0, 10)}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   };
 
   const apply = (mode: 'merge' | 'replace') => {
@@ -123,6 +142,46 @@ export function DataPage() {
         </section>
 
         <TeamSharing />
+
+        {snapshots.length > 0 && (
+          <section className="panel">
+            <h2>Copias automáticas de este navegador</h2>
+            <p>
+              Cada vez que abrís la app se guarda acá una copia de lo que había en este navegador (las últimas 5). Si algo
+              se borró, podés sumarlo de nuevo a tus datos.
+            </p>
+            <ul className="share-list">
+              {snapshots.map((snap) => (
+                <li key={snap.at}>
+                  <span className="share-email">
+                    <b>{formatWhen(snap.at)}</b>
+                    <br />
+                    <span className="muted small">
+                      {describeBackup(snap.data)}
+                      {snap.ownerUid && snap.ownerUid !== ownerUid && ' · de otra cuenta'}
+                      {!snap.ownerUid && ' · sin cuenta'}
+                    </span>
+                  </span>
+                  <button className="primary" onClick={() => recover(snap)}>
+                    Sumar a mis datos
+                  </button>
+                  <button onClick={() => downloadSnapshot(snap)}>Descargar</button>
+                  <button
+                    className="danger"
+                    onClick={() => {
+                      if (confirm('¿Borrar esta copia automática?')) {
+                        removeSnapshot(snap.at);
+                        setSnapshots(readSnapshots());
+                      }
+                    }}
+                  >
+                    Borrar
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
     </div>
   );
