@@ -12,6 +12,7 @@ export type Route =
   | { name: 'season' }
   | { name: 'library' }
   | { name: 'data' }
+  | { name: 'matches' }
   | { name: 'match'; id: string }
   | { name: 'match-stats'; id: string }
   | { name: 'shared-play'; code: string };
@@ -23,6 +24,7 @@ function parse(hash: string): Route {
   if (parts[0] === 'calendario') return { name: 'calendar' };
   if (parts[0] === 'temporada') return { name: 'season' };
   if (parts[0] === 'datos') return { name: 'data' };
+  if (parts[0] === 'partidos' && !parts[1]) return { name: 'matches' };
   if (parts[0] === 'partidos' && parts[1]) {
     return parts[2] === 'estadisticas' ? { name: 'match-stats', id: parts[1] } : { name: 'match', id: parts[1] };
   }

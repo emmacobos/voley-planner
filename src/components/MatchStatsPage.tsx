@@ -36,7 +36,7 @@ export function MatchStatsPage({ id }: { id: string }) {
     return (
       <div className="empty">
         <p>No se encontró el partido.</p>
-        <button onClick={() => navigate('/calendario')}>Volver al calendario</button>
+        <button onClick={() => navigate('/partidos')}>Volver a partidos</button>
       </div>
     );
   }

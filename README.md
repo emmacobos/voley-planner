@@ -123,8 +123,12 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    debilidades), nuestro plan (saque, bloqueo y defensa, claves), el historial
    contra ese rival y una pizarra con modo presentación para la charla previa.
    Si ya jugaste contra ese rival, ofrece copiar el plan anterior.
-9. **Estadísticas de partido:** desde el plan del partido, **Anotar
-   estadísticas**. Durante el partido, alguien del banco anota cada acción en
+   **Partidos** (en el menú) junta todos los partidos: el próximo bien a mano
+   con **Anotar estadísticas en vivo**, el plan y sus datos, y abajo los que
+   faltan y los jugados (con resultado y acceso a sus estadísticas). También
+   se crean partidos desde ahí.
+9. **Estadísticas de partido:** desde **Partidos** o desde el plan del
+   partido, **Anotar estadísticas**. Durante el partido, alguien del banco anota cada acción en
    3 toques: **quién** (la jugadora), **qué hizo** (saque, recepción, ataque,
    bloqueo o defensa) y **cómo salió** (por ejemplo ace, perfecta, punto,
    error). La app lleva sola el marcador, quién saca y la rotación (avanza al

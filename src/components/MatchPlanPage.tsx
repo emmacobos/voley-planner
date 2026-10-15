@@ -27,7 +27,7 @@ export function MatchPlanPage({ id }: { id: string }) {
     return (
       <div className="empty">
         <p>No se encontró el partido.</p>
-        <button onClick={() => navigate('/calendario')}>Volver al calendario</button>
+        <button onClick={() => navigate('/partidos')}>Volver a partidos</button>
       </div>
     );
   }
@@ -49,8 +49,8 @@ export function MatchPlanPage({ id }: { id: string }) {
   return (
     <div className="page match-plan">
       <div className="exercise-header">
-        <button className="link" onClick={() => navigate('/calendario')}>
-          ← Calendario
+        <button className="link" onClick={() => navigate('/partidos')}>
+          ← Partidos
         </button>
         <h1 className="match-title">vs {match.opponent || 'rival sin nombre'}</h1>
         <div className="row">
@@ -164,7 +164,7 @@ export function MatchPlanPage({ id }: { id: string }) {
           onChange={(patch) => updateMatch(match.id, patch)}
           onRemove={() => {
             removeMatch(match.id);
-            navigate('/calendario');
+            navigate('/partidos');
           }}
           onClose={() => setEditing(false)}
         />

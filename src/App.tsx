@@ -23,6 +23,7 @@ const MatchStatsPage = lazy(() => import('./components/MatchStatsPage').then((m)
 const PlayerPage = lazy(() => import('./components/PlayerPage').then((m) => ({ default: m.PlayerPage })));
 const SharedPlayPage = lazy(() => import('./components/SharedPlayPage').then((m) => ({ default: m.SharedPlayPage })));
 const SeasonPage = lazy(() => import('./components/SeasonPage').then((m) => ({ default: m.SeasonPage })));
+const MatchesPage = lazy(() => import('./components/MatchesPage').then((m) => ({ default: m.MatchesPage })));
 const SessionPrint = lazy(() => import('./components/SessionPrint').then((m) => ({ default: m.SessionPrint })));
 
 export default function App() {
@@ -52,9 +53,13 @@ export default function App() {
             <NavIcon d="M9 3h6v3H9zM7 4.5H5.5A1.5 1.5 0 0 0 4 6v14a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 20V6a1.5 1.5 0 0 0-1.5-1.5H17M8 11h8M8 15h5" />
             Sesiones
           </a>
-          <a className={route.name === 'calendar' || route.name.startsWith('match') ? 'active' : ''} href="#/calendario">
+          <a className={route.name === 'calendar' ? 'active' : ''} href="#/calendario">
             <NavIcon d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 2v4M16 2v4M3 10h18M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2" />
             Calendario
+          </a>
+          <a className={route.name.startsWith('match') ? 'active' : ''} href="#/partidos">
+            <NavIcon d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 3c-2.5 3-3 6-2.5 9.5M3.6 8.5c3.4-.6 6.4.4 8.9 3.5M12.5 12c-1.5 3.5-4.2 5.6-7.6 6.3M12.5 12c3.8.2 6.4 1.6 8.2 4.3M12.5 12c2.1-3.2 4.8-5 8-5.2" />
+            Partidos
           </a>
           <a className={route.name === 'season' ? 'active' : ''} href="#/temporada">
             <NavIcon d="M3 12h4l3-8 4 16 3-8h4" />
@@ -98,6 +103,7 @@ export default function App() {
               {route.name === 'season' && <SeasonPage />}
               {route.name === 'library' && <LibraryPage />}
               {route.name === 'data' && <DataPage />}
+              {route.name === 'matches' && <MatchesPage />}
               {route.name === 'match' && <MatchPlanPage id={route.id} />}
               {route.name === 'match-stats' && <MatchStatsPage id={route.id} />}
               {route.name === 'exercises' && <ExerciseList />}

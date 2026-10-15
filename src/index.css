@@ -5179,3 +5179,96 @@ input.num {
     margin-left: 0;
   }
 }
+
+/* ===== Partidos ===== */
+.next-match {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 1.3rem 1.5rem;
+  border-radius: 20px;
+  background: var(--navy);
+  color: #f3ead8;
+  box-shadow: var(--shadow-lg);
+}
+
+.next-match-kicker {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e3c48b;
+}
+
+.next-match h2 {
+  margin: 0.2rem 0 0.3rem;
+  font-size: 1.8rem;
+  color: #fff;
+}
+
+.next-match p {
+  margin: 0 0 1rem;
+  color: #c9b48a;
+}
+
+.next-match .row {
+  flex-wrap: wrap;
+}
+
+.next-match button:not(.primary) {
+  background: rgb(255 255 255 / 0.1);
+  border-color: rgb(255 255 255 / 0.2);
+  color: #fff;
+}
+
+.match-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.match-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.match-list li:last-child {
+  border-bottom: none;
+}
+
+.match-main {
+  flex: 1 1 16rem;
+  max-width: 100%;
+  white-space: normal;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  min-width: 0;
+  padding: 0.2rem 0.4rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-weight: 400;
+}
+
+.match-main:hover:not(:disabled) {
+  background: var(--row-hover);
+}
+
+.match-main span {
+  overflow-wrap: anywhere;
+}
+
+.match-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.match-actions button {
+  min-height: 34px;
+  font-size: 0.88rem;
+}
