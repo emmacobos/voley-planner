@@ -74,12 +74,15 @@ export function FloatingPanel({
   stageRef,
   svgRef,
   onClose,
+  hidden = false,
   children,
 }: {
   element: BoardElement;
   stageRef: RefObject<HTMLDivElement | null>;
   svgRef: RefObject<SVGSVGElement | null>;
   onClose: () => void;
+  /** Escondida (por ejemplo, mientras se arrastra el elemento): conserva su lugar. */
+  hidden?: boolean;
   children: ReactNode;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -182,7 +185,7 @@ export function FloatingPanel({
   return (
     <div
       ref={cardRef}
-      className={`floating-panel ${manual ? 'moved' : `side-${placement?.side ?? 'below'}`}`}
+      className={`floating-panel ${manual ? 'moved' : `side-${placement?.side ?? 'below'}`}${hidden ? ' dragging' : ''}`}
       style={
         {
           left: position?.left ?? 0,
@@ -207,7 +210,7 @@ export function FloatingPanel({
           ×
         </button>
       </div>
-      <FloatingPanelReady.Provider value={position !== null}>{children}</FloatingPanelReady.Provider>
+      <FloatingPanelReady.Provider value={position !== null && !hidden}>{children}</FloatingPanelReady.Provider>
     </div>
   );
 }

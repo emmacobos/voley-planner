@@ -72,6 +72,8 @@ interface BoardProps {
   onDelete?: (id: string) => void;
   /** Si está, el jugador seleccionado muestra un botón para comentarlo. */
   onComment?: (id: string) => void;
+  /** Avisa cuando empieza y termina el arrastre de un elemento (para esconder su tarjeta mientras tanto). */
+  onDraggingChange?: (dragging: boolean) => void;
 }
 
 /**
@@ -197,6 +199,7 @@ export function Board({
   onAddElement,
   onDelete,
   onComment,
+  onDraggingChange,
 }: BoardProps) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const playersById = new Map(players.map((p) => [p.id, p]));
@@ -219,6 +222,12 @@ export function Board({
     const p = svgPoint(svg, e.clientX, e.clientY);
     onSelect(id);
     setDrag({ type: 'element', id, part, ox: p.x, oy: p.y, dx: 0, dy: 0 });
+    onDraggingChange?.(true);
+  };
+
+  const endDrag = () => {
+    if (drag?.type === 'element') onDraggingChange?.(false);
+    setDrag(null);
   };
 
   const onBackgroundDown = (e: ReactPointerEvent<SVGSVGElement>) => {
@@ -269,7 +278,7 @@ export function Board({
       if (drag.type === 'shadow') onAddElement?.(drawnShadow(drag));
       else onAddArrow(drawnArrow(drag));
     }
-    setDrag(null);
+    endDrag();
   };
 
   const shown = elements.map((el) => applyDrag(el, drag));
@@ -289,7 +298,7 @@ export function Board({
       onPointerDown={onBackgroundDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onPointerCancel={() => setDrag(null)}
+      onPointerCancel={endDrag}
     >
       <defs>
         {ARROW_KINDS.map((c) => (
@@ -676,8 +685,8 @@ function TextMark({
   const box = textBox(element);
   const top = -box.height / 2;
   const pad = textPadding(size);
-  // Contorno contrastante para que se lea sobre la madera o la franja azul.
-  const halo = element.color.toUpperCase() === '#FFFFFF' ? '#0E1A2B' : '#FFFFFF';
+  // Contorno contrastante para que se lea sobre la madera o la franja azul (se puede sacar).
+  const halo = element.outline === false ? 'none' : element.color.toUpperCase() === '#FFFFFF' ? '#0E1A2B' : '#FFFFFF';
   return (
     <g className="el" transform={`translate(${element.x} ${element.y})`} onPointerDown={onPointerDown}>
       {/* Área para tocarlo y arrastrarlo. */}

@@ -101,6 +101,8 @@ export function BoardEditor({
   const [speed, setSpeed] = useState(1);
   const [presenting, setPresenting] = useState(false);
   const [sharing, setSharing] = useState(false);
+  /** Mientras se arrastra un elemento, su tarjeta se esconde (aparece al soltar). */
+  const [dragging, setDragging] = useState(false);
   /** Avance de la grabación del video (0 a 1) mientras se genera. */
   const [videoProgress, setVideoProgress] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -456,9 +458,16 @@ export function BoardEditor({
               setSelectedId(id);
               setFocusField({ id, field: 'comment' });
             }}
+            onDraggingChange={setDragging}
           />
           {selected && !playing && (
-            <FloatingPanel element={selected} stageRef={stageRef} svgRef={svgRef} onClose={() => setSelectedId(null)}>
+            <FloatingPanel
+              element={selected}
+              stageRef={stageRef}
+              svgRef={svgRef}
+              hidden={dragging}
+              onClose={() => setSelectedId(null)}
+            >
               <SelectedPanel
                 element={selected}
                 roster={roster}
@@ -812,6 +821,29 @@ function SelectedPanel({
                 title={c.label}
               />
             ))}
+          </div>
+        </div>
+        <div className="field">
+          Borde
+          <div className="segmented" role="group" aria-label="Borde del texto">
+            <button
+              className={element.outline !== false ? 'active' : ''}
+              aria-pressed={element.outline !== false}
+              onClick={() => {
+                const { outline: _outline, ...rest } = element;
+                onUpdate(rest);
+              }}
+              title="Contorno que lo hace leer sobre cualquier fondo"
+            >
+              Con borde
+            </button>
+            <button
+              className={element.outline === false ? 'active' : ''}
+              aria-pressed={element.outline === false}
+              onClick={() => onUpdate({ ...element, outline: false })}
+            >
+              Sin borde
+            </button>
           </div>
         </div>
         <p className="hint">

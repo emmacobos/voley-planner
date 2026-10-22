@@ -89,3 +89,29 @@ test('cerrar la tarjeta al final de la página no la hace saltar', async ({ page
   await expect(page.locator('.floating-panel')).toHaveCount(0);
   expect(await page.evaluate(() => scrollY)).toBe(scroll);
 });
+
+test('mientras se arrastra un elemento no aparece su tarjeta; aparece al soltar', async ({ page }) => {
+  await page.evaluate(() => document.querySelector('.board-stage')!.scrollIntoView());
+  const player = (await savedElements(page)).find((e) => e.kind === 'player' && e.team === 'A')!;
+  const [x, y] = await boardPoint(page, player.x as number, player.y as number);
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 40, y + 30, { steps: 5 });
+  await expect(page.locator('.floating-panel')).toBeHidden();
+  await page.mouse.up();
+  await expect(page.locator('.floating-panel')).toBeVisible();
+  expect((await savedElements(page)).find((e) => e.id === player.id)!.x).not.toBe(player.x);
+});
+
+test('el texto se puede dejar sin borde', async ({ page }) => {
+  await chooseTool(page, 'Texto');
+  const [x, y] = await boardPoint(page, 9, 4);
+  await page.mouse.click(x, y);
+  await page.keyboard.type('Sin borde');
+  await page.locator('.floating-panel button', { hasText: 'Sin borde' }).click();
+  await expect.poll(async () => (await savedElements(page)).find((e) => e.kind === 'text')?.outline).toBe(false);
+  const stroke = await page.locator('svg.board text', { hasText: 'Sin borde' }).getAttribute('stroke');
+  expect(stroke).toBe('none');
+  await page.locator('.floating-panel button', { hasText: 'Con borde' }).click();
+  await expect.poll(async () => (await savedElements(page)).find((e) => e.kind === 'text')?.outline).toBeUndefined();
+});

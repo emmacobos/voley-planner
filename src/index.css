@@ -5272,3 +5272,9 @@ input.num {
   min-height: 34px;
   font-size: 0.88rem;
 }
+
+/* Mientras se arrastra el elemento, su tarjeta se esconde (aparece al soltar). */
+.floating-panel.dragging {
+  visibility: hidden !important;
+  pointer-events: none;
+}

@@ -108,6 +108,8 @@ export interface TextElement extends Positioned {
   fontSize?: number;
   /** Ancho del cuadro en metros: si está, las líneas se cortan para entrar en ese ancho. */
   width?: number;
+  /** false: sin el borde (contorno) que lo rodea. Sin valor, con borde. */
+  outline?: boolean;
 }
 
 /**

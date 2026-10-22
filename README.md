@@ -56,7 +56,7 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      el panel ajustás el ancho en el bloqueo y al final; en la animación
      acompaña al bloqueo.
    - *Texto*: tocá la cancha y escribí directo (arranca vacío; si lo dejás
-     vacío se borra solo). Se puede mover y tiene cuatro colores. El cuadro
+     vacío se borra solo). Se puede mover, tiene cuatro colores y se le puede sacar el borde (contorno). El cuadro
      siempre envuelve al texto. El tamaño de letra va de muy chico a muy grande (barra o
      tamaños rápidos chico, mediano y grande) y el cuadro se ensancha o se
      angosta a gusto: en la pizarra, arrastrá el borde derecho para el ancho
@@ -68,7 +68,7 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      los puntos de agarre son más grandes para usarlos con el dedo.
    - Al tocar un elemento se abre su **tarjeta** al lado, sobre la pizarra,
      con todo lo que se puede cambiar (en el celular aparece debajo de la
-     pizarra). Aparece debajo del elemento para no taparlo, se mueve arrastrando
+     pizarra). Aparece debajo del elemento para no taparlo (mientras lo arrastrás se esconde y vuelve al soltar), se mueve arrastrando
      su título y se cierra con la ✕, con Esc o tocando en cualquier otro lugar.
    - Al seleccionar un jugador aparece, al lado del tachito, el **globito de
      comentario**: lo que escribas (por ejemplo "Se desplaza a 1") se ve
