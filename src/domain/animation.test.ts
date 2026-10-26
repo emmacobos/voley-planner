@@ -58,6 +58,15 @@ describe('sombra del bloqueo y texto', () => {
   });
 });
 
+describe('trazos de lápiz en la animación', () => {
+  it('un trazo que se corrió acompaña el movimiento', () => {
+    const a = { id: 'd', kind: 'draw' as const, points: [0, 0, 2, 0], color: '#fff' };
+    const b = { ...a, points: [2, 2, 4, 2] };
+    const [mid] = interpolateFrames([a], [b], 0.5);
+    expect(mid).toMatchObject({ kind: 'draw', points: [1, 1, 3, 1] });
+  });
+});
+
 describe('playbackProgress', () => {
   const timing = { intro: 1000, move: 1000, hold: 500, outro: 1000 };
 

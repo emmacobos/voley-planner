@@ -36,7 +36,11 @@ export function interpolateFrames(
         startWidth: lerp(a.startWidth, b.startWidth, t),
         endWidth: lerp(a.endWidth, b.endWidth, t),
       });
-    } else if (a && b.kind !== 'shadow' && a.kind !== 'arrow' && a.kind !== 'shadow') {
+    } else if (a && a.kind === 'draw' && b.kind === 'draw') {
+      // Un trazo que se corrió de lugar acompaña el movimiento (si se redibujó, cambia en la mitad).
+      if (a.points.length === b.points.length) result.push({ ...b, points: b.points.map((v, i) => lerp(a.points[i], v, t)) });
+      else result.push(t >= 0.5 ? b : a);
+    } else if (a && b.kind !== 'shadow' && b.kind !== 'draw' && a.kind !== 'arrow' && a.kind !== 'shadow' && a.kind !== 'draw') {
       result.push({ ...b, x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) });
     } else if (t >= 0.5) {
       result.push(b);

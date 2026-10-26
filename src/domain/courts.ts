@@ -1,3 +1,4 @@
+import { strokeBounds } from './drawing';
 import type { CourtInfo, Exercise, Frame, TeamNames } from './types';
 
 /**
@@ -49,6 +50,12 @@ export function courtProgress(court: Court, progress: number): number {
   return Math.min(progress, court.frames.length - 1);
 }
 
+/** Lo más a la derecha (hacia el lado B) que llega un elemento. */
+function rightmost(e: Frame['elements'][number]): number {
+  if (e.kind === 'draw') return strokeBounds(e.points).x2;
+  return 'x1' in e ? Math.max(e.x1, e.x2) : e.x;
+}
+
 /** Al pasar a media cancha se borra lo que está pasando la red (del lado B). */
 export const HALF_COURT_LIMIT = 9.2;
 
@@ -58,8 +65,7 @@ export const HALF_COURT_LIMIT = 9.2;
  */
 export function cutToHalfCourt(frames: Frame[]): { frames: Frame[]; removed: number } {
   let removed = 0;
-  const outside = (e: Frame['elements'][number]) =>
-    'x1' in e ? Math.max(e.x1, e.x2) > HALF_COURT_LIMIT : e.x > HALF_COURT_LIMIT;
+  const outside = (e: Frame['elements'][number]) => rightmost(e) > HALF_COURT_LIMIT;
   const next = frames.map((f) => {
     const keep = f.elements.filter((e) => !outside(e));
     removed += f.elements.length - keep.length;
@@ -72,6 +78,6 @@ export function cutToHalfCourt(frames: Frame[]): { frames: Frame[]; removed: num
 export function halfCourtLosses(frames: Frame[]): number {
   const ids = new Set<string>();
   for (const f of frames)
-    for (const e of f.elements) if ('x1' in e ? Math.max(e.x1, e.x2) > HALF_COURT_LIMIT : e.x > HALF_COURT_LIMIT) ids.add(e.id);
+    for (const e of f.elements) if (rightmost(e) > HALF_COURT_LIMIT) ids.add(e.id);
   return ids.size;
 }

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode, RefObject } from 'react';
 import { midPoint } from '../domain/arrows';
+import { strokeBounds } from '../domain/drawing';
 import { shadowCorners, textBox, wrapText } from '../domain/shadows';
 import type { BoardElement } from '../domain/types';
 import { holdPageHeight } from '../utils/holdPageHeight';
@@ -22,6 +23,7 @@ const TITLES: Record<BoardElement['kind'], string> = {
   arrow: 'Flecha',
   shadow: 'Sombra del bloqueo',
   text: 'Texto',
+  draw: 'Trazo de lápiz',
 };
 
 /** Margen (en metros) para no tapar los puntos de agarre del elemento. */
@@ -29,7 +31,7 @@ const HANDLE_PAD = 0.35;
 
 /** Rectángulo (en metros) que ocupa el elemento en la pizarra, incluidos sus textos y agarres. */
 function elementBounds(el: BoardElement): { x1: number; y1: number; x2: number; y2: number } {
-  if (el.kind === 'arrow' || el.kind === 'shadow' || el.kind === 'text') {
+  if (el.kind === 'arrow' || el.kind === 'shadow' || el.kind === 'text' || el.kind === 'draw') {
     const b = rawBounds(el);
     return { x1: b.x1 - HANDLE_PAD, y1: b.y1 - HANDLE_PAD, x2: b.x2 + HANDLE_PAD, y2: b.y2 + HANDLE_PAD };
   }
@@ -43,6 +45,7 @@ function rawBounds(el: BoardElement): { x1: number; y1: number; x2: number; y2: 
     const ys = [el.y1, el.y2, m.y];
     return { x1: Math.min(...xs), y1: Math.min(...ys), x2: Math.max(...xs), y2: Math.max(...ys) };
   }
+  if (el.kind === 'draw') return strokeBounds(el.points);
   if (el.kind === 'shadow') {
     const pts = shadowCorners(el);
     const xs = pts.map((p) => p.x);

@@ -280,3 +280,35 @@ test('en la compu, ☰ achica el menú a solo íconos y se recuerda', async ({ p
   await expect(page.locator('.app')).not.toHaveClass(/menu-collapsed/);
   expect(page.url()).toBe(url);
 });
+
+test('con el lápiz se dibuja a mano alzada, en el color elegido, y el trazo se mueve y se borra', async ({ page }) => {
+  await chooseTool(page, 'Lápiz');
+  await page.locator('.pen-bar button[aria-label="Blanco"]').click();
+  await page.locator('.pen-bar button', { hasText: 'Grueso' }).click();
+  const path = [[3, 3], [4, 2.5], [5, 3.2], [6, 2.6], [7, 3.4]];
+  const [sx, sy] = await boardPoint(page, 3, 3);
+  await page.mouse.move(sx, sy);
+  await page.mouse.down();
+  for (const [x, y] of path.slice(1)) {
+    const [px, py] = await boardPoint(page, x, y);
+    await page.mouse.move(px, py, { steps: 4 });
+  }
+  await page.mouse.up();
+  const strokes = (await savedElements(page)).filter((e) => e.kind === 'draw');
+  expect(strokes).toHaveLength(1);
+  expect(strokes[0]).toMatchObject({ color: '#FFFFFF', width: 0.22 });
+  expect((strokes[0].points as number[]).length).toBeGreaterThan(6);
+  // Se sigue dibujando: el trazo no queda seleccionado.
+  await expect(page.locator('.floating-panel')).toHaveCount(0);
+
+  // Con Mover se agarra y se corre.
+  await chooseTool(page, 'Mover');
+  const id = strokes[0].id;
+  await dragFrom(page, `[data-id="${id}"]`, 0, 80);
+  const moved = (await savedElements(page)).find((e) => e.id === id)!;
+  expect((moved.points as number[])[1]).toBeGreaterThan((strokes[0].points as number[])[1] + 0.5);
+  await expect(page.locator('.floating-panel')).toContainText('Trazo de lápiz');
+
+  await page.keyboard.press('Delete');
+  expect((await savedElements(page)).filter((e) => e.kind === 'draw')).toHaveLength(0);
+});

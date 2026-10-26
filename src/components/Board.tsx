@@ -23,9 +23,11 @@ import {
   wrapText,
 } from '../domain/shadows';
 import { isSegment } from '../domain/types';
+import { DEFAULT_DRAW_WIDTH, DRAW_COLORS, drawPath, moveStroke, simplifyStroke, strokeBounds, strokeLength, strokeWidth } from '../domain/drawing';
 import type {
   ArrowElement,
   BlockShadowElement,
+  DrawElement,
   PointElement,
   TextElement,
   ArrowStyle,
@@ -81,7 +83,9 @@ interface BoardProps {
   onUpdate: (element: BoardElement) => void;
   onAddArrow: (arrow: Omit<ArrowElement, 'id'>) => void;
   /** Agrega otro elemento dibujado en la pizarra (sombra del bloqueo, texto). */
-  onAddElement?: (element: Omit<BlockShadowElement, 'id'> | Omit<TextElement, 'id'>) => void;
+  onAddElement?: (element: Omit<BlockShadowElement, 'id'> | Omit<TextElement, 'id'> | Omit<DrawElement, 'id'>) => void;
+  /** Color y grosor del lápiz (herramienta de dibujo libre). */
+  pen?: { color: string; width: number };
   /** Si está, el elemento seleccionado muestra un tachito para borrarlo. */
   onDelete?: (id: string) => void;
   /** Si está, el jugador seleccionado muestra un botón para comentarlo. */
@@ -105,6 +109,7 @@ type ArrowPart = 'whole' | 'start' | 'end' | 'mid' | 'width' | 'scale';
 type Drag =
   | { type: 'element'; id: string; part: ArrowPart; ox: number; oy: number; dx: number; dy: number }
   | { type: 'shadow'; x1: number; y1: number; x2: number; y2: number }
+  | { type: 'draw'; points: { x: number; y: number }[] }
   | {
       type: 'arrow';
       style: ArrowStyle;
@@ -170,6 +175,7 @@ function svgPoint(content: SVGGraphicsElement, clientX: number, clientY: number)
 function applyDrag(el: BoardElement, drag: Drag | null, vertical = false): BoardElement {
   if (!drag || drag.type !== 'element' || drag.id !== el.id) return el;
   const { dx, dy, part } = drag;
+  if (el.kind === 'draw') return moveStroke(el, dx, dy);
   if (isSegment(el)) {
     if (part === 'mid' && el.kind === 'arrow') return { ...el, curve: curveThrough(el, { x: drag.ox + dx, y: drag.oy + dy }) };
     return {
@@ -222,6 +228,7 @@ export function Board({
   vertical = false,
   teamNames,
   half = false,
+  pen,
 }: BoardProps) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const contentRef = useRef<SVGGElement>(null);
@@ -268,6 +275,10 @@ export function Board({
       return;
     }
     e.currentTarget.setPointerCapture(e.pointerId);
+    if (tool === 'draw') {
+      setDrag({ type: 'draw', points: [p] });
+      return;
+    }
     if (tool === 'shadow') {
       setDrag({ type: 'shadow', x1: p.x, y1: p.y, x2: p.x, y2: p.y });
       return;
@@ -287,6 +298,8 @@ export function Board({
     const p = point(e);
     if (drag.type === 'element') {
       setDrag({ ...drag, dx: p.x - drag.ox, dy: p.y - drag.oy });
+    } else if (drag.type === 'draw') {
+      setDrag({ ...drag, points: [...drag.points, p] });
     } else {
       setDrag({ ...drag, x2: p.x, y2: p.y });
     }
@@ -297,6 +310,10 @@ export function Board({
     if (drag.type === 'element') {
       const el = elements.find((x) => x.id === drag.id);
       if (el && (drag.dx !== 0 || drag.dy !== 0)) onUpdate(applyDrag(el, drag, vertical));
+    } else if (drag.type === 'draw') {
+      const points = simplifyStroke(drag.points);
+      // Un toque sin arrastrar no deja marca.
+      if (strokeLength(points) > 0.15) onAddElement?.({ kind: 'draw', points, ...currentPen });
     } else if (Math.hypot(drag.x2 - drag.x1, drag.y2 - drag.y1) > 0.3) {
       if (drag.type === 'shadow') onAddElement?.(drawnShadow(drag));
       else onAddArrow(drawnArrow(drag));
@@ -304,7 +321,9 @@ export function Board({
     endDrag();
   };
 
+  const currentPen = pen ?? { color: DRAW_COLORS[0].value, width: DEFAULT_DRAW_WIDTH };
   const shown = elements.map((el) => applyDrag(el, drag, vertical));
+  const strokes = shown.filter((e): e is DrawElement => e.kind === 'draw');
   // Abajo las sombras del bloqueo, después las flechas y arriba el resto.
   const shadows = shown.filter((e): e is BlockShadowElement => e.kind === 'shadow');
   const arrows = shown.filter((e): e is ArrowElement => e.kind === 'arrow');
@@ -367,6 +386,13 @@ export function Board({
       ))}
       {drag?.type === 'arrow' && (
         <Arrow arrow={{ id: 'preview', ...drawnArrow(drag) }} selected={false} />
+      )}
+
+      {strokes.map((st) => (
+        <Stroke key={st.id} stroke={st} selected={st.id === selectedId} onPointerDown={(e) => startElementDrag(e, st.id)} />
+      ))}
+      {drag?.type === 'draw' && (
+        <Stroke stroke={{ id: 'preview', kind: 'draw', points: drag.points.flatMap((q) => [q.x, q.y]), ...currentPen }} selected={false} />
       )}
 
       {points.map((el) => {
@@ -601,6 +627,31 @@ function Court({ showZones, teamNames, half = false }: { showZones: boolean; tea
   );
 }
 
+/** Trazo hecho con el lápiz. */
+function Stroke({
+  stroke,
+  selected,
+  onPointerDown,
+}: {
+  stroke: DrawElement;
+  selected: boolean;
+  onPointerDown?: (e: ReactPointerEvent<SVGElement>) => void;
+}) {
+  const d = drawPath(stroke.points);
+  const w = strokeWidth(stroke);
+  return (
+    <g className={onPointerDown ? 'el' : undefined} data-id={stroke.id}>
+      {selected && (
+        <path className="ui-only" d={d} fill="none" stroke={SELECTION_COLOR} strokeOpacity={0.45} strokeWidth={w + 0.24} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />
+      )}
+      <path d={d} fill="none" stroke={stroke.color} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />
+      {onPointerDown && (
+        <path d={d} fill="none" stroke="transparent" strokeWidth={Math.max(0.45, w + 0.3)} strokeLinecap="round" strokeLinejoin="round" onPointerDown={onPointerDown} />
+      )}
+    </g>
+  );
+}
+
 /** Pelota de vóley vista desde arriba, centrada en el origen. */
 function BallShape({ r = 0.24 }: { r?: number }) {
   const k = r / 0.24;
@@ -728,6 +779,12 @@ function deleteButtonSpot(el: BoardElement, vertical: boolean) {
   if (el.kind === 'arrow') {
     const m = midPoint(el);
     return screenOffset(m.x, m.y, 0.6, 0.6, vertical);
+  }
+  if (el.kind === 'draw') {
+    const b = strokeBounds(el.points);
+    const w = (b.x2 - b.x1) / 2 + 0.35;
+    const h = (b.y2 - b.y1) / 2 + 0.35;
+    return screenOffset((b.x1 + b.x2) / 2, (b.y1 + b.y2) / 2, vertical ? h : w, vertical ? w : h, vertical);
   }
   if (el.kind === 'shadow') {
     return screenOffset((el.x1 + el.x2) / 2, (el.y1 + el.y2) / 2, 0.5, 0.5, vertical);

@@ -3928,13 +3928,14 @@ input.num {
   }
 
   .tool-bar button {
-    flex: 1 0 auto;
+    flex: 1 1 0;
     flex-direction: column;
     gap: 2px;
-    min-width: 46px;
+    min-width: 0;
     min-height: 52px;
-    padding: 4px 3px;
-    font-size: 0.68rem;
+    padding: 4px 1px;
+    font-size: 0.62rem;
+    letter-spacing: -0.01em;
     line-height: 1.1;
     border-radius: 14px;
   }
@@ -5953,4 +5954,32 @@ input.num {
   .topbar .topbar-toggle {
     display: inline-flex;
   }
+}
+
+/* Opciones del lápiz (dibujo libre), debajo de las herramientas */
+.pen-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.pen-bar .field {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.pen-bar-title {
+  font-weight: 700;
+}
+
+.pen-bar .hint {
+  margin: 0;
+  flex: 1 1 220px;
 }

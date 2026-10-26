@@ -8,7 +8,8 @@ export type Tool =
   | 'arrow-curve'
   | 'arrow-curve-dashed'
   | 'shadow'
-  | 'text';
+  | 'text'
+  | 'draw';
 
 export const TEAM_COLORS: Record<Team, string> = { A: '#23201B', B: '#7A1424' };
 

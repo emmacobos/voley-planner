@@ -97,6 +97,9 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      tamaños rápidos chico, mediano y grande) y el cuadro se ensancha o se
      angosta a gusto: en la pizarra, arrastrá el borde derecho para el ancho
      y la esquina para agrandar la letra.
+   - *Lápiz*: dibujo a mano alzada para marcar lo que quieras (redondear a una
+     jugadora, señalar una zona…). Tiene cuatro colores y tres grosores; cada
+     trazo queda en su paso, se mueve con *Mover* y se borra con el tachito.
    - Los puntos de agarre del elemento seleccionado (curva y extremos de una
      flecha, borde y esquina de un texto) se arrastran aunque esté elegida
      una herramienta de dibujo.

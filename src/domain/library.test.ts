@@ -17,7 +17,7 @@ describe('ejercicios modelo', () => {
         const ids = f.elements.map((e) => e.id);
         expect(new Set(ids).size, `${ex.name}: ids repetidos`).toBe(ids.length);
         for (const e of f.elements) {
-          const points = isSegment(e) ? [[e.x1, e.y1], [e.x2, e.y2]] : [[e.x, e.y]];
+          const points = isSegment(e) ? [[e.x1, e.y1], [e.x2, e.y2]] : 'x' in e ? [[e.x, e.y]] : [];
           for (const [x, y] of points) {
             expect(x, `${ex.name} ${e.id}`).toBeGreaterThanOrEqual(-3);
             expect(x, `${ex.name} ${e.id}`).toBeLessThanOrEqual(21);

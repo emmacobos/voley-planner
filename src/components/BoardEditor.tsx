@@ -5,6 +5,7 @@ import { ARROW_KINDS, arrowColor, arrowKind } from '../domain/arrows';
 import type { ArrowKind } from '../domain/arrows';
 import { TEXT_COLORS, TEXT_FONT_RANGE, TEXT_SIZES, textBox, textFontSize, textMinWidth } from '../domain/shadows';
 import { NET_X } from '../domain/court';
+import { DEFAULT_DRAW_WIDTH, DRAW_COLORS, DRAW_WIDTHS, strokeWidth } from '../domain/drawing';
 import { newId } from '../domain/ids';
 import {
   GAME_SYSTEMS,
@@ -21,6 +22,7 @@ import type {
   ArrowElement,
   BlockShadowElement,
   BoardElement,
+  DrawElement,
   TextElement,
   TextSize,
   Frame,
@@ -289,9 +291,14 @@ export function BoardEditor({
   /** Campo del panel que hay que enfocar (texto recién creado o comentario de un jugador). */
   const [focusField, setFocusField] = useState<{ id: string; field: 'text' | 'comment' } | null>(null);
 
-  const addDrawn = (element: Omit<BlockShadowElement, 'id'> | Omit<TextElement, 'id'>) => {
+  /** Color y grosor del lápiz. */
+  const [pen, setPen] = useState({ color: DRAW_COLORS[0].value, width: DEFAULT_DRAW_WIDTH });
+
+  const addDrawn = (element: Omit<BlockShadowElement, 'id'> | Omit<TextElement, 'id'> | Omit<DrawElement, 'id'>) => {
     const el = { ...element, id: newId() } as BoardElement;
     setElements((els) => [...els, el]);
+    // Con el lápiz se sigue dibujando: el trazo no se selecciona.
+    if (el.kind === 'draw') return;
     setSelectedId(el.id);
     if (el.kind === 'text') {
       setFocusField({ id: el.id, field: 'text' });
@@ -429,6 +436,7 @@ export function BoardEditor({
       onUpdate={updateFromBoard}
       onAddArrow={addArrow}
       onAddElement={addDrawn}
+      pen={pen}
       onDelete={removeElement}
       onComment={(id) => {
         setSelectedId(id);
@@ -544,6 +552,18 @@ export function BoardEditor({
             >
               <Icon d="M5 5h14M12 5v14M9 19h6" />
               <span className="tool-label">Texto</span>
+              <span className="tool-short">Texto</span>
+            </button>
+            <button
+              className={tool === 'draw' ? 'active' : ''}
+              onClick={() => {
+                setSelectedId(null);
+                setTool('draw');
+              }}
+              title="Dibujá a mano alzada sobre la cancha para marcar lo que quieras."
+            >
+              <Icon d="M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19l-4 1zM14 7l3 3" />
+              <span className="tool-label">Lápiz</span>
             </button>
           </div>
           <div className="toolbar-group">
@@ -632,6 +652,14 @@ export function BoardEditor({
             </button>
           </div>
         </div>
+
+        {tool === 'draw' && (
+          <div className="pen-bar" role="group" aria-label="Lápiz">
+            <span className="pen-bar-title">Lápiz</span>
+            <PenOptions color={pen.color} width={pen.width} onChange={(patch) => setPen((p) => ({ ...p, ...patch }))} />
+            <span className="hint">Dibujá arrastrando sobre la cancha. Para mover o borrar un trazo, usá Mover y tocalo.</span>
+          </div>
+        )}
 
         <div className={`board-stage${multi ? ` multi count-${(others?.length ?? 0) + 1}${vertical ? ' vertical' : ''}` : ''}`} ref={stageRef}>
           {multi
@@ -953,6 +981,53 @@ export function BoardEditor({
   );
 }
 
+/** Color y grosor del lápiz (para dibujar o para cambiar un trazo ya hecho). */
+function PenOptions({
+  color,
+  width,
+  onChange,
+}: {
+  color: string;
+  width: number;
+  onChange: (patch: { color?: string; width?: number }) => void;
+}) {
+  return (
+    <>
+      <div className="field">
+        Color
+        <div className="swatches" role="group" aria-label="Color del lápiz">
+          {DRAW_COLORS.map((c) => (
+            <button
+              key={c.value}
+              className={`color-swatch${color === c.value ? ' active' : ''}`}
+              style={{ background: c.value }}
+              onClick={() => onChange({ color: c.value })}
+              aria-label={c.label}
+              aria-pressed={color === c.value}
+              title={c.label}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="field">
+        Grosor
+        <div className="segmented" role="group" aria-label="Grosor del lápiz">
+          {DRAW_WIDTHS.map((w) => (
+            <button
+              key={w.value}
+              className={width === w.value ? 'active' : ''}
+              aria-pressed={width === w.value}
+              onClick={() => onChange({ width: w.value })}
+            >
+              {w.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 function SelectedPanel({
   element,
   roster,
@@ -980,6 +1055,20 @@ function SelectedPanel({
     onFocused?.();
   }, [focusField, element.id, onFocused, ready]);
 
+  if (element.kind === 'draw') {
+    return (
+      <div className="stack">
+        <PenOptions
+          color={element.color}
+          width={strokeWidth(element)}
+          onChange={(patch) => onUpdate({ ...element, ...patch })}
+        />
+        <p className="hint" style={{ margin: 0 }}>
+          Arrastralo para moverlo.
+        </p>
+      </div>
+    );
+  }
   if (element.kind === 'text') {
     const fontSize = textFontSize(element);
     return (

@@ -179,6 +179,17 @@ export interface BlockShadowElement {
   endWidth: number;
 }
 
+/** Trazo a mano alzada hecho con el lápiz. */
+export interface DrawElement {
+  id: string;
+  kind: 'draw';
+  /** Puntos del trazo en metros, seguidos: x1, y1, x2, y2… */
+  points: number[];
+  color: string;
+  /** Grosor del trazo en metros (sin valor, el mediano). */
+  width?: number;
+}
+
 export type PointElement =
   | PlayerToken
   | BallElement
@@ -193,7 +204,7 @@ export type PointElement =
 /** Elementos definidos por dos extremos (se arrastran por sus puntas). */
 export type SegmentElement = ArrowElement | BlockShadowElement;
 
-export type BoardElement = PointElement | SegmentElement;
+export type BoardElement = PointElement | SegmentElement | DrawElement;
 
 export function isSegment(e: BoardElement): e is SegmentElement {
   return e.kind === 'arrow' || e.kind === 'shadow';
