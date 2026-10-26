@@ -85,7 +85,19 @@ export default function App() {
       {drawer && <div className="menu-backdrop" onClick={() => setDrawer(false)} aria-hidden="true" />}
       <aside className="sidebar" id="menu-principal">
         <div className="sidebar-head">
-          <a className="brand" href="#/sesiones" aria-label="Voley Planner, inicio">
+          <a
+            className="brand"
+            href="#/sesiones"
+            aria-label={collapsed ? 'Abrir el menú' : 'Voley Planner, inicio'}
+            title={collapsed ? 'Abrir el menú' : undefined}
+            onClick={(e) => {
+              // Con el menú achicado (en la compu), la pelota lo vuelve a abrir.
+              if (collapsed && !window.matchMedia('(max-width: 800px)').matches) {
+                e.preventDefault();
+                toggleMenu();
+              }
+            }}
+          >
             <BallLogo />
             <span className="brand-text">
               <span className="brand-top">Voley</span>

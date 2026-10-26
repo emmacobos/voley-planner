@@ -191,7 +191,7 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    pizarras; en el diálogo de impresión elegí "Guardar como PDF".
 
 Con **☰** (en el menú, al lado del logo; en el celular, arriba a la izquierda) el menú se achica a una franja con los íconos
-(en la compu, y se recuerda) o se abre encima de la pantalla (en el celular, y se
+(en la compu, y se recuerda; se vuelve a abrir tocando la pelota del logo) o se abre encima de la pantalla (en el celular, y se
 cierra al elegir una sección). Arriba a la derecha están tu **cuenta** y el botón de **modo oscuro** (se recuerda en cada
 navegador; la primera vez toma la preferencia del sistema). La pantalla de
 Sesiones muestra el **resumen de la semana**: sesiones, minutos planificados,

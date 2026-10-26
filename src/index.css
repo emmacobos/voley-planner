@@ -5929,10 +5929,23 @@ input.num {
 }
 
 @media (min-width: 801px) {
-  /* Achicado: el ☰ arriba y el logo abajo, en la franja. */
+  /* Achicado: solo la pelota, que vuelve a abrir el menú. */
+  .app.menu-collapsed .sidebar-toggle {
+    display: none;
+  }
+
   .app.menu-collapsed .sidebar-head {
-    flex-direction: column-reverse;
-    gap: 1rem;
+    justify-content: center;
+  }
+
+  .app.menu-collapsed .brand {
+    border-radius: 50%;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .app.menu-collapsed .brand:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 3px rgb(223 185 125 / 0.35);
   }
 }
 

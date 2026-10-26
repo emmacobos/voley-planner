@@ -273,6 +273,10 @@ test('en la compu, ☰ achica el menú a solo íconos y se recuerda', async ({ p
   await expect.poll(async () => (await page.locator('.sidebar').boundingBox())!.width).toBeLessThan(80);
   await page.reload();
   await expect(page.locator('.app')).toHaveClass(/menu-collapsed/);
-  await page.locator('.sidebar .menu-toggle').click();
+  // Achicado no se ve el ☰: la pelota del logo lo vuelve a abrir (sin cambiar de pantalla).
+  await expect(page.locator('.sidebar .menu-toggle')).toBeHidden();
+  const url = page.url();
+  await page.locator('.sidebar .brand').click();
   await expect(page.locator('.app')).not.toHaveClass(/menu-collapsed/);
+  expect(page.url()).toBe(url);
 });
