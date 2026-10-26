@@ -9,7 +9,7 @@ import {
   clampToView,
   toCourt,
 } from '../domain/court';
-import { ARROW_KINDS, arrowColor, arrowDashed, arrowPath, curveThrough, headMarkerId, midPoint } from '../domain/arrows';
+import { ARROW_KINDS, arrowColor, arrowDashed, arrowKind, arrowPath, curveThrough, headMarkerId, midPoint } from '../domain/arrows';
 import {
   DEFAULT_SHADOW,
   TEXT_COLORS,
@@ -388,8 +388,7 @@ export function Board({
             return (
               <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
                 {selected && <Halo r={0.4} />}
-                <circle r={0.24} fill="#ffffff" stroke="#1e3a8a" strokeWidth={0.05} />
-                <path d="M-0.24,0 Q0,-0.12 0.24,0 M-0.08,-0.22 Q0.06,0 -0.08,0.22" fill="none" stroke="#2563eb" strokeWidth={0.04} />
+                <BallShape />
               </g>
             );
           case 'cone':
@@ -602,6 +601,17 @@ function Court({ showZones, teamNames, half = false }: { showZones: boolean; tea
   );
 }
 
+/** Pelota de vóley vista desde arriba, centrada en el origen. */
+function BallShape({ r = 0.24 }: { r?: number }) {
+  const k = r / 0.24;
+  return (
+    <g transform={k === 1 ? undefined : `scale(${k})`}>
+      <circle r={0.24} fill="#ffffff" stroke="#1e3a8a" strokeWidth={0.05} />
+      <path d="M-0.24,0 Q0,-0.12 0.24,0 M-0.08,-0.22 Q0.06,0 -0.08,0.22" fill="none" stroke="#2563eb" strokeWidth={0.04} />
+    </g>
+  );
+}
+
 function Arrow({
   arrow,
   selected,
@@ -615,21 +625,33 @@ function Arrow({
   const d = arrowPath(arrow);
   const mid = midPoint(arrow);
   const color = arrowColor(arrow);
+  // La de pelota: trazo blanco medio transparente con la pelota en la punta.
+  const ballTip = arrowKind(arrow) === 'pelota';
   return (
     <g className={onPointerDown ? 'el' : undefined} data-id={arrow.id}>
       {selected && (
         <path className="ui-only" d={d} fill="none" stroke={SELECTION_COLOR} strokeOpacity={0.45} strokeWidth={0.3} strokeLinecap="round" pointerEvents="none" />
       )}
-      <path
-        d={d}
-        fill="none"
-        stroke={color}
-        strokeWidth={0.08}
-        strokeLinecap="round"
-        strokeDasharray={arrowDashed(arrow) ? '0.25 0.15' : undefined}
-        markerEnd={`url(#${headMarkerId(color)})`}
-        pointerEvents="none"
-      />
+      {ballTip ? (
+        <g pointerEvents="none">
+          <path d={d} fill="none" stroke="#000000" strokeOpacity={0.18} strokeWidth={0.15} strokeLinecap="round" />
+          <path d={d} fill="none" stroke="#ffffff" strokeOpacity={0.7} strokeWidth={0.1} strokeLinecap="round" />
+          <g transform={`translate(${x2} ${y2})`}>
+            <BallShape r={0.2} />
+          </g>
+        </g>
+      ) : (
+        <path
+          d={d}
+          fill="none"
+          stroke={color}
+          strokeWidth={0.08}
+          strokeLinecap="round"
+          strokeDasharray={arrowDashed(arrow) ? '0.25 0.15' : undefined}
+          markerEnd={`url(#${headMarkerId(color)})`}
+          pointerEvents="none"
+        />
+      )}
       {onPointerDown && (
         <path d={d} fill="none" stroke="transparent" strokeWidth={0.45} onPointerDown={(e) => onPointerDown(e, 'whole')} />
       )}
