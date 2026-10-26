@@ -616,10 +616,11 @@ function Court({ showZones, teamNames, half = false }: { showZones: boolean; tea
             fontFamily={DISPLAY_FONT}
             fontSize={name.length > 18 ? 0.5 : 0.66}
             fontWeight={700}
-            letterSpacing={0.06}
+            letterSpacing={0.02}
             fill="#ffffff"
           >
-            {name.toUpperCase()}
+            {/* Tal cual lo escribió (mayúsculas y minúsculas). */}
+            {name}
           </text>
         );
       })}

@@ -156,8 +156,8 @@ test('varias canchas: cada una con su jugada, media cancha y todas juntas', asyn
   await expect(page.locator('svg.board.half')).toBeVisible();
   await page.locator('.board-side input[type="checkbox"]').first().uncheck();
   // Al agregar una cancha se ven todas juntas: los nombres se sacan solo de la que se edita.
-  await expect(page.locator('.court-cell.active svg.board text', { hasText: 'EQUIPO A' })).toHaveCount(0);
-  await expect(page.locator('svg.board text', { hasText: 'EQUIPO A' })).toHaveCount(1);
+  await expect(page.locator('.court-cell.active svg.board text', { hasText: 'Equipo A' })).toHaveCount(0);
+  await expect(page.locator('svg.board text', { hasText: 'Equipo A' })).toHaveCount(1);
 
   await expect(page.locator('.court-cell')).toHaveCount(2);
   await expect(page.locator('.court-cell.active')).toContainText('Ataque');
