@@ -108,7 +108,9 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    con botones grandes de paso anterior/siguiente, reproducir y la descripción
    de cada paso; se maneja también con ← →, Espacio y Esc. Con **✏ Marcar**
    (o la tecla D) se dibuja a mano sobre la jugada, en dorado, blanco o rojo,
-   como en la tele: cada paso tiene sus marcas y no se guardan. **Exportar video**
+   como en la tele: cada paso tiene sus marcas y no se guardan. Las marcas se
+   deshacen y rehacen de a una (↶ ↷ o Ctrl+Z / Ctrl+Shift+Z), incluso después
+   de *Borrar marcas*. **Exportar video**
    graba la jugada animada (con una pausa en cada paso y su descripción abajo)
    y la descarga en MP4 —o WebM si el navegador no graba MP4— para mandarla
    por WhatsApp. **Compartir link** arma un link de solo lectura: quien lo

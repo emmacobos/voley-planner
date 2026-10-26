@@ -166,3 +166,29 @@ test('varias canchas: cada una con su jugada, media cancha y todas juntas', asyn
   // La cancha principal no cambió.
   expect(ex.frames[0].elements.length).toBeGreaterThan(1);
 });
+
+test('en la presentación, las marcas a mano se deshacen y rehacen de a una', async ({ page }) => {
+  await page.locator('.present-button').click();
+  await page.locator('.ink-toggle').click();
+  const box = (await page.locator('.ink-layer').boundingBox())!;
+  const stroke = async (dy: number) => {
+    await page.mouse.move(box.x + 100, box.y + 100 + dy);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 250, box.y + 140 + dy, { steps: 6 });
+    await page.mouse.up();
+  };
+  await stroke(0);
+  await stroke(80);
+  await expect(page.locator('.ink-layer polyline')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Deshacer la última marca' }).click();
+  await expect(page.locator('.ink-layer polyline')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Rehacer la marca' }).click();
+  await expect(page.locator('.ink-layer polyline')).toHaveCount(2);
+  await page.locator('.ink-clear').click();
+  await expect(page.locator('.ink-layer polyline')).toHaveCount(0);
+  const before = JSON.stringify(await savedElements(page));
+  await page.keyboard.press('Control+z');
+  await expect(page.locator('.ink-layer polyline')).toHaveCount(2);
+  // Deshacer marcas no toca la jugada guardada.
+  expect(JSON.stringify(await savedElements(page))).toBe(before);
+});

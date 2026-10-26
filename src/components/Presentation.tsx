@@ -67,6 +67,9 @@ export function Presentation({
   const [drawing, setDrawing] = useState(false);
   const [ink, setInk] = useState(INK[0].value);
   const [strokes, setStrokes] = useState<Record<number, Stroke[]>>({});
+  /** Historial de las marcas de cada paso, para deshacer y rehacer. */
+  const [inkPast, setInkPast] = useState<Record<number, Stroke[][]>>({});
+  const [inkFuture, setInkFuture] = useState<Record<number, Stroke[][]>>({});
   const live = useRef<{ svg: SVGSVGElement; points: string[] } | null>(null);
   const [livePoints, setLivePoints] = useState<string | null>(null);
   const toBoard = (svg: SVGSVGElement, e: ReactPointerEvent) => {
@@ -96,10 +99,32 @@ export function Presentation({
     live.current = null;
     setLivePoints(null);
     if (!l || l.points.length < 2) return;
-    setStrokes((all) => ({ ...all, [index]: [...(all[index] ?? []), { color: ink, points: l.points.join(' ') }] }));
+    changeInk([...(strokes[index] ?? []), { color: ink, points: l.points.join(' ') }]);
   };
-  const clearInk = () => setStrokes((all) => ({ ...all, [index]: [] }));
   const stepStrokes = strokes[index] ?? [];
+  const stepPast = inkPast[index] ?? [];
+  const stepFuture = inkFuture[index] ?? [];
+  /** Nuevo estado de las marcas del paso (se puede deshacer). */
+  function changeInk(next: Stroke[]) {
+    setInkPast((all) => ({ ...all, [index]: [...(all[index] ?? []), strokes[index] ?? []] }));
+    setInkFuture((all) => ({ ...all, [index]: [] }));
+    setStrokes((all) => ({ ...all, [index]: next }));
+  }
+  const clearInk = () => changeInk([]);
+  const undoInk = () => {
+    const prev = stepPast.at(-1);
+    if (!prev) return;
+    setInkPast((all) => ({ ...all, [index]: stepPast.slice(0, -1) }));
+    setInkFuture((all) => ({ ...all, [index]: [stepStrokes, ...stepFuture] }));
+    setStrokes((all) => ({ ...all, [index]: prev }));
+  };
+  const redoInk = () => {
+    const [next, ...rest] = stepFuture;
+    if (!next) return;
+    setInkPast((all) => ({ ...all, [index]: [...stepPast, stepStrokes] }));
+    setInkFuture((all) => ({ ...all, [index]: rest }));
+    setStrokes((all) => ({ ...all, [index]: next }));
+  };
   const moving = target !== null;
   const playingAll = moving && target === last && index < last;
 
@@ -170,6 +195,13 @@ export function Presentation({
       } else if (e.key === 'Escape') {
         if (drawing) setDrawing(false);
         else onClose();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        if (e.shiftKey) redoInk();
+        else undoInk();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) {
+        e.preventDefault();
+        redoInk();
       } else if (e.key === 'd' || e.key === 'D') {
         setDrawing((d) => !d);
       }
@@ -209,10 +241,18 @@ export function Presentation({
                 title={c.label}
               />
             ))}
-          {(drawing || stepStrokes.length > 0) && (
-            <button className="ink-clear" onClick={clearInk} disabled={!stepStrokes.length} title="Borrar las marcas de este paso">
-              Borrar marcas
-            </button>
+          {(drawing || stepStrokes.length > 0 || stepPast.length > 0) && (
+            <>
+              <button onClick={undoInk} disabled={!stepPast.length} aria-label="Deshacer la última marca" title="Deshacer (Ctrl+Z)">
+                ↶
+              </button>
+              <button onClick={redoInk} disabled={!stepFuture.length} aria-label="Rehacer la marca" title="Rehacer (Ctrl+Shift+Z)">
+                ↷
+              </button>
+              <button className="ink-clear" onClick={clearInk} disabled={!stepStrokes.length} title="Borrar todas las marcas de este paso (se puede deshacer)">
+                Borrar marcas
+              </button>
+            </>
           )}
         </div>
         <button className="presentation-close" onClick={onClose} aria-label="Cerrar presentación" title="Cerrar (Esc)">
@@ -284,7 +324,7 @@ export function Presentation({
           <option value={2}>2×</option>
         </select>
       </footer>
-      <p className="presentation-hint">← → pasos · Espacio reproducir · D marcar · Esc salir</p>
+      <p className="presentation-hint">← → pasos · Espacio reproducir · D marcar · Ctrl+Z deshacer marca · Esc salir</p>
       {footer}
     </div>
   );

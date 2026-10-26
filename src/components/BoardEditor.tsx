@@ -304,6 +304,8 @@ export function BoardEditor({
   // Atajos de teclado.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Con la presentación abierta, sus atajos (por ejemplo, deshacer marcas) no tocan la pizarra.
+      if (presenting) return;
       const target = e.target as HTMLElement;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
       const mod = e.ctrlKey || e.metaKey;
