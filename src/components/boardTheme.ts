@@ -39,6 +39,14 @@ export const DISPLAY_FONT = "'Barlow Condensed', 'Arial Narrow', sans-serif";
 /** El líbero usa otra camiseta. */
 export const LIBERO_COLORS: Record<Team, string> = { A: '#B07A3C', B: '#A0525F' };
 
+/** Colores de los aros de precisión (el primero es el de base). */
+export const HOOP_COLORS: { value: string; label: string }[] = [
+  { value: '#E5484D', label: 'Rojo' },
+  { value: '#F2C744', label: 'Amarillo' },
+  { value: '#2F7DD1', label: 'Azul' },
+  { value: '#3FA34D', label: 'Verde' },
+];
+
 /** viewBox de la pizarra, horizontal o vertical (girada -90°). */
 export function boardViewBox(vertical = false): string {
   return vertical

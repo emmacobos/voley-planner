@@ -48,7 +48,10 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      celular). Es solo la vista: la jugada es la misma y se ve igual en las dos;
      los textos y nombres quedan siempre derechos. Se recuerda en cada
      navegador y vale también para *Presentar*.
-   - *Agregar* suma jugadores, pelota, conos, entrenadores y carros.
+   - *Agregar* suma jugadores, pelota, conos, entrenadores, carros de pelotas,
+     aros de precisión (en rojo, amarillo, azul o verde, para marcar a dónde
+     sacar o atacar) y banquitos o cajones (para saltar o pararse arriba). Los
+     aros y banquitos quedan en el piso, debajo de las jugadoras.
    - *Mover* para arrastrar; *Flecha desplazamiento*, *Flecha pelota*,
      *Flecha curva* y *Curva punteada* para dibujar arrastrando sobre la
      cancha. Cada tipo tiene su color: desplazamiento azul (punteada), pelota

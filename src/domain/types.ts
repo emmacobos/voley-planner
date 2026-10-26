@@ -81,6 +81,18 @@ export interface CartElement extends Positioned {
   kind: 'cart';
 }
 
+/** Banquito o cajón: para saltar o para pararse arriba (por ejemplo, el entrenador que ataca desde arriba). */
+export interface StepElement extends Positioned {
+  kind: 'step';
+}
+
+/** Aro de precisión: objetivo en el piso (por ejemplo, para el saque o la recepción). */
+export interface HoopElement extends Positioned {
+  kind: 'hoop';
+  /** Color del aro (sin valor, rojo). */
+  color?: string;
+}
+
 export type ArrowStyle = 'move' | 'ball';
 
 export interface ArrowElement {
@@ -133,6 +145,8 @@ export type PointElement =
   | ConeElement
   | CoachElement
   | CartElement
+  | HoopElement
+  | StepElement
   | TextElement;
 
 /** Elementos definidos por dos extremos (se arrastran por sus puntas). */

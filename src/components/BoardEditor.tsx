@@ -36,6 +36,7 @@ import { downloadSvgAsPng, slugify } from '../utils/exportPng';
 import { exportPlayVideo, videoSupport } from '../utils/exportVideo';
 import { Board, DEFAULT_BEND } from './Board';
 import { useBoardOrientation } from '../utils/boardOrientation';
+import { HOOP_COLORS } from './boardTheme';
 import { FloatingPanel } from './FloatingPanel';
 import { FloatingPanelReady } from './floatingPanelReady';
 import { Presentation } from './Presentation';
@@ -60,13 +61,17 @@ interface BoardEditorProps {
 const TRANSITION_MS = 1200;
 const ZONES: Zone[] = [1, 2, 3, 4, 5, 6];
 
-type AddKind = 'playerA' | 'playerB' | 'ball' | 'cone' | 'coach' | 'cart';
+type AddKind = 'playerA' | 'playerB' | 'ball' | 'cone' | 'coach' | 'cart' | 'hoop' | 'step';
 
-const DEFAULT_SPOT: Record<'ball' | 'cone' | 'coach' | 'cart', { x: number; y: number }> = {
+const DEFAULT_SPOT: Record<'ball' | 'cone' | 'coach' | 'cart' | 'hoop' | 'step', { x: number; y: number }> = {
   ball: { x: NET_X - 1, y: 4.5 },
   cone: { x: NET_X - 3, y: 1 },
   coach: { x: -1.5, y: 4.5 },
   cart: { x: -1.5, y: 7 },
+  // Aro en el fondo de la cancha rival (objetivo de saque).
+  hoop: { x: NET_X + 7, y: 1.5 },
+  // Banquito cerca de la red (por ejemplo, para atacar o bloquear desde arriba).
+  step: { x: NET_X - 1.2, y: 6.5 },
 };
 
 const ADD_BUTTONS: { kind: AddKind; label: string }[] = [
@@ -75,7 +80,9 @@ const ADD_BUTTONS: { kind: AddKind; label: string }[] = [
   { kind: 'ball', label: '+ Pelota' },
   { kind: 'cone', label: '+ Cono' },
   { kind: 'coach', label: '+ Entrenador' },
-  { kind: 'cart', label: '+ Carro' },
+  { kind: 'cart', label: '+ Carro de pelotas' },
+  { kind: 'hoop', label: '+ Aro de precisión' },
+  { kind: 'step', label: '+ Banquito / cajón' },
 ];
 
 export function BoardEditor({
@@ -175,6 +182,9 @@ export function BoardEditor({
     } else {
       el = { id: newId(), kind, ...DEFAULT_SPOT[kind] };
       if (kind === 'cone') el.y += offset;
+      // Los aros miden 1 m: se separan más para que no se encimen.
+      if (kind === 'hoop') el.y += offset * 1.4;
+      if (kind === 'step') el.y -= offset;
     }
     setElements((els) => [...els, el]);
     setSelectedId(el.id);
@@ -954,6 +964,30 @@ function SelectedPanel({
             Enderezar flecha
           </button>
         )}
+      </div>
+    );
+  }
+  if (element.kind === 'hoop') {
+    const current = element.color ?? HOOP_COLORS[0].value;
+    return (
+      <div className="stack">
+        <div className="field">
+          Color del aro
+          <div className="swatches" role="group" aria-label="Color del aro">
+            {HOOP_COLORS.map((c) => (
+              <button
+                key={c.value}
+                className={`color-swatch${current === c.value ? ' active' : ''}`}
+                style={{ background: c.value }}
+                onClick={() => onUpdate({ ...element, color: c.value })}
+                aria-label={c.label}
+                aria-pressed={current === c.value}
+                title={c.label}
+              />
+            ))}
+          </div>
+        </div>
+        <p className="hint">Arrastralo a la zona que tienen que buscar con el saque, la recepción o el ataque. Podés poner varios.</p>
       </div>
     );
   }

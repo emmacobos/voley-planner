@@ -132,3 +132,14 @@ test('en la pizarra vertical se arrastra en la dirección de la pantalla y la op
   await page.reload();
   await expect(page.locator('svg.board.vertical')).toBeVisible();
 });
+
+test('se agregan aros de precisión (con color), el carro de pelotas y el banquito', async ({ page }) => {
+  await page.locator('button', { hasText: '+ Aro de precisión' }).click();
+  await page.locator('.floating-panel .color-swatch[aria-label="Azul"]').click();
+  await page.locator('button', { hasText: '+ Carro de pelotas' }).click();
+  await page.locator('button', { hasText: '+ Banquito / cajón' }).click();
+  const els = await savedElements(page);
+  expect(els.some((e) => e.kind === 'step')).toBe(true);
+  expect(els.find((e) => e.kind === 'hoop')?.color).toBe('#2F7DD1');
+  expect(els.some((e) => e.kind === 'cart')).toBe(true);
+});

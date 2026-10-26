@@ -36,7 +36,7 @@ import type {
   Zone,
 } from '../domain/types';
 import { positionShort } from '../domain/types';
-import { COURT_COLORS, DISPLAY_FONT, LIBERO_COLORS, SELECTION_COLOR, TEAM_COLORS, boardViewBox } from './boardTheme';
+import { COURT_COLORS, DISPLAY_FONT, HOOP_COLORS, LIBERO_COLORS, SELECTION_COLOR, TEAM_COLORS, boardViewBox } from './boardTheme';
 import type { Tool } from './boardTheme';
 
 
@@ -301,7 +301,9 @@ export function Board({
   // Abajo las sombras del bloqueo, después las flechas y arriba el resto.
   const shadows = shown.filter((e): e is BlockShadowElement => e.kind === 'shadow');
   const arrows = shown.filter((e): e is ArrowElement => e.kind === 'arrow');
-  const points = shown.filter((e): e is PointElement => !isSegment(e));
+  // Aros y banquitos van en el piso: debajo de jugadores, pelotas y textos (una jugadora se puede parar arriba).
+  const onFloor = (e: PointElement) => Number(e.kind === 'hoop' || e.kind === 'step');
+  const points = shown.filter((e): e is PointElement => !isSegment(e)).sort((a, b) => onFloor(b) - onFloor(a));
   const selectedEl = shown.find((e) => e.id === selectedId) ?? null;
 
   return (
@@ -410,12 +412,50 @@ export function Board({
             );
           case 'cart':
             return (
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
-                {selected && <Halo r={0.6} />}
-                <rect x={-0.45} y={-0.3} width={0.9} height={0.6} rx={0.06} fill="#78350f" stroke="#ffffff" strokeWidth={0.04} />
-                {[-0.22, 0, 0.22].map((cx) => (
-                  <circle key={cx} cx={cx} cy={0} r={0.1} fill="#ffffff" />
+              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up} scale(1.25)`} onPointerDown={down} data-id={el.id}>
+                {selected && <Halo r={0.75} />}
+                {/* Carro de pelotas visto desde arriba: canasto con pelotas, manija y ruedas. */}
+                <line x1={0.5} y1={0} x2={0.78} y2={0} stroke="#ffffff" strokeWidth={0.07} strokeLinecap="round" />
+                <line x1={0.78} y1={-0.22} x2={0.78} y2={0.22} stroke="#ffffff" strokeWidth={0.07} strokeLinecap="round" />
+                {[
+                  [-0.42, -0.42],
+                  [0.42, -0.42],
+                  [-0.42, 0.42],
+                  [0.42, 0.42],
+                ].map(([cx, cy]) => (
+                  <circle key={`${cx}${cy}`} cx={cx} cy={cy} r={0.08} fill="#1c1915" stroke="#ffffff" strokeWidth={0.03} />
                 ))}
+                <rect x={-0.5} y={-0.38} width={1} height={0.76} rx={0.08} fill="#2b2925" stroke="#d8d2c4" strokeWidth={0.05} />
+                {[
+                  [-0.27, -0.16, '#ffffff'],
+                  [0, -0.16, '#F2C744'],
+                  [0.27, -0.16, '#2F5DA8'],
+                  [-0.27, 0.16, '#F2C744'],
+                  [0, 0.16, '#2F5DA8'],
+                  [0.27, 0.16, '#ffffff'],
+                ].map(([cx, cy, fill]) => (
+                  <circle key={`${cx}${cy}`} cx={cx} cy={cy} r={0.13} fill={fill as string} stroke="#1c1915" strokeWidth={0.025} />
+                ))}
+              </g>
+            );
+          case 'step':
+            return (
+              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
+                {selected && <Halo r={0.75} />}
+                {/* Banquito / cajón visto desde arriba: tapa de madera con borde y sombra. */}
+                <rect x={-0.42} y={-0.3} width={0.9} height={0.66} rx={0.08} fill="#000000" opacity={0.25} />
+                <rect x={-0.45} y={-0.33} width={0.9} height={0.66} rx={0.08} fill="#8B5A2B" stroke="#ffffff" strokeWidth={0.05} />
+                <rect x={-0.33} y={-0.21} width={0.66} height={0.42} rx={0.05} fill="#B07A3C" stroke="#5c3a1a" strokeWidth={0.025} />
+                <line x1={-0.33} y1={0} x2={0.33} y2={0} stroke="#5c3a1a" strokeWidth={0.02} opacity={0.6} />
+              </g>
+            );
+          case 'hoop':
+            return (
+              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})`} onPointerDown={down} data-id={el.id}>
+                {selected && <Halo r={0.75} />}
+                {/* Aro de precisión (1 m de diámetro): se puede tocar en todo el círculo. */}
+                <circle r={0.5} fill={el.color ?? HOOP_COLORS[0].value} fillOpacity={0.14} stroke={el.color ?? HOOP_COLORS[0].value} strokeWidth={0.1} />
+                <circle r={0.5} fill="none" stroke="#ffffff" strokeOpacity={0.55} strokeWidth={0.025} />
               </g>
             );
         }
