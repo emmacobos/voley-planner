@@ -161,6 +161,7 @@ function PrintExercise({
                 tool="select"
                 readOnly
                 showZones={false}
+                teamNames={exercise.teamNames}
                 onSelect={noop}
                 onUpdate={noop}
                 onAddArrow={noop}

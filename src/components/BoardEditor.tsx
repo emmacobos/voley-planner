@@ -29,6 +29,7 @@ import type {
   PointElement,
   Situation,
   Team,
+  TeamNames,
   Zone,
 } from '../domain/types';
 import { POSITIONS, SITUATIONS } from '../domain/types';
@@ -56,6 +57,9 @@ interface BoardEditorProps {
   /** Sistema de juego del ejercicio (5-1 si no tiene). */
   system?: GameSystem;
   onSystemChange?: (system: GameSystem) => void;
+  /** Nombres de los equipos en la cancha. */
+  teamNames?: TeamNames;
+  onTeamNamesChange?: (names: TeamNames) => void;
 }
 
 const TRANSITION_MS = 1200;
@@ -94,6 +98,8 @@ export function BoardEditor({
   title,
   system = '5-1',
   onSystemChange,
+  teamNames,
+  onTeamNamesChange,
 }: BoardEditorProps) {
   const [current, setCurrent] = useState(0);
   const [tool, setTool] = useState<Tool>('select');
@@ -323,9 +329,18 @@ export function BoardEditor({
 
   return (
     <div className="board-editor">
-      {sharing && <ShareLinkDialog title={title} frames={frames} players={allPlayers} onClose={() => setSharing(false)} />}
+      {sharing && (
+        <ShareLinkDialog title={title} frames={frames} players={allPlayers} teamNames={teamNames} onClose={() => setSharing(false)} />
+      )}
       {presenting && (
-        <Presentation title={title} frames={frames} players={allPlayers} startAt={index} onClose={() => setPresenting(false)} />
+        <Presentation
+          title={title}
+          frames={frames}
+          players={allPlayers}
+          teamNames={teamNames}
+          startAt={index}
+          onClose={() => setPresenting(false)}
+        />
       )}
       <div className="board-main">
         <div className="toolbar">
@@ -436,6 +451,7 @@ export function BoardEditor({
                     title,
                     frames,
                     players: allPlayers,
+                    teamNames,
                     fileName: slugify(title),
                     onProgress: setVideoProgress,
                   });
@@ -483,6 +499,7 @@ export function BoardEditor({
             readOnly={playing}
             showZones={showZones}
             vertical={vertical}
+            teamNames={teamNames}
             onSelect={setSelectedId}
             onUpdate={updateElement}
             onAddArrow={addArrow}
@@ -617,6 +634,25 @@ export function BoardEditor({
       </div>
 
       <aside className="board-side">
+        {onTeamNamesChange && (
+          <section>
+            <h3>Equipos</h3>
+            <div className="team-names">
+              {(['A', 'B'] as Team[]).map((team) => (
+                <label key={team} className="field">
+                  Equipo {team}
+                  <input
+                    value={teamNames?.[team] ?? ''}
+                    maxLength={24}
+                    placeholder={`Equipo ${team}`}
+                    onChange={(e) => onTeamNamesChange({ ...teamNames, [team]: e.target.value || undefined })}
+                  />
+                </label>
+              ))}
+            </div>
+            <p className="hint">Se ven en la cancha en lugar de "Equipo A" y "Equipo B" (por ejemplo, "Nosotros" y el rival).</p>
+          </section>
+        )}
         <section>
           <h3>Agregar</h3>
           <div className="button-grid">
@@ -964,6 +1000,30 @@ function SelectedPanel({
             Enderezar flecha
           </button>
         )}
+      </div>
+    );
+  }
+  if (element.kind === 'step') {
+    const rotation = element.rotation ?? 0;
+    const setRotation = (deg: number) => onUpdate({ ...element, rotation: ((Math.round(deg) % 180) + 180) % 180 });
+    return (
+      <div className="stack">
+        <label className="field">
+          <span className="field-row">
+            Giro <output>{rotation}°</output>
+          </span>
+          <input type="range" min={0} max={179} step={5} value={rotation} onChange={(e) => setRotation(Number(e.target.value))} aria-label="Giro del banquito" />
+        </label>
+        <div className="row">
+          <button onClick={() => setRotation(rotation - 45)} title="Girar 45° a la izquierda">
+            ↺ 45°
+          </button>
+          <button onClick={() => setRotation(rotation + 45)} title="Girar 45° a la derecha">
+            ↻ 45°
+          </button>
+          <button onClick={() => setRotation(rotation + 90)}>Girar 90°</button>
+        </div>
+        <p className="hint">Para saltar o pararse arriba: arrastralo y giralo hasta dejarlo como en la cancha.</p>
       </div>
     );
   }

@@ -1,7 +1,7 @@
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { elementsAtProgress, playbackDuration, playbackProgress } from '../domain/animation';
-import type { Frame, Player } from '../domain/types';
+import type { Frame, Player, TeamNames } from '../domain/types';
 import { Board } from '../components/Board';
 
 const WIDTH = 1280;
@@ -46,12 +46,14 @@ export async function exportPlayVideo({
   title,
   frames,
   players,
+  teamNames,
   fileName,
   onProgress,
 }: {
   title: string;
   frames: Frame[];
   players: Player[];
+  teamNames?: TeamNames;
   fileName: string;
   onProgress?: (fraction: number) => void;
 }): Promise<void> {
@@ -75,6 +77,7 @@ export async function exportPlayVideo({
           tool="select"
           readOnly
           showZones
+          teamNames={teamNames}
           onSelect={noop}
           onUpdate={noop}
           onAddArrow={noop}

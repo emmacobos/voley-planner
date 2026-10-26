@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { Frame, Player } from '../domain/types';
+import type { Frame, Player, TeamNames } from '../domain/types';
 import { encodePlay, sharedPlayData, sharedPlayUrl } from '../utils/sharePlay';
 
 /** Arma el link de solo lectura de una jugada y ofrece copiarlo o mandarlo. */
@@ -7,11 +7,13 @@ export function ShareLinkDialog({
   title,
   frames,
   players,
+  teamNames,
   onClose,
 }: {
   title: string;
   frames: Frame[];
   players: Player[];
+  teamNames?: TeamNames;
   onClose: () => void;
 }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -19,11 +21,11 @@ export function ShareLinkDialog({
 
   useEffect(() => {
     let alive = true;
-    encodePlay(sharedPlayData(title, frames, players)).then((code) => alive && setUrl(sharedPlayUrl(code)));
+    encodePlay(sharedPlayData(title, frames, players, teamNames)).then((code) => alive && setUrl(sharedPlayUrl(code)));
     return () => {
       alive = false;
     };
-  }, [title, frames, players]);
+  }, [title, frames, players, teamNames]);
 
   const copy = async () => {
     if (!url) return;

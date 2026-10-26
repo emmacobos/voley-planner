@@ -1,4 +1,4 @@
-import type { Frame, Player } from '../domain/types';
+import type { Frame, Player, TeamNames } from '../domain/types';
 
 /**
  * Jugada compartida por link: viaja comprimida dentro del propio link (después
@@ -10,6 +10,7 @@ export interface SharedPlay {
   frames: Frame[];
   /** Solo las jugadoras que aparecen en la jugada (para mostrar sus nombres). */
   players: Pick<Player, 'id' | 'name' | 'number' | 'position'>[];
+  teamNames?: TeamNames;
 }
 
 const toBase64Url = (bytes: Uint8Array) => {
@@ -30,13 +31,14 @@ async function pipe(bytes: Uint8Array, stream: CompressionStream | Decompression
 }
 
 /** Arma lo que se comparte: los pasos y los datos de las jugadoras que aparecen. */
-export function sharedPlayData(title: string, frames: Frame[], players: Player[]): SharedPlay {
+export function sharedPlayData(title: string, frames: Frame[], players: Player[], teamNames?: TeamNames): SharedPlay {
   const used = new Set(frames.flatMap((f) => f.elements.flatMap((e) => (e.kind === 'player' && e.playerId ? [e.playerId] : []))));
   return {
     v: 1,
     title,
     frames,
     players: players.filter((p) => used.has(p.id)).map(({ id, name, number, position }) => ({ id, name, number, position })),
+    ...(teamNames?.A || teamNames?.B ? { teamNames } : {}),
   };
 }
 

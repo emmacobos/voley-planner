@@ -52,6 +52,11 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      aros de precisión (en rojo, amarillo, azul o verde, para marcar a dónde
      sacar o atacar) y banquitos o cajones (para saltar o pararse arriba). Los
      aros y banquitos quedan en el piso, debajo de las jugadoras.
+     El banquito se gira desde su tarjeta (de a 45° o 90°, o con la barra).
+   - *Equipos*: cambiá "Equipo A" y "Equipo B" por los nombres que quieras
+     (por ejemplo "Nosotras" y el rival). Se guardan con el ejercicio y se
+     ven en la presentación, el video, el link y el PDF. En el plan de partido,
+     el equipo B toma el nombre del rival.
    - *Mover* para arrastrar; *Flecha desplazamiento*, *Flecha pelota*,
      *Flecha curva* y *Curva punteada* para dibujar arrastrando sobre la
      cancha. Cada tipo tiene su color: desplazamiento azul (punteada), pelota

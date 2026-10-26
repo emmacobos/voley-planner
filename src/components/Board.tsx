@@ -33,6 +33,7 @@ import type {
   Player,
   PlayerToken,
   Team,
+  TeamNames,
   Zone,
 } from '../domain/types';
 import { positionShort } from '../domain/types';
@@ -89,6 +90,8 @@ interface BoardProps {
   onDraggingChange?: (dragging: boolean) => void;
   /** Dibujar la cancha vertical (red horizontal, equipo A abajo). */
   vertical?: boolean;
+  /** Nombres de los equipos en la cancha (si faltan, "Equipo A" y "Equipo B"). */
+  teamNames?: TeamNames;
 }
 
 /**
@@ -215,6 +218,7 @@ export function Board({
   onComment,
   onDraggingChange,
   vertical = false,
+  teamNames,
 }: BoardProps) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const contentRef = useRef<SVGGElement>(null);
@@ -338,7 +342,7 @@ export function Board({
       {/* Todo lo de la cancha, girado si la pizarra está vertical. */}
       <g ref={contentRef} className="board-content" transform={vertical ? 'rotate(-90)' : undefined}>
 
-      <Court showZones={showZones} />
+      <Court showZones={showZones} teamNames={teamNames} />
 
       {shadows.map((sh) => (
         <Shadow
@@ -440,7 +444,8 @@ export function Board({
             );
           case 'step':
             return (
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
+              // Gira con la cancha (es un objeto en el piso) y con su propio giro.
+              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y}) rotate(${el.rotation ?? 0})`} onPointerDown={down} data-id={el.id}>
                 {selected && <Halo r={0.75} />}
                 {/* Banquito / cajón visto desde arriba: tapa de madera con borde y sombra. */}
                 <rect x={-0.42} y={-0.3} width={0.9} height={0.66} rx={0.08} fill="#000000" opacity={0.25} />
@@ -476,7 +481,7 @@ function Halo({ r }: { r: number }) {
   return <circle className="ui-only" r={r} fill="none" stroke={SELECTION_COLOR} strokeWidth={0.09} strokeDasharray="0.15 0.1" />;
 }
 
-function Court({ showZones }: { showZones: boolean }) {
+function Court({ showZones, teamNames }: { showZones: boolean; teamNames?: TeamNames }) {
   const vertical = useContext(VerticalContext);
   // Textos derechos aunque la cancha esté girada.
   const upright = (x: number, y: number) => (vertical ? `rotate(90 ${x} ${y})` : undefined);
@@ -533,12 +538,25 @@ function Court({ showZones }: { showZones: boolean }) {
       <circle cx={NET_X} cy={-0.8} r={0.16} fill={COURT_COLORS.net} />
       <circle cx={NET_X} cy={COURT_WIDTH + 0.8} r={0.16} fill={COURT_COLORS.net} />
       {(['A', 'B'] as Team[]).map((team) => {
-        // Horizontal: arriba de cada mitad. Vertical: en la franja de abajo (A) y de arriba (B).
-        const x = vertical ? (team === 'A' ? -1.15 : COURT_LENGTH + 1.65) : team === 'A' ? NET_X / 2 : NET_X + NET_X / 2;
+        // Horizontal: arriba de cada mitad. Vertical: centrado en la franja de abajo (A) y de arriba (B).
+        const x = vertical ? (team === 'A' ? -1.4 : COURT_LENGTH + 1.4) : team === 'A' ? NET_X / 2 : NET_X + NET_X / 2;
         const y = vertical ? COURT_WIDTH / 2 : -1.4;
+        const name = teamNames?.[team]?.trim() || `Equipo ${team}`;
         return (
-          <text key={team} x={x} y={y} transform={upright(x, y)} textAnchor="middle" fontFamily={DISPLAY_FONT} fontSize={0.66} fontWeight={700} letterSpacing={0.06} fill="#ffffff">
-            EQUIPO {team}
+          <text
+            key={team}
+            x={x}
+            y={y}
+            transform={upright(x, y)}
+            dominantBaseline={vertical ? 'central' : undefined}
+            textAnchor="middle"
+            fontFamily={DISPLAY_FONT}
+            fontSize={name.length > 18 ? 0.5 : 0.66}
+            fontWeight={700}
+            letterSpacing={0.06}
+            fill="#ffffff"
+          >
+            {name.toUpperCase()}
           </text>
         );
       })}

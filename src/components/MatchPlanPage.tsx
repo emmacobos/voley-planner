@@ -155,6 +155,8 @@ export function MatchPlanPage({ id }: { id: string }) {
         title={`Plan vs ${match.opponent || 'rival'}`}
         system={plan.system}
         onSystemChange={(system) => setPlan({ system })}
+        teamNames={plan.teamNames ?? { B: match.opponent || undefined }}
+        onTeamNamesChange={(teamNames) => setPlan({ teamNames })}
       />
 
       {editing && (

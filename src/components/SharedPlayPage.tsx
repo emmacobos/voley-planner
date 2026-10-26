@@ -36,6 +36,7 @@ export function SharedPlayPage({ code }: { code: string }) {
       title={play.title || 'Jugada'}
       frames={play.frames}
       players={players}
+      teamNames={play.teamNames}
       fullscreen={false}
       onClose={() => navigate('/')}
       footer={

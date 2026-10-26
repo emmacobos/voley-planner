@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { elementsAtProgress } from '../domain/animation';
-import type { Frame, Player } from '../domain/types';
+import type { Frame, Player, TeamNames } from '../domain/types';
 import { useBoardOrientation } from '../utils/boardOrientation';
 import { Board } from './Board';
 import { boardViewBox } from './boardTheme';
@@ -33,6 +33,7 @@ export function Presentation({
   onClose,
   fullscreen = true,
   footer,
+  teamNames,
 }: {
   title: string;
   frames: Frame[];
@@ -43,6 +44,7 @@ export function Presentation({
   fullscreen?: boolean;
   /** Texto extra al pie (por ejemplo, en una jugada compartida). */
   footer?: ReactNode;
+  teamNames?: TeamNames;
 }) {
   const last = frames.length - 1;
   const [progress, setProgress] = useState(Math.min(startAt, last));
@@ -226,6 +228,7 @@ export function Presentation({
           readOnly
           showZones
           vertical={vertical}
+          teamNames={teamNames}
           onSelect={noop}
           onUpdate={noop}
           onAddArrow={noop}

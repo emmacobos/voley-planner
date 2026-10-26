@@ -84,6 +84,14 @@ export interface CartElement extends Positioned {
 /** Banquito o cajón: para saltar o para pararse arriba (por ejemplo, el entrenador que ataca desde arriba). */
 export interface StepElement extends Positioned {
   kind: 'step';
+  /** Giro en grados (sin valor, 0). */
+  rotation?: number;
+}
+
+/** Nombres que se muestran en la cancha en lugar de "Equipo A" y "Equipo B". */
+export interface TeamNames {
+  A?: string;
+  B?: string;
 }
 
 /** Aro de precisión: objetivo en el piso (por ejemplo, para el saque o la recepción). */
@@ -224,6 +232,8 @@ export interface Exercise {
   system?: GameSystem;
   /** Qué se trabaja (si falta, se deduce del nombre y el objetivo). */
   contents?: Content[];
+  /** Nombres de los equipos en la pizarra. */
+  teamNames?: TeamNames;
   createdAt: string;
   updatedAt: string;
 }
@@ -331,6 +341,8 @@ export interface MatchPlan {
   frames: Frame[];
   /** Nuestro sistema para las formaciones de la pizarra del plan. */
   system?: GameSystem;
+  /** Nombres de los equipos en la pizarra del plan. */
+  teamNames?: TeamNames;
 }
 
 /** Partido del calendario. */

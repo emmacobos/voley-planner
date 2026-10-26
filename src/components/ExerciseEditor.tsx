@@ -174,6 +174,8 @@ export function ExerciseEditor({ id }: { id: string }) {
         title={exercise.name}
         system={exercise.system}
         onSystemChange={(system) => update({ system })}
+        teamNames={exercise.teamNames}
+        onTeamNamesChange={(teamNames) => update({ teamNames })}
       />
     </div>
   );
