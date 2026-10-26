@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAIN_COURT, courtLabel, courtProgress, exerciseCourts, sharedStepCount, updateCourt } from './courts';
+import { MAIN_COURT, courtLabel, courtProgress, cutToHalfCourt, exerciseCourts, halfCourtLosses, sharedStepCount, updateCourt } from './courts';
 import type { ExtraCourt, Frame } from './types';
 
 const frame = (id: string): Frame => ({ id, note: '', situation: 'juego', elements: [] });
@@ -33,5 +33,30 @@ describe('varias canchas en un ejercicio', () => {
     expect(sharedStepCount(courts)).toBe(3);
     expect(courtProgress(courts[0], 2)).toBe(0);
     expect(courtProgress(courts[1], 1.5)).toBe(1.5);
+  });
+});
+
+describe('pasar a media cancha', () => {
+  it('saca lo que queda del otro lado de la red, en todos los pasos', () => {
+    const frames: Frame[] = [
+      {
+        id: 'f1',
+        note: '',
+        situation: 'juego',
+        elements: [
+          { id: 'a', kind: 'player', team: 'A', label: '1', x: 4, y: 3 },
+          { id: 'b', kind: 'player', team: 'B', label: '1', x: 14, y: 3 },
+          { id: 'red', kind: 'player', team: 'B', label: '2', x: 9.5, y: 3 },
+          { id: 'f', kind: 'arrow', style: 'ball', x1: 3, y1: 2, x2: 15, y2: 2 },
+        ],
+      },
+      { id: 'f2', note: '', situation: 'juego', elements: [{ id: 'b', kind: 'player', team: 'B', label: '1', x: 13, y: 4 }] },
+    ];
+    expect(halfCourtLosses(frames)).toBe(3);
+    const cut = cutToHalfCourt(frames);
+    expect(cut.removed).toBe(4);
+    // También la jugadora pegada a la red del otro lado: no queda colgada en el borde.
+    expect(cut.frames[0].elements.map((e) => e.id)).toEqual(['a']);
+    expect(cut.frames[1].elements).toEqual([]);
   });
 });

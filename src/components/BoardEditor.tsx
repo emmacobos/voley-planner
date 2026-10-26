@@ -1,4 +1,5 @@
 import { useContext, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { elementsAtProgress } from '../domain/animation';
 import { ARROW_KINDS, arrowColor, arrowKind } from '../domain/arrows';
 import type { ArrowKind } from '../domain/arrows';
@@ -71,6 +72,10 @@ interface BoardEditorProps {
   others?: OtherCourt[];
   /** Lugar de esta cancha entre todas (para ordenarlas). */
   courtPosition?: number;
+  /** Algo para mostrar arriba de cada cancha (por ejemplo, el grupo que está ahí), por id de cancha. */
+  courtBadges?: Record<string, ReactNode>;
+  /** Controles extra para la presentación de todas las canchas (por ejemplo, rotar grupos). */
+  overviewControls?: ReactNode;
   onActivate?: (courtId: string) => void;
 }
 
@@ -129,6 +134,8 @@ export function BoardEditor({
   others,
   courtPosition = 0,
   onActivate,
+  courtBadges,
+  overviewControls,
 }: BoardEditorProps) {
   const [current, setCurrent] = useState(0);
   const [tool, setTool] = useState<Tool>('select');
@@ -427,6 +434,8 @@ export function BoardEditor({
               .sort((x, y) => x.position - y.position)
               .map((c) => ({ id: c.id, name: c.label, frames: c.frames, half: c.half, teamNames: c.teamNames }))}
             players={allPlayers}
+            badges={courtBadges}
+            controls={overviewControls}
             onOpen={(id) => {
               setPresenting(false);
               onActivate?.(id);
@@ -607,6 +616,7 @@ export function BoardEditor({
                         <b>{c.label}</b>
                         <span>Editando</span>
                       </header>
+                      {courtBadges?.[c.id]}
                       {activeBoard}
                     </section>
                   ) : (
@@ -620,6 +630,7 @@ export function BoardEditor({
                         <b>{c.label}</b>
                         <span>Tocá para editar</span>
                       </header>
+                      {courtBadges?.[c.id]}
                       <Board
                         elements={elementsAtProgress(
                           (c as OtherCourt).frames.map((f) => f.elements),

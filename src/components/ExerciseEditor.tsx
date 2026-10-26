@@ -4,10 +4,12 @@ import { useAppStore } from '../store';
 import { EXERCISE_TYPES, INTENSITIES, positionLabel } from '../domain/types';
 import type { ExerciseType, Intensity } from '../domain/types';
 import { CONTENTS, exerciseContents } from '../domain/season';
-import { MAIN_COURT, MAX_COURTS, courtLabel, exerciseCourts, updateCourt } from '../domain/courts';
+import { MAIN_COURT, MAX_COURTS, courtLabel, cutToHalfCourt, exerciseCourts, halfCourtLosses, updateCourt } from '../domain/courts';
 import { newId } from '../domain/ids';
 import { emptyFrame } from '../store';
+import { groupAtCourt } from '../domain/stations';
 import { BoardEditor } from './BoardEditor';
+import { GroupBadge, GroupsPanel, RotationControls } from './GroupsPanel';
 
 export function ExerciseEditor({ id }: { id: string }) {
   const exercise = useAppStore((s) => s.exercises.find((e) => e.id === id));
@@ -18,6 +20,8 @@ export function ExerciseEditor({ id }: { id: string }) {
   const [active, setActive] = useState<string>(MAIN_COURT);
   /** Todas las canchas a la vista, una al lado de la otra (se edita la que se toca). */
   const [together, setTogether] = useState(false);
+  /** Vuelta del circuito (qué grupo está en cada cancha). */
+  const [round, setRound] = useState(0);
 
   if (!exercise) {
     return (
@@ -53,6 +57,32 @@ export function ExerciseEditor({ id }: { id: string }) {
     setActive(id);
     // Con dos o más canchas, se empieza viéndolas juntas.
     setTogether(true);
+  };
+  const groupPlayers = exercisePlayers.length ? exercisePlayers : roster;
+  const rounds = courts.length;
+  const currentRound = round % Math.max(1, rounds);
+  const badges = exercise.groups?.length
+    ? Object.fromEntries(
+        courts.map((c, i) => [
+          c.id,
+          <GroupBadge key={c.id} group={groupAtCourt(exercise.groups!, courts.length, currentRound, i)} players={allPlayers} />,
+        ]),
+      )
+    : undefined;
+  /** Pasar a media cancha: si hay cosas del otro lado de la red, se avisa antes de borrarlas. */
+  const toHalf = () => {
+    if (court.half) return;
+    const losses = halfCourtLosses(court.frames);
+    if (losses > 0) {
+      const side = court.teamNames?.B?.trim() || 'Equipo B';
+      const ok = confirm(
+        `¿Seguro que querés pasar ${courtLabel(court, courtIndex)} a media cancha?\n\n` +
+          `Se va a borrar la mitad de "${side}" (el otro lado de la red): ` +
+          `${losses} ${losses === 1 ? 'elemento' : 'elementos'} en todos los pasos.`,
+      );
+      if (!ok) return;
+    }
+    setCourt({ half: true, frames: cutToHalfCourt(court.frames).frames });
   };
   const removeCourt = () => {
     if (!confirm(`¿Borrar ${courtLabel(court, courtIndex)} con su jugada?`)) return;
@@ -233,6 +263,25 @@ export function ExerciseEditor({ id }: { id: string }) {
         )}
       </div>
 
+      {courts.length > 1 && (
+        <details className="groups-details" open={!!exercise.groups?.length}>
+          <summary>
+            Grupos que rotan
+            {exercise.groups?.length ? ` · ${exercise.groups.length} grupos · vuelta ${currentRound + 1} de ${rounds}` : ''}
+          </summary>
+          <GroupsPanel
+            groups={exercise.groups}
+            players={groupPlayers}
+            courtLabels={courts.map((c, i) => courtLabel(c, i))}
+            round={currentRound}
+            onRound={setRound}
+            minutes={exercise.stationMinutes}
+            onChange={(groups) => update({ groups })}
+            onMinutesChange={(stationMinutes) => update({ stationMinutes })}
+          />
+        </details>
+      )}
+
       <div className="court-settings">
         {courts.length > 1 && (
           <>
@@ -257,7 +306,7 @@ export function ExerciseEditor({ id }: { id: string }) {
           <button
             className={court.half ? 'active' : ''}
             aria-pressed={!!court.half}
-            onClick={() => setCourt({ half: true })}
+            onClick={toHalf}
             title="Solo un lado de la red: para trabajos de un solo equipo"
           >
             Media cancha
@@ -283,6 +332,10 @@ export function ExerciseEditor({ id }: { id: string }) {
             : undefined
         }
         onActivate={setActive}
+        courtBadges={badges}
+        overviewControls={
+          exercise.groups?.length ? <RotationControls round={currentRound} rounds={rounds} onRound={setRound} /> : undefined
+        }
         frames={court.frames}
         onChange={(frames) => setCourt({ frames })}
         allPlayers={allPlayers}

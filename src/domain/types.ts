@@ -88,6 +88,14 @@ export interface StepElement extends Positioned {
   rotation?: number;
 }
 
+/** Grupo de jugadoras de un circuito por estaciones. */
+export interface StationGroup {
+  id: string;
+  name: string;
+  color: string;
+  playerIds: string[];
+}
+
 /** Datos de una cancha de un ejercicio con varias canchas. */
 export interface CourtInfo {
   name?: string;
@@ -255,6 +263,10 @@ export interface Exercise {
   mainCourt?: CourtInfo;
   /** Canchas extra para trabajar en estaciones, una al lado de la otra. */
   extraCourts?: ExtraCourt[];
+  /** Grupos que rotan entre las canchas (circuito por estaciones). */
+  groups?: StationGroup[];
+  /** Minutos que pasa cada grupo en cada cancha. */
+  stationMinutes?: number;
   createdAt: string;
   updatedAt: string;
 }

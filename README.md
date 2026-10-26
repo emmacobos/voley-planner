@@ -63,6 +63,15 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      y *Presentar* las muestra juntas a pantalla completa. La casilla *Nombres
      de los equipos en las canchas* saca "Equipo A / B" de todas. El PDF de la
      sesión muestra todas las canchas.
+     Cada cancha puede pasar a **media cancha**: si del otro lado de la red ya
+     había algo, la app avisa cuántos elementos se van a borrar (en todos los
+     pasos) y pide confirmación.
+   - **Grupos que rotan** (con 2 o 3 canchas): repartí a las jugadoras del
+     ejercicio en grupos de colores (se arman solos, parejos por puesto, y se
+     cambian tocando a cada jugadora). Arriba de cada cancha se ve qué grupo
+     está ahí; **Rotar grupos ↻** pasa a cada grupo a la cancha siguiente
+     (también desde *Presentar*). Con los minutos por estación calcula el
+     total, y el PDF de la sesión trae la tabla de rotación.
    - *Equipos*: cambiá "Equipo A" y "Equipo B" por los nombres que quieras
      (por ejemplo "Nosotras" y el rival), o sacarlos de la cancha. Se guardan con el ejercicio y se
      ven en la presentación, el video, el link y el PDF. En el plan de partido,

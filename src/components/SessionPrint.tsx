@@ -5,6 +5,7 @@ import { blockDuration, formatDate, formatMinutes } from '../domain/sessions';
 import { EXERCISE_TYPES, INTENSITIES, SITUATIONS, positionLabel } from '../domain/types';
 import type { Exercise, Player } from '../domain/types';
 import { courtLabel, exerciseCourts } from '../domain/courts';
+import { rotationTable } from '../domain/stations';
 import { Board } from './Board';
 import { SessionSummary } from './SessionSummary';
 
@@ -150,6 +151,31 @@ function PrintExercise({
         </p>
       )}
       {exercise.notes && <p className="pre">{exercise.notes}</p>}
+      {exercise.groups?.length && courts.length > 1 ? (
+        <table className="print-rotation">
+          <caption>
+            Rotación de grupos{exercise.stationMinutes ? ` · ${exercise.stationMinutes} min por estación` : ''}
+          </caption>
+          <thead>
+            <tr>
+              <th>Vuelta</th>
+              {courts.map((c, i) => (
+                <th key={c.id}>{courtLabel(c, i)}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rotationTable(exercise.groups, courts.length).map((row, r) => (
+              <tr key={r}>
+                <th scope="row">{r + 1}</th>
+                {row.map((g, c) => (
+                  <td key={c}>{g ? `${g.name} (${g.playerIds.map((id) => players.find((p) => p.id === id)?.name.split(' ')[0]).filter(Boolean).join(', ')})` : '—'}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : null}
       {withBoards &&
         courts.map((court, i) => {
           const frames = court.frames.filter((f) => f.elements.length > 0);

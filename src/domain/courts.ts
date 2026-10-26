@@ -48,3 +48,30 @@ export function sharedStepCount(courts: Court[]): number {
 export function courtProgress(court: Court, progress: number): number {
   return Math.min(progress, court.frames.length - 1);
 }
+
+/** Al pasar a media cancha se borra lo que está pasando la red (del lado B). */
+export const HALF_COURT_LIMIT = 9.2;
+
+/**
+ * Lo que queda al pasar una cancha a media cancha: se sacan, en todos los
+ * pasos, los elementos que están del otro lado de la red (fuera de la vista).
+ */
+export function cutToHalfCourt(frames: Frame[]): { frames: Frame[]; removed: number } {
+  let removed = 0;
+  const outside = (e: Frame['elements'][number]) =>
+    'x1' in e ? Math.max(e.x1, e.x2) > HALF_COURT_LIMIT : e.x > HALF_COURT_LIMIT;
+  const next = frames.map((f) => {
+    const keep = f.elements.filter((e) => !outside(e));
+    removed += f.elements.length - keep.length;
+    return keep.length === f.elements.length ? f : { ...f, elements: keep };
+  });
+  return { frames: next, removed };
+}
+
+/** Elementos distintos (por id) que se perderían, para avisar antes. */
+export function halfCourtLosses(frames: Frame[]): number {
+  const ids = new Set<string>();
+  for (const f of frames)
+    for (const e of f.elements) if ('x1' in e ? Math.max(e.x1, e.x2) > HALF_COURT_LIMIT : e.x > HALF_COURT_LIMIT) ids.add(e.id);
+  return ids.size;
+}

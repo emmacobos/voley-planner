@@ -197,3 +197,28 @@ test('en la presentación, las marcas a mano se deshacen y rehacen de a una', as
   // Deshacer marcas no toca la jugada guardada.
   expect(JSON.stringify(await savedElements(page))).toBe(before);
 });
+
+test('pasar a media cancha avisa y borra lo del otro lado de la red', async ({ page }) => {
+  let message = '';
+  page.once('dialog', (d) => {
+    message = d.message();
+    void d.accept();
+  });
+  await page.locator('.court-settings button', { hasText: 'Media cancha' }).click();
+  expect(message).toContain('media cancha');
+  expect(message).toContain('Equipo B');
+  const els = await savedElements(page);
+  expect(els.every((e) => ('x1' in e ? Math.max(e.x1 as number, e.x2 as number) : (e.x as number)) <= 9.2)).toBe(true);
+  await expect(page.locator('svg.board.half')).toBeVisible();
+});
+
+test('grupos que rotan entre las canchas', async ({ page }) => {
+  await page.locator('summary', { hasText: 'Datos del ejercicio' }).click();
+  while (await page.locator('.player-picker label:not(.on)').count()) await page.locator('.player-picker label:not(.on)').first().click();
+  await page.locator('button', { hasText: '+ Agregar cancha' }).click();
+  await page.locator('summary', { hasText: 'Grupos que rotan' }).click();
+  await page.locator('button', { hasText: 'Armar 2 grupos' }).click();
+  await expect(page.locator('.court-cell .group-badge b')).toHaveText(['Grupo 1', 'Grupo 2']);
+  await page.locator('.groups-head button', { hasText: 'Rotar grupos' }).click();
+  await expect(page.locator('.court-cell .group-badge b')).toHaveText(['Grupo 2', 'Grupo 1']);
+});

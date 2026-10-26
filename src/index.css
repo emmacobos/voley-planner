@@ -5515,3 +5515,211 @@ input.num {
 .courts-presentation .frames button:not(.primary) {
   color: var(--text);
 }
+
+/* ===== Grupos que rotan ===== */
+.groups-details {
+  margin-bottom: 0.8rem;
+}
+
+.groups-details > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.55rem 0.9rem;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.groups-details[open] > summary {
+  margin-bottom: 0.6rem;
+}
+
+.groups-panel {
+  margin: 0;
+}
+
+.groups-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.groups-head h2 {
+  margin: 0;
+}
+
+.rotation-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.8rem;
+}
+
+.group-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-top: 5px solid;
+  background: var(--surface);
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.group-title input {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.group-color {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.group-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.group-players .chip,
+.groups-panel .hint .chip {
+  min-height: 30px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.groups-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.8rem 1.2rem;
+  margin-top: 0.4rem;
+}
+
+.groups-foot .field input {
+  width: 6rem;
+}
+
+.groups-foot p {
+  margin: 0 0 0.5rem;
+}
+
+.rotation-table {
+  margin-top: 0.8rem;
+}
+
+.rotation-table summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.rotation-table tr.current th,
+.rotation-table tr.current td {
+  background: var(--accent-soft);
+}
+
+.dot-label::before {
+  content: '';
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-right: 0.35rem;
+  border-radius: 50%;
+  background: var(--dot);
+  vertical-align: middle;
+}
+
+.group-badge {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.group-badge small {
+  opacity: 0.85;
+  font-size: 0.72rem;
+}
+
+.group-badge.empty {
+  background: rgb(255 255 255 / 0.08);
+  color: #c9b48a;
+}
+
+.print-rotation {
+  width: 100%;
+  margin: 0.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.print-rotation caption {
+  text-align: left;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.print-rotation th,
+.print-rotation td {
+  border: 1px solid #ccc;
+  padding: 0.25rem 0.4rem;
+  text-align: left;
+}
+
+/* Media cancha: otras proporciones (13,5 × 15 m; en vertical, 15 × 13,5). */
+.board {
+  overflow: hidden;
+}
+
+.board.half {
+  width: min(100%, calc((100vh - 210px) * 0.9));
+  margin-inline: auto;
+}
+
+.board.half.vertical {
+  width: min(100%, calc((100vh - 210px) * 1.11));
+}
+
+.presentation-board .board.half {
+  width: min(100%, calc((100dvh - 250px) * 0.9));
+}
+
+.presentation-board .board.half.vertical {
+  width: min(100%, calc((100dvh - 250px) * 1.11));
+}
+
+/* Dentro de la vista de varias canchas, cada una ocupa su columna. */
+.court-cell .board.half,
+.court-card .board.half {
+  width: 100%;
+}
+
+.group-badge {
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.22);
+}

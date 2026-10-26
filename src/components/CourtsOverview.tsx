@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { elementsAtProgress } from '../domain/animation';
 import { courtLabel, courtProgress, sharedStepCount } from '../domain/courts';
 import type { Court } from '../domain/courts';
@@ -14,7 +15,21 @@ const noop = () => {};
  * vez (paso 1 de todas, después paso 2…). Las que tienen menos pasos quedan
  * quietas en el último.
  */
-export function CourtsOverview({ courts, players, onOpen }: { courts: Court[]; players: Player[]; onOpen: (id: string) => void }) {
+export function CourtsOverview({
+  courts,
+  players,
+  onOpen,
+  badges,
+  controls,
+}: {
+  courts: Court[];
+  players: Player[];
+  onOpen: (id: string) => void;
+  /** Algo para mostrar arriba de cada cancha (por ejemplo, el grupo que está ahí). */
+  badges?: Record<string, ReactNode>;
+  /** Controles extra en la barra (por ejemplo, rotar grupos). */
+  controls?: ReactNode;
+}) {
   const vertical = useBoardOrientation((s) => s.vertical);
   const steps = sharedStepCount(courts);
   const last = steps - 1;
@@ -73,6 +88,7 @@ export function CourtsOverview({ courts, players, onOpen }: { courts: Court[]; p
             </button>
           ))}
         </div>
+        {controls}
         <button
           onClick={() => rootRef.current?.requestFullscreen?.().catch(() => {})}
           title="Ver las canchas a pantalla completa (por ejemplo en una tele)"
@@ -93,6 +109,7 @@ export function CourtsOverview({ courts, players, onOpen }: { courts: Court[]; p
                 </button>
               </header>
               {court.objective && <p className="court-objective">{court.objective}</p>}
+              {badges?.[court.id]}
               <Board
                 elements={elementsAtProgress(
                   court.frames.map((f) => f.elements),
