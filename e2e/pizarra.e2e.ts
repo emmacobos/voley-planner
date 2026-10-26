@@ -213,10 +213,10 @@ test('pasar a media cancha avisa y borra lo del otro lado de la red', async ({ p
 });
 
 test('grupos que rotan entre las canchas', async ({ page }) => {
-  await page.locator('summary', { hasText: 'Datos del ejercicio' }).click();
-  while (await page.locator('.player-picker label:not(.on)').count()) await page.locator('.player-picker label:not(.on)').first().click();
   await page.locator('button', { hasText: '+ Agregar cancha' }).click();
   await page.locator('summary', { hasText: 'Grupos que rotan' }).click();
+  // Las jugadoras se marcan ahí mismo.
+  await page.locator('.groups-picker button', { hasText: 'Marcar todas' }).click();
   await page.locator('button', { hasText: 'Armar 2 grupos' }).click();
   await expect(page.locator('.court-cell .group-badge b')).toHaveText(['Grupo 1', 'Grupo 2']);
   await page.locator('.groups-head button', { hasText: 'Rotar grupos' }).click();

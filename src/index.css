@@ -5723,3 +5723,41 @@ input.num {
 .group-badge {
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.22);
 }
+
+.groups-steps {
+  margin: 0 0 0.8rem;
+  padding-left: 1.2rem;
+  color: var(--text-2);
+}
+
+.groups-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.groups-picker .field {
+  max-width: 22rem;
+}
+
+.groups-picker .row {
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.groups-picker .row {
+  justify-content: flex-start;
+}
+
+/* Que se note bien quién está marcada. */
+.groups-picker .chip.on::before {
+  content: '✓';
+  margin-right: 0.3rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.groups-picker .chip:not(.on) {
+  opacity: 0.6;
+}

@@ -58,7 +58,7 @@ export function ExerciseEditor({ id }: { id: string }) {
     // Con dos o más canchas, se empieza viéndolas juntas.
     setTogether(true);
   };
-  const groupPlayers = exercisePlayers.length ? exercisePlayers : roster;
+  const groupPlayers = exercisePlayers;
   const rounds = courts.length;
   const currentRound = round % Math.max(1, rounds);
   const badges = exercise.groups?.length
@@ -278,6 +278,58 @@ export function ExerciseEditor({ id }: { id: string }) {
             minutes={exercise.stationMinutes}
             onChange={(groups) => update({ groups })}
             onMinutesChange={(stationMinutes) => update({ stationMinutes })}
+            picker={
+              squads.length === 0 ? (
+                <p className="hint">
+                  Todavía no cargaste jugadoras. <a href="#/plantel">Cargá tu plantel</a> y volvé.
+                </p>
+              ) : (
+                <div className="groups-picker">
+                  <label className="field">
+                    Plantel
+                    <select
+                      value={exercise.squadId ?? ''}
+                      onChange={(e) => {
+                        const squadId = e.target.value || null;
+                        // Al elegir el plantel se marcan todas sus jugadoras (después se pueden desmarcar).
+                        update({ squadId, playerIds: allPlayers.filter((p) => p.squadId === squadId).map((p) => p.id) });
+                      }}
+                    >
+                      <option value="">— Elegí el plantel —</option>
+                      {squads.map((q) => (
+                        <option key={q.id} value={q.id}>
+                          {q.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {exercise.squadId && (
+                    <>
+                      <div className="row">
+                        <span className="muted">
+                          {exercisePlayers.length} de {roster.length} marcadas
+                        </span>
+                        <button className="link-button" onClick={() => update({ playerIds: roster.map((p) => p.id) })}>
+                          Marcar todas
+                        </button>
+                        <button className="link-button" onClick={() => update({ playerIds: [] })}>
+                          Ninguna
+                        </button>
+                      </div>
+                      <div className="player-picker">
+                        {sortedRoster.map((p) => (
+                          <label key={p.id} className={`chip${exercise.playerIds.includes(p.id) ? ' on' : ''}`}>
+                            <input type="checkbox" checked={exercise.playerIds.includes(p.id)} onChange={() => togglePlayer(p.id)} />
+                            <b>{p.number}</b> {p.name}
+                          </label>
+                        ))}
+                        {!roster.length && <span className="muted">Este plantel no tiene jugadoras todavía.</span>}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )
+            }
           />
         </details>
       )}

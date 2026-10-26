@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { newId } from '../domain/ids';
 import { GROUP_COLORS, makeGroups, rotationTable } from '../domain/stations';
 import type { Player, StationGroup } from '../domain/types';
@@ -54,6 +55,7 @@ export function GroupsPanel({
   minutes,
   onChange,
   onMinutesChange,
+  picker,
 }: {
   groups: StationGroup[] | undefined;
   players: Player[];
@@ -63,6 +65,8 @@ export function GroupsPanel({
   minutes: number | undefined;
   onChange: (groups: StationGroup[] | undefined) => void;
   onMinutesChange: (minutes: number | undefined) => void;
+  /** Para elegir el plantel y las jugadoras que participan, ahí mismo. */
+  picker?: ReactNode;
 }) {
   const courts = courtLabels.length;
   const playerOf = (id: string) => players.find((p) => p.id === id);
@@ -77,12 +81,20 @@ export function GroupsPanel({
           Repartí a las jugadoras en {courts} grupos, uno por cancha. En cada vuelta, cada grupo pasa a la cancha siguiente,
           como en un circuito.
         </p>
-        {players.length ? (
-          <button className="primary" onClick={() => onChange(makeGroups(players, courts, newId))}>
-            Armar {courts} grupos con las {players.length} jugadoras
-          </button>
-        ) : (
-          <p className="hint">Primero elegí las jugadoras del ejercicio (en "Datos del ejercicio").</p>
+        <ol className="groups-steps">
+          <li>Marcá las jugadoras que participan.</li>
+          <li>
+            Tocá <b>Armar grupos</b>: se reparten parejas por puesto (después las podés cambiar).
+          </li>
+        </ol>
+        {picker}
+        <button className="primary" disabled={players.length < courts} onClick={() => onChange(makeGroups(players, courts, newId))}>
+          {players.length
+            ? `Armar ${courts} grupos con las ${players.length} jugadoras`
+            : `Armar ${courts} grupos`}
+        </button>
+        {players.length > 0 && players.length < courts && (
+          <p className="hint">Marcá al menos {courts} jugadoras (una por grupo).</p>
         )}
       </section>
     );
