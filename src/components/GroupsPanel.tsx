@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { useState } from 'react';
+import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { newId } from '../domain/ids';
-import { GROUP_COLORS, makeGroups, rotationTable } from '../domain/stations';
+import { GROUP_COLORS, makeGroups, movePlayer, reshuffleGroups, rotationTable } from '../domain/stations';
 import type { Player, StationGroup } from '../domain/types';
 
 const firstName = (p?: Player) => (p ? p.name.split(' ')[0] || `#${p.number}` : '');
@@ -69,6 +70,8 @@ export function GroupsPanel({
   picker?: ReactNode;
 }) {
   const courts = courtLabels.length;
+  /** Jugadora que se está arrastrando a otro grupo (con el mouse o el dedo). */
+  const [drag, setDrag] = useState<{ id: string; x: number; y: number; sx: number; sy: number; over: string | null } | null>(null);
   const playerOf = (id: string) => players.find((p) => p.id === id);
   const assigned = new Set(groups?.flatMap((g) => g.playerIds) ?? []);
   const unassigned = players.filter((p) => !assigned.has(p.id));
@@ -100,17 +103,27 @@ export function GroupsPanel({
     );
   }
 
-  /** Pasa la jugadora al grupo siguiente (o la saca del último). */
-  const moveNext = (playerId: string) => {
-    const from = groups.findIndex((g) => g.playerIds.includes(playerId));
-    const to = from === -1 ? 0 : (from + 1) % groups.length;
-    onChange(
-      groups.map((g, i) => ({
-        ...g,
-        playerIds: i === to ? [...g.playerIds.filter((id) => id !== playerId), playerId] : g.playerIds.filter((id) => id !== playerId),
-      })),
-    );
-  };
+  /** Grupo que está debajo del puntero. */
+  const groupAt = (x: number, y: number) =>
+    (document.elementFromPoint(x, y)?.closest('[data-group]') as HTMLElement | null)?.dataset.group ?? null;
+  /** Para agarrar una jugadora y soltarla en otro grupo. */
+  const dragProps = (id: string) => ({
+    onPointerDown: (e: ReactPointerEvent<HTMLElement>) => {
+      e.currentTarget.setPointerCapture(e.pointerId);
+      setDrag({ id, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, over: null });
+    },
+    onPointerMove: (e: ReactPointerEvent<HTMLElement>) =>
+      setDrag((d) => (d && d.id === id ? { ...d, x: e.clientX, y: e.clientY, over: groupAt(e.clientX, e.clientY) } : d)),
+    onPointerUp: (e: ReactPointerEvent<HTMLElement>) => {
+      const d = drag;
+      setDrag(null);
+      if (!d || Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 5) return;
+      const over = groupAt(e.clientX, e.clientY);
+      if (over) onChange(movePlayer(groups, id, over));
+    },
+    onPointerCancel: () => setDrag(null),
+  });
+  const moving = drag && Math.hypot(drag.x - drag.sx, drag.y - drag.sy) >= 5 ? drag : null;
   const rename = (id: string, name: string) => onChange(groups.map((g) => (g.id === id ? { ...g, name } : g)));
   const recolor = (id: string) =>
     onChange(
@@ -129,7 +142,12 @@ export function GroupsPanel({
 
       <div className="groups-grid">
         {groups.map((g, i) => (
-          <div key={g.id} className="group-col" style={{ borderTopColor: g.color }}>
+          <div
+            key={g.id}
+            data-group={g.id}
+            className={`group-col${moving?.over === g.id ? ' drop-over' : ''}`}
+            style={{ borderTopColor: g.color }}
+          >
             <div className="group-title">
               <button
                 className="group-color"
@@ -147,7 +165,12 @@ export function GroupsPanel({
               {g.playerIds.map((id) => {
                 const p = playerOf(id);
                 return (
-                  <button key={id} className="chip" onClick={() => moveNext(id)} title="Tocá para pasarla al grupo siguiente">
+                  <button
+                    key={id}
+                    className={`chip drag-chip${moving?.id === id ? ' dragging' : ''}`}
+                    title="Arrastrala a otro grupo"
+                    {...dragProps(id)}
+                  >
                     <b>{p?.number ?? '?'}</b> {firstName(p)}
                   </button>
                 );
@@ -161,13 +184,18 @@ export function GroupsPanel({
         <p className="hint">
           Sin grupo:{' '}
           {unassigned.map((p) => (
-            <button key={p.id} className="chip" onClick={() => moveNext(p.id)}>
+            <button key={p.id} className={`chip drag-chip${moving?.id === p.id ? ' dragging' : ''}`} {...dragProps(p.id)}>
               <b>{p.number}</b> {firstName(p)}
             </button>
           ))}
         </p>
       )}
-      <p className="hint">Tocá una jugadora para pasarla al grupo siguiente. Tocá el color para cambiarlo.</p>
+      <p className="hint">Arrastrá una jugadora a otro grupo para cambiarla. Tocá el color para cambiarlo.</p>
+      {moving && (
+        <span className="drag-ghost" style={{ left: moving.x, top: moving.y }} aria-hidden="true">
+          <b>{playerOf(moving.id)?.number}</b> {firstName(playerOf(moving.id))}
+        </span>
+      )}
 
       <div className="groups-foot">
         <label className="field">
@@ -187,7 +215,9 @@ export function GroupsPanel({
           </p>
         ) : null}
         <div className="row">
-          <button onClick={() => onChange(makeGroups(players, courts, newId))}>Repartir de nuevo</button>
+          <button onClick={() => onChange(reshuffleGroups(groups, players))} title="Mezcla distinto, parejo por puesto">
+            Repartir de nuevo
+          </button>
           <button
             className="danger"
             onClick={() => {

@@ -5765,3 +5765,33 @@ input.num {
 .groups-picker .row > * {
   flex: 0 0 auto;
 }
+
+/* Arrastrar jugadoras entre grupos */
+.drag-chip {
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.drag-chip.dragging {
+  opacity: 0.35;
+}
+
+.group-col.drop-over {
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px #c99a4e;
+}
+
+.drag-ghost {
+  position: fixed;
+  z-index: 200;
+  transform: translate(-50%, -120%);
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: #1c1915;
+  color: #e3c48b;
+  font-size: 0.9rem;
+  pointer-events: none;
+  box-shadow: 0 8px 20px rgb(0 0 0 / 0.3);
+  white-space: nowrap;
+}

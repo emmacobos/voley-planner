@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoGroups, courtOfGroup, groupAtCourt, makeGroups, rotationTable } from './stations';
+import { autoGroups, courtOfGroup, groupAtCourt, makeGroups, movePlayer, reshuffleGroups, rotationTable } from './stations';
 import type { Player, Position } from './types';
 
 const player = (n: number, position: Position): Player => ({ id: `p${n}`, squadId: 's', name: `J${n}`, number: n, position });
@@ -44,5 +44,32 @@ describe('circuito por estaciones', () => {
     const made = makeGroups(players, 3, () => `g${n++}`);
     expect(made.map((g) => g.name)).toEqual(['Grupo 1', 'Grupo 2', 'Grupo 3']);
     expect(new Set(made.map((g) => g.color)).size).toBe(3);
+  });
+});
+
+describe('cambiar los grupos', () => {
+  const players = Array.from({ length: 12 }, (_, i) =>
+    player(i + 1, (['armador', 'opuesto', 'punta', 'punta', 'central', 'central'] as Position[])[i % 6]),
+  );
+  let n = 0;
+  const groups = makeGroups(players, 3, () => `g${n++}`).map((g, i) => ({ ...g, name: `Equipo ${i}` }));
+
+  it('repartir de nuevo cambia el reparto, sigue parejo y conserva nombres y colores', () => {
+    let seed = 1;
+    const random = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+    const next = reshuffleGroups(groups, players, random);
+    expect(next.map((g) => g.name)).toEqual(groups.map((g) => g.name));
+    expect(next.map((g) => g.color)).toEqual(groups.map((g) => g.color));
+    expect(next.map((g) => g.playerIds.length)).toEqual([4, 4, 4]);
+    expect(next.flatMap((g) => g.playerIds).sort()).toEqual(players.map((p) => p.id).sort());
+    expect(next.map((g) => g.playerIds.slice().sort().join())).not.toEqual(groups.map((g) => g.playerIds.slice().sort().join()));
+  });
+
+  it('pasa una jugadora a otro grupo', () => {
+    const id = groups[0].playerIds[0];
+    const moved = movePlayer(groups, id, groups[2].id);
+    expect(moved[0].playerIds).not.toContain(id);
+    expect(moved[2].playerIds.at(-1)).toBe(id);
+    expect(moved[1]).toBe(groups[1]);
   });
 });

@@ -221,4 +221,22 @@ test('grupos que rotan entre las canchas', async ({ page }) => {
   await expect(page.locator('.court-cell .group-badge b')).toHaveText(['Grupo 1', 'Grupo 2']);
   await page.locator('.groups-head button', { hasText: 'Rotar grupos' }).click();
   await expect(page.locator('.court-cell .group-badge b')).toHaveText(['Grupo 2', 'Grupo 1']);
+
+  // Repartir de nuevo cambia el reparto.
+  const lists = () => page.locator('.group-col').evaluateAll((cols) => cols.map((c) => c.textContent));
+  const before = await lists();
+  await page.locator('button', { hasText: 'Repartir de nuevo' }).click();
+  expect(await lists()).not.toEqual(before);
+
+  // Arrastrar una jugadora al otro grupo.
+  const count = (i: number) => page.locator('.group-col').nth(i).locator('.drag-chip').count();
+  const [a0, a1] = [await count(0), await count(1)];
+  const chip = (await page.locator('.group-col').nth(0).locator('.drag-chip').first().boundingBox())!;
+  const target = (await page.locator('.group-col').nth(1).boundingBox())!;
+  await page.mouse.move(chip.x + chip.width / 2, chip.y + chip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 8 });
+  await page.mouse.up();
+  await expect.poll(() => count(1)).toBe(a1 + 1);
+  expect(await count(0)).toBe(a0 - 1);
 });

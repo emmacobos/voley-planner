@@ -67,8 +67,8 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      había algo, la app avisa cuántos elementos se van a borrar (en todos los
      pasos) y pide confirmación.
    - **Grupos que rotan** (con 2 o 3 canchas): repartí a las jugadoras del
-     ejercicio en grupos de colores (se arman solos, parejos por puesto, y se
-     cambian tocando a cada jugadora). Arriba de cada cancha se ve qué grupo
+     ejercicio en grupos de colores (se arman solos, parejos por puesto; *Repartir
+     de nuevo* mezcla distinto, y cada jugadora se arrastra a otro grupo). Arriba de cada cancha se ve qué grupo
      está ahí; **Rotar grupos ↻** pasa a cada grupo a la cancha siguiente
      (también desde *Presentar*). Con los minutos por estación calcula el
      total, y el PDF de la sesión trae la tabla de rotación.
