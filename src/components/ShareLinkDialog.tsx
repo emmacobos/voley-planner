@@ -8,12 +8,14 @@ export function ShareLinkDialog({
   frames,
   players,
   teamNames,
+  half = false,
   onClose,
 }: {
   title: string;
   frames: Frame[];
   players: Player[];
   teamNames?: TeamNames;
+  half?: boolean;
   onClose: () => void;
 }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -21,11 +23,11 @@ export function ShareLinkDialog({
 
   useEffect(() => {
     let alive = true;
-    encodePlay(sharedPlayData(title, frames, players, teamNames)).then((code) => alive && setUrl(sharedPlayUrl(code)));
+    encodePlay(sharedPlayData(title, frames, players, teamNames, half)).then((code) => alive && setUrl(sharedPlayUrl(code)));
     return () => {
       alive = false;
     };
-  }, [title, frames, players, teamNames]);
+  }, [title, frames, players, teamNames, half]);
 
   const copy = async () => {
     if (!url) return;

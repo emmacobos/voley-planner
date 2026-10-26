@@ -34,6 +34,7 @@ export function Presentation({
   fullscreen = true,
   footer,
   teamNames,
+  half = false,
 }: {
   title: string;
   frames: Frame[];
@@ -45,6 +46,7 @@ export function Presentation({
   /** Texto extra al pie (por ejemplo, en una jugada compartida). */
   footer?: ReactNode;
   teamNames?: TeamNames;
+  half?: boolean;
 }) {
   const last = frames.length - 1;
   const [progress, setProgress] = useState(Math.min(startAt, last));
@@ -229,13 +231,14 @@ export function Presentation({
           showZones
           vertical={vertical}
           teamNames={teamNames}
+          half={half}
           onSelect={noop}
           onUpdate={noop}
           onAddArrow={noop}
         />
         <svg
           className={`ink-layer${drawing ? ' drawing' : ''}`}
-          viewBox={boardViewBox(vertical)}
+          viewBox={boardViewBox(vertical, half)}
           onPointerDown={drawing ? inkDown : undefined}
           onPointerMove={drawing ? inkMove : undefined}
           onPointerUp={drawing ? inkUp : undefined}

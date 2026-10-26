@@ -37,6 +37,7 @@ export function SharedPlayPage({ code }: { code: string }) {
       frames={play.frames}
       players={players}
       teamNames={play.teamNames}
+      half={play.half}
       fullscreen={false}
       onClose={() => navigate('/')}
       footer={

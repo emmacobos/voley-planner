@@ -143,3 +143,26 @@ test('se agregan aros de precisión (con color), el carro de pelotas y el banqui
   expect(els.find((e) => e.kind === 'hoop')?.color).toBe('#2F7DD1');
   expect(els.some((e) => e.kind === 'cart')).toBe(true);
 });
+
+test('varias canchas: cada una con su jugada, media cancha y todas juntas', async ({ page }) => {
+  await page.locator('button', { hasText: '+ Agregar cancha' }).click();
+  await page.locator('.court-settings input').first().fill('Ataque');
+  await page.locator('.court-settings button', { hasText: 'Media cancha' }).click();
+  await page.locator('button', { hasText: '+ Jugador A' }).click();
+  await expect(page.locator('svg.board.half')).toBeVisible();
+  await page.locator('.board-side input[type="checkbox"]').first().uncheck();
+  await expect(page.locator('svg.board text', { hasText: 'EQUIPO A' })).toHaveCount(0);
+
+  await page.locator('.courts-bar button', { hasText: 'Todas juntas' }).click();
+  await expect(page.locator('.court-card')).toHaveCount(2);
+  await expect(page.locator('.court-card').nth(1)).toContainText('Ataque');
+
+  const ex = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('voley-planner')!).state.exercises.find((e: { id: string }) => e.id === 'ejemplo-ejercicio-k1'),
+  );
+  expect(ex.extraCourts).toHaveLength(1);
+  expect(ex.extraCourts[0]).toMatchObject({ name: 'Ataque', half: true, teamNames: { hidden: true } });
+  expect(ex.extraCourts[0].frames[0].elements).toHaveLength(1);
+  // La cancha principal no cambió.
+  expect(ex.frames[0].elements.length).toBeGreaterThan(1);
+});

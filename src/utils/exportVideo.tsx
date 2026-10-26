@@ -47,6 +47,7 @@ export async function exportPlayVideo({
   frames,
   players,
   teamNames,
+  half,
   fileName,
   onProgress,
 }: {
@@ -54,6 +55,7 @@ export async function exportPlayVideo({
   frames: Frame[];
   players: Player[];
   teamNames?: TeamNames;
+  half?: boolean;
   fileName: string;
   onProgress?: (fraction: number) => void;
 }): Promise<void> {
@@ -78,6 +80,7 @@ export async function exportPlayVideo({
           readOnly
           showZones
           teamNames={teamNames}
+          half={half}
           onSelect={noop}
           onUpdate={noop}
           onAddArrow={noop}

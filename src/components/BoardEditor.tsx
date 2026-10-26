@@ -60,6 +60,8 @@ interface BoardEditorProps {
   /** Nombres de los equipos en la cancha. */
   teamNames?: TeamNames;
   onTeamNamesChange?: (names: TeamNames) => void;
+  /** Media cancha: solo el lado del equipo A y la red. */
+  half?: boolean;
 }
 
 const TRANSITION_MS = 1200;
@@ -100,6 +102,7 @@ export function BoardEditor({
   onSystemChange,
   teamNames,
   onTeamNamesChange,
+  half = false,
 }: BoardEditorProps) {
   const [current, setCurrent] = useState(0);
   const [tool, setTool] = useState<Tool>('select');
@@ -192,6 +195,8 @@ export function BoardEditor({
       if (kind === 'hoop') el.y += offset * 1.4;
       if (kind === 'step') el.y -= offset;
     }
+    // En media cancha no se ve el otro lado: lo que caería ahí va del lado visible.
+    if (half && el.x > NET_X + 0.5) el = { ...el, x: el.kind === 'player' ? NET_X + 0.5 : NET_X - 2.5 };
     setElements((els) => [...els, el]);
     setSelectedId(el.id);
     setTool('select');
@@ -330,7 +335,7 @@ export function BoardEditor({
   return (
     <div className="board-editor">
       {sharing && (
-        <ShareLinkDialog title={title} frames={frames} players={allPlayers} teamNames={teamNames} onClose={() => setSharing(false)} />
+        <ShareLinkDialog title={title} frames={frames} players={allPlayers} teamNames={teamNames} half={half} onClose={() => setSharing(false)} />
       )}
       {presenting && (
         <Presentation
@@ -338,6 +343,7 @@ export function BoardEditor({
           frames={frames}
           players={allPlayers}
           teamNames={teamNames}
+          half={half}
           startAt={index}
           onClose={() => setPresenting(false)}
         />
@@ -452,6 +458,7 @@ export function BoardEditor({
                     frames,
                     players: allPlayers,
                     teamNames,
+                    half,
                     fileName: slugify(title),
                     onProgress: setVideoProgress,
                   });
@@ -500,6 +507,7 @@ export function BoardEditor({
             showZones={showZones}
             vertical={vertical}
             teamNames={teamNames}
+            half={half}
             onSelect={setSelectedId}
             onUpdate={updateElement}
             onAddArrow={addArrow}
@@ -637,6 +645,14 @@ export function BoardEditor({
         {onTeamNamesChange && (
           <section>
             <h3>Equipos</h3>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={!teamNames?.hidden}
+                onChange={(e) => onTeamNamesChange({ ...teamNames, hidden: e.target.checked ? undefined : true })}
+              />{' '}
+              Mostrar los nombres en la cancha
+            </label>
             <div className="team-names">
               {(['A', 'B'] as Team[]).map((team) => (
                 <label key={team} className="field">

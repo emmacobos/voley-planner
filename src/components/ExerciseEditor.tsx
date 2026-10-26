@@ -1,15 +1,22 @@
+import { useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
 import { useAppStore } from '../store';
 import { EXERCISE_TYPES, INTENSITIES, positionLabel } from '../domain/types';
 import type { ExerciseType, Intensity } from '../domain/types';
 import { CONTENTS, exerciseContents } from '../domain/season';
+import { MAIN_COURT, MAX_COURTS, courtLabel, exerciseCourts, updateCourt } from '../domain/courts';
+import { newId } from '../domain/ids';
+import { emptyFrame } from '../store';
 import { BoardEditor } from './BoardEditor';
+import { CourtsOverview } from './CourtsOverview';
 
 export function ExerciseEditor({ id }: { id: string }) {
   const exercise = useAppStore((s) => s.exercises.find((e) => e.id === id));
   const allPlayers = useAppStore((s) => s.players);
   const squads = useAppStore((s) => s.squads);
   const updateExercise = useAppStore((s) => s.updateExercise);
+  /** Cancha que se está editando, o 'todas' para verlas juntas. */
+  const [active, setActive] = useState<string>(MAIN_COURT);
 
   if (!exercise) {
     return (
@@ -25,6 +32,21 @@ export function ExerciseEditor({ id }: { id: string }) {
   const exercisePlayers = roster.filter((p) => exercise.playerIds.includes(p.id));
   const sortedRoster = [...roster].sort((a, b) => a.number - b.number);
   const contents = exerciseContents(exercise);
+  const courts = exerciseCourts(exercise);
+  const courtIndex = Math.max(0, courts.findIndex((c) => c.id === active));
+  const court = courts[courtIndex];
+  const showAll = active === 'todas' && courts.length > 1;
+  const setCourt = (patch: Parameters<typeof updateCourt>[2]) => update(updateCourt(exercise, court.id, patch));
+  const addCourt = () => {
+    const id = newId();
+    update({ extraCourts: [...(exercise.extraCourts ?? []), { id, name: '', objective: '', frames: [emptyFrame()] }] });
+    setActive(id);
+  };
+  const removeCourt = () => {
+    if (!confirm(`¿Borrar ${courtLabel(court, courtIndex)} con su jugada?`)) return;
+    update({ extraCourts: (exercise.extraCourts ?? []).filter((c) => c.id !== court.id) });
+    setActive(MAIN_COURT);
+  };
 
   const togglePlayer = (pid: string) =>
     update({
@@ -164,19 +186,89 @@ export function ExerciseEditor({ id }: { id: string }) {
         </div>
       </details>
 
-      <BoardEditor
-        key={exercise.id}
-        frames={exercise.frames}
-        onChange={(frames) => update({ frames })}
-        allPlayers={allPlayers}
-        roster={roster}
-        exercisePlayers={exercisePlayers}
-        title={exercise.name}
-        system={exercise.system}
-        onSystemChange={(system) => update({ system })}
-        teamNames={exercise.teamNames}
-        onTeamNamesChange={(teamNames) => update({ teamNames })}
-      />
+      <div className="courts-bar">
+        <div className="segmented" role="tablist" aria-label="Canchas">
+          {courts.map((c, i) => (
+            <button
+              key={c.id}
+              role="tab"
+              aria-selected={!showAll && c.id === court.id}
+              className={!showAll && c.id === court.id ? 'active' : ''}
+              onClick={() => setActive(c.id)}
+            >
+              {courtLabel(c, i)}
+            </button>
+          ))}
+          {courts.length > 1 && (
+            <button role="tab" aria-selected={showAll} className={showAll ? 'active' : ''} onClick={() => setActive('todas')}>
+              ▶ Todas juntas
+            </button>
+          )}
+        </div>
+        {courts.length < MAX_COURTS && (
+          <button onClick={addCourt} title="Otra cancha al lado, para trabajar en estaciones al mismo tiempo">
+            + Agregar cancha
+          </button>
+        )}
+      </div>
+
+      {showAll ? (
+        <CourtsOverview courts={courts} players={allPlayers} onOpen={setActive} />
+      ) : (
+        <>
+          <div className="court-settings">
+            {courts.length > 1 && (
+              <>
+                <input
+                  value={court.name ?? ''}
+                  onChange={(e) => setCourt({ name: e.target.value })}
+                  placeholder={`Cancha ${courtIndex + 1}: nombre (ej.: Saque y recepción)`}
+                  aria-label="Nombre de la cancha"
+                />
+                <input
+                  value={court.objective ?? ''}
+                  onChange={(e) => setCourt({ objective: e.target.value })}
+                  placeholder="Objetivo de esta cancha"
+                  aria-label="Objetivo de la cancha"
+                />
+              </>
+            )}
+            <div className="segmented" role="group" aria-label="Tamaño de la cancha">
+              <button className={!court.half ? 'active' : ''} aria-pressed={!court.half} onClick={() => setCourt({ half: false })}>
+                Cancha entera
+              </button>
+              <button
+                className={court.half ? 'active' : ''}
+                aria-pressed={!!court.half}
+                onClick={() => setCourt({ half: true })}
+                title="Solo un lado de la red: para trabajos de un solo equipo"
+              >
+                Media cancha
+              </button>
+            </div>
+            {court.id !== MAIN_COURT && (
+              <button className="danger" onClick={removeCourt}>
+                Borrar cancha
+              </button>
+            )}
+          </div>
+
+          <BoardEditor
+            key={`${exercise.id}-${court.id}`}
+            frames={court.frames}
+            onChange={(frames) => setCourt({ frames })}
+            allPlayers={allPlayers}
+            roster={roster}
+            exercisePlayers={exercisePlayers}
+            title={courts.length > 1 ? `${exercise.name} · ${courtLabel(court, courtIndex)}` : exercise.name}
+            system={exercise.system}
+            onSystemChange={(system) => update({ system })}
+            teamNames={court.teamNames}
+            onTeamNamesChange={(teamNames) => setCourt({ teamNames })}
+            half={court.half}
+          />
+        </>
+      )}
     </div>
   );
 }

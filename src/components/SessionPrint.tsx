@@ -4,6 +4,7 @@ import { useAppStore } from '../store';
 import { blockDuration, formatDate, formatMinutes } from '../domain/sessions';
 import { EXERCISE_TYPES, INTENSITIES, SITUATIONS, positionLabel } from '../domain/types';
 import type { Exercise, Player } from '../domain/types';
+import { courtLabel, exerciseCourts } from '../domain/courts';
 import { Board } from './Board';
 import { SessionSummary } from './SessionSummary';
 
@@ -133,8 +134,7 @@ function PrintExercise({
   players: Player[];
   withBoards: boolean;
 }) {
-  const frames = exercise.frames.filter((f) => f.elements.length > 0);
-  const shown = frames.slice(0, MAX_FRAMES);
+  const courts = exerciseCourts(exercise);
   return (
     <div className="print-exercise">
       <h3 className="print-exercise-title">
@@ -150,34 +150,47 @@ function PrintExercise({
         </p>
       )}
       {exercise.notes && <p className="pre">{exercise.notes}</p>}
-      {withBoards && shown.length > 0 && (
-        <div className={`print-boards count-${shown.length}`}>
-          {shown.map((f) => (
-            <figure key={f.id} className="print-board">
-              <Board
-                elements={f.elements}
-                players={players}
-                selectedId={null}
-                tool="select"
-                readOnly
-                showZones={false}
-                teamNames={exercise.teamNames}
-                onSelect={noop}
-                onUpdate={noop}
-                onAddArrow={noop}
-              />
-              <figcaption>
-                Paso {exercise.frames.indexOf(f) + 1}
-                {f.situation && f.situation !== 'juego' && ` · ${SITUATIONS.find((s) => s.value === f.situation)?.label}`}
-                {f.note && ` · ${f.note}`}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      )}
-      {withBoards && frames.length > MAX_FRAMES && (
-        <p className="hint">Se muestran los primeros {MAX_FRAMES} de {frames.length} pasos.</p>
-      )}
+      {withBoards &&
+        courts.map((court, i) => {
+          const frames = court.frames.filter((f) => f.elements.length > 0);
+          const shown = frames.slice(0, MAX_FRAMES);
+          if (!shown.length) return null;
+          return (
+            <div key={court.id}>
+              {courts.length > 1 && (
+                <h4 className="print-court-title">
+                  {courtLabel(court, i)}
+                  {court.objective && <span className="muted"> · {court.objective}</span>}
+                </h4>
+              )}
+              <div className={`print-boards count-${shown.length}`}>
+                {shown.map((f) => (
+                  <figure key={f.id} className="print-board">
+                    <Board
+                      elements={f.elements}
+                      players={players}
+                      selectedId={null}
+                      tool="select"
+                      readOnly
+                      showZones={false}
+                      teamNames={court.teamNames}
+                      half={court.half}
+                      onSelect={noop}
+                      onUpdate={noop}
+                      onAddArrow={noop}
+                    />
+                    <figcaption>
+                      Paso {court.frames.indexOf(f) + 1}
+                      {f.situation && f.situation !== 'juego' && ` · ${SITUATIONS.find((x) => x.value === f.situation)?.label}`}
+                      {f.note && ` · ${f.note}`}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+              {frames.length > MAX_FRAMES && <p className="hint">Se muestran los primeros {MAX_FRAMES} de {frames.length} pasos.</p>}
+            </div>
+          );
+        })}
     </div>
   );
 }

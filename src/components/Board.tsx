@@ -92,6 +92,8 @@ interface BoardProps {
   vertical?: boolean;
   /** Nombres de los equipos en la cancha (si faltan, "Equipo A" y "Equipo B"). */
   teamNames?: TeamNames;
+  /** Media cancha: solo el lado del equipo A y la red. */
+  half?: boolean;
 }
 
 /**
@@ -219,6 +221,7 @@ export function Board({
   onDraggingChange,
   vertical = false,
   teamNames,
+  half = false,
 }: BoardProps) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const contentRef = useRef<SVGGElement>(null);
@@ -314,8 +317,8 @@ export function Board({
     <VerticalContext.Provider value={vertical}>
     <svg
       ref={svgRef}
-      className={`board tool-${tool}${readOnly ? ' read-only' : ''}${vertical ? ' vertical' : ''}`}
-      viewBox={boardViewBox(vertical)}
+      className={`board tool-${tool}${readOnly ? ' read-only' : ''}${vertical ? ' vertical' : ''}${half ? ' half' : ''}`}
+      viewBox={boardViewBox(vertical, half)}
       xmlns="http://www.w3.org/2000/svg"
       fontFamily="Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif"
       onPointerDown={onBackgroundDown}
@@ -342,7 +345,7 @@ export function Board({
       {/* Todo lo de la cancha, girado si la pizarra está vertical. */}
       <g ref={contentRef} className="board-content" transform={vertical ? 'rotate(-90)' : undefined}>
 
-      <Court showZones={showZones} teamNames={teamNames} />
+      <Court showZones={showZones} teamNames={teamNames} half={half} />
 
       {shadows.map((sh) => (
         <Shadow
@@ -481,13 +484,18 @@ function Halo({ r }: { r: number }) {
   return <circle className="ui-only" r={r} fill="none" stroke={SELECTION_COLOR} strokeWidth={0.09} strokeDasharray="0.15 0.1" />;
 }
 
-function Court({ showZones, teamNames }: { showZones: boolean; teamNames?: TeamNames }) {
+function Court({ showZones, teamNames, half = false }: { showZones: boolean; teamNames?: TeamNames; half?: boolean }) {
   const vertical = useContext(VerticalContext);
   // Textos derechos aunque la cancha esté girada.
   const upright = (x: number, y: number) => (vertical ? `rotate(90 ${x} ${y})` : undefined);
   const line = { stroke: COURT_COLORS.lines, strokeWidth: 0.05 };
   const B = COURT_COLORS.band;
   const board = COURT_COLORS.boardDepth;
+  // Ancho visible: en media cancha, hasta un poco pasando la red.
+  const W = half ? NET_X + 1.5 - VIEW.minX : VIEW.width;
+  // En media cancha, la franja y la cancha se cortan antes del borde, con el mismo margen que del otro lado.
+  const ring = -B.ends - (VIEW.minX + board);
+  const cutAt = VIEW.minX + W - board - ring;
   return (
     <g pointerEvents="none">
       <defs>
@@ -499,21 +507,27 @@ function Court({ showZones, teamNames }: { showZones: boolean; teamNames?: TeamN
         </pattern>
       </defs>
       {/* Piso del estadio y carteles en los bordes. */}
-      <rect x={VIEW.minX} y={VIEW.minY} width={VIEW.width} height={VIEW.height} fill={COURT_COLORS.boards} />
+      <rect x={VIEW.minX} y={VIEW.minY} width={W} height={VIEW.height} fill={COURT_COLORS.boards} />
       <rect
         x={VIEW.minX + board}
         y={VIEW.minY + board}
-        width={VIEW.width - board * 2}
+        width={W - board * 2}
         height={VIEW.height - board * 2}
         fill={COURT_COLORS.floor}
       />
       <rect
         x={VIEW.minX + board}
         y={VIEW.minY + board}
-        width={VIEW.width - board * 2}
+        width={W - board * 2}
         height={VIEW.height - board * 2}
         fill="url(#court-planks)"
       />
+      {half && (
+        <clipPath id="half-court-clip">
+          <rect x={VIEW.minX} y={VIEW.minY} width={cutAt - VIEW.minX} height={VIEW.height} />
+        </clipPath>
+      )}
+      <g clipPath={half ? 'url(#half-court-clip)' : undefined}>
       {/* Franja azul alrededor de la cancha. */}
       <rect x={-B.ends} y={-B.sides} width={COURT_LENGTH + B.ends * 2} height={COURT_WIDTH + B.sides * 2} fill={COURT_COLORS.bandColor} />
       {/* Cancha de madera, con la zona de ataque más oscura. */}
@@ -537,7 +551,8 @@ function Court({ showZones, teamNames }: { showZones: boolean; teamNames?: TeamN
       <line x1={NET_X} y1={-0.7} x2={NET_X} y2={COURT_WIDTH + 0.7} stroke={COURT_COLORS.net} strokeWidth={0.14} />
       <circle cx={NET_X} cy={-0.8} r={0.16} fill={COURT_COLORS.net} />
       <circle cx={NET_X} cy={COURT_WIDTH + 0.8} r={0.16} fill={COURT_COLORS.net} />
-      {(['A', 'B'] as Team[]).map((team) => {
+      </g>
+      {(teamNames?.hidden ? [] : half ? (['A'] as Team[]) : (['A', 'B'] as Team[])).map((team) => {
         // Horizontal: arriba de cada mitad. Vertical: centrado en la franja de abajo (A) y de arriba (B).
         const x = vertical ? (team === 'A' ? -1.4 : COURT_LENGTH + 1.4) : team === 'A' ? NET_X / 2 : NET_X + NET_X / 2;
         const y = vertical ? COURT_WIDTH / 2 : -1.4;

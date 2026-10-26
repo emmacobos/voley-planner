@@ -1,4 +1,4 @@
-import { VIEW } from '../domain/court';
+import { NET_X, VIEW } from '../domain/court';
 import type { Team } from '../domain/types';
 
 export type Tool =
@@ -47,9 +47,13 @@ export const HOOP_COLORS: { value: string; label: string }[] = [
   { value: '#3FA34D', label: 'Verde' },
 ];
 
-/** viewBox de la pizarra, horizontal o vertical (girada -90°). */
-export function boardViewBox(vertical = false): string {
+/** Media cancha: se ve desde el fondo del equipo A hasta un poco pasando la red. */
+const HALF_WIDTH = NET_X + 1.5 - VIEW.minX;
+
+/** viewBox de la pizarra, horizontal o vertical (girada -90°), entera o media cancha. */
+export function boardViewBox(vertical = false, half = false): string {
+  const width = half ? HALF_WIDTH : VIEW.width;
   return vertical
-    ? `${VIEW.minY} ${-(VIEW.minX + VIEW.width)} ${VIEW.height} ${VIEW.width}`
-    : `${VIEW.minX} ${VIEW.minY} ${VIEW.width} ${VIEW.height}`;
+    ? `${VIEW.minY} ${-(VIEW.minX + width)} ${VIEW.height} ${width}`
+    : `${VIEW.minX} ${VIEW.minY} ${width} ${VIEW.height}`;
 }

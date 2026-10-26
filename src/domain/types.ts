@@ -88,10 +88,27 @@ export interface StepElement extends Positioned {
   rotation?: number;
 }
 
+/** Datos de una cancha de un ejercicio con varias canchas. */
+export interface CourtInfo {
+  name?: string;
+  objective?: string;
+  /** Media cancha (solo el lado del equipo A y la red). */
+  half?: boolean;
+}
+
+/** Cancha extra de un ejercicio: tiene su propia jugada (pasos) y sus nombres de equipos. */
+export interface ExtraCourt extends CourtInfo {
+  id: string;
+  frames: Frame[];
+  teamNames?: TeamNames;
+}
+
 /** Nombres que se muestran en la cancha en lugar de "Equipo A" y "Equipo B". */
 export interface TeamNames {
   A?: string;
   B?: string;
+  /** true: no se muestran los nombres en la cancha. */
+  hidden?: boolean;
 }
 
 /** Aro de precisión: objetivo en el piso (por ejemplo, para el saque o la recepción). */
@@ -234,6 +251,10 @@ export interface Exercise {
   contents?: Content[];
   /** Nombres de los equipos en la pizarra. */
   teamNames?: TeamNames;
+  /** Cancha principal (la de `frames`): nombre, objetivo y si es media cancha. */
+  mainCourt?: CourtInfo;
+  /** Canchas extra para trabajar en estaciones, una al lado de la otra. */
+  extraCourts?: ExtraCourt[];
   createdAt: string;
   updatedAt: string;
 }
