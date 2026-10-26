@@ -55,6 +55,22 @@ export default function App() {
     });
   };
 
+  /** Botón ☰: en la compu va en el menú, al lado del logo; en el celular, arriba (el menú está escondido). */
+  const menuButton = (where: string) => (
+    <button
+      className={`icon-button menu-toggle ${where}`}
+      onClick={toggleMenu}
+      aria-label={collapsed || !drawer ? 'Abrir o cerrar el menú' : 'Cerrar el menú'}
+      aria-controls="menu-principal"
+      aria-expanded={drawer || !collapsed}
+      title="Menú"
+    >
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    </button>
+  );
+
   // Jugada compartida por link: se muestra sola, sin el resto de la app.
   if (route.name === 'shared-play') {
     return (
@@ -68,13 +84,16 @@ export default function App() {
     <div className={`app route-${route.name}${collapsed ? ' menu-collapsed' : ''}${drawer ? ' drawer-open' : ''}`}>
       {drawer && <div className="menu-backdrop" onClick={() => setDrawer(false)} aria-hidden="true" />}
       <aside className="sidebar" id="menu-principal">
-        <a className="brand" href="#/sesiones" aria-label="Voley Planner, inicio">
-          <BallLogo />
-          <span className="brand-text">
-            <span className="brand-top">Voley</span>
-            <span className="brand-bottom">Planner</span>
-          </span>
-        </a>
+        <div className="sidebar-head">
+          <a className="brand" href="#/sesiones" aria-label="Voley Planner, inicio">
+            <BallLogo />
+            <span className="brand-text">
+              <span className="brand-top">Voley</span>
+              <span className="brand-bottom">Planner</span>
+            </span>
+          </a>
+          {menuButton('sidebar-toggle')}
+        </div>
         <nav aria-label="Principal" onClick={() => setDrawer(false)}>
           <a className={route.name.startsWith('session') ? 'active' : ''} href="#/sesiones" title="Sesiones">
             <NavIcon d="M9 3h6v3H9zM7 4.5H5.5A1.5 1.5 0 0 0 4 6v14a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 20V6a1.5 1.5 0 0 0-1.5-1.5H17M8 11h8M8 15h5" />
@@ -111,18 +130,7 @@ export default function App() {
       <div className="app-body">
         {/* Tema y cuenta, siempre a la vista arriba a la derecha. */}
         <header className="topbar">
-          <button
-            className="icon-button menu-toggle"
-            onClick={toggleMenu}
-            aria-label={collapsed || !drawer ? 'Abrir o cerrar el menú' : 'Cerrar el menú'}
-            aria-controls="menu-principal"
-            aria-expanded={drawer || !collapsed}
-            title="Menú"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
+          {menuButton('topbar-toggle')}
           {/* En el celular, con el menú cerrado, la marca queda a la vista arriba. */}
           <a className="topbar-brand" href="#/sesiones" aria-label="Voley Planner, inicio">
             <BallLogo />

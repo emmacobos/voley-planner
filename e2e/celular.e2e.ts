@@ -14,7 +14,7 @@ test('en el celular el menú se abre con ☰ y se cierra al elegir una sección'
   await openDemoExercise(page);
   const app = page.locator('.app');
   await expect(app).not.toHaveClass(/drawer-open/);
-  await page.locator('.menu-toggle').click();
+  await page.locator('.topbar .menu-toggle').click();
   await expect(app).toHaveClass(/drawer-open/);
   await page.locator('.sidebar nav a[title="Planteles"]').click();
   await expect(app).not.toHaveClass(/drawer-open/);

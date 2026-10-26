@@ -190,7 +190,7 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
 11. **Exportar PDF:** abre una versión para imprimir con toda la sesión y las
    pizarras; en el diálogo de impresión elegí "Guardar como PDF".
 
-Con **☰** (arriba a la izquierda) el menú se achica a una franja con los íconos
+Con **☰** (en el menú, al lado del logo; en el celular, arriba a la izquierda) el menú se achica a una franja con los íconos
 (en la compu, y se recuerda) o se abre encima de la pantalla (en el celular, y se
 cierra al elegir una sección). Arriba a la derecha están tu **cuenta** y el botón de **modo oscuro** (se recuerda en cada
 navegador; la primera vez toma la preferencia del sistema). La pantalla de

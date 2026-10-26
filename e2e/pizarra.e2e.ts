@@ -268,11 +268,11 @@ test('al rotar, las fichas de cada cancha muestran a las jugadoras del grupo que
 });
 
 test('en la compu, ☰ achica el menú a solo íconos y se recuerda', async ({ page }) => {
-  await page.locator('.menu-toggle').click();
+  await page.locator('.sidebar .menu-toggle').click();
   await expect(page.locator('.app')).toHaveClass(/menu-collapsed/);
   await expect.poll(async () => (await page.locator('.sidebar').boundingBox())!.width).toBeLessThan(80);
   await page.reload();
   await expect(page.locator('.app')).toHaveClass(/menu-collapsed/);
-  await page.locator('.menu-toggle').click();
+  await page.locator('.sidebar .menu-toggle').click();
   await expect(page.locator('.app')).not.toHaveClass(/menu-collapsed/);
 });

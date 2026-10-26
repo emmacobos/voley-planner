@@ -5902,3 +5902,42 @@ input.num {
     height: 28px;
   }
 }
+
+/* ☰ dentro del menú, al lado del logo (en el celular va arriba, en la barra). */
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sidebar .sidebar-toggle {
+  flex-shrink: 0;
+  background: transparent;
+  border-color: rgb(255 255 255 / 0.18);
+  color: #e8dcc4;
+}
+
+.sidebar .sidebar-toggle:hover:not(:disabled) {
+  background: var(--navy-2);
+  border-color: var(--ball);
+  color: #fff;
+}
+
+.topbar .topbar-toggle {
+  display: none;
+}
+
+@media (min-width: 801px) {
+  /* Achicado: el ☰ arriba y el logo abajo, en la franja. */
+  .app.menu-collapsed .sidebar-head {
+    flex-direction: column-reverse;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .topbar .topbar-toggle {
+    display: inline-flex;
+  }
+}
