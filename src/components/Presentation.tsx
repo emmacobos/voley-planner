@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { elementsAtProgress } from '../domain/animation';
-import { VIEW } from '../domain/court';
 import type { Frame, Player } from '../domain/types';
+import { useBoardOrientation } from '../utils/boardOrientation';
 import { Board } from './Board';
+import { boardViewBox } from './boardTheme';
 
 const TRANSITION_MS = 1200;
 const noop = () => {};
@@ -56,6 +57,7 @@ export function Presentation({
   });
 
   const index = Math.round(progress);
+  const vertical = useBoardOrientation((s) => s.vertical);
 
   // Marcas a mano alzada: no se guardan; cada paso tiene las suyas.
   const [drawing, setDrawing] = useState(false);
@@ -223,13 +225,14 @@ export function Presentation({
           tool="select"
           readOnly
           showZones
+          vertical={vertical}
           onSelect={noop}
           onUpdate={noop}
           onAddArrow={noop}
         />
         <svg
           className={`ink-layer${drawing ? ' drawing' : ''}`}
-          viewBox={`${VIEW.minX} ${VIEW.minY} ${VIEW.width} ${VIEW.height}`}
+          viewBox={boardViewBox(vertical)}
           onPointerDown={drawing ? inkDown : undefined}
           onPointerMove={drawing ? inkMove : undefined}
           onPointerUp={drawing ? inkUp : undefined}

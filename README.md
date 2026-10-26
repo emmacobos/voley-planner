@@ -43,6 +43,11 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
        hace de segundo. Líbero por el central zaguero.
      - *6-0*: seis jugadores universales, sin líbero; arma el que pasa por la
        zona 3 o la zona 2 (se elige) y en recepción los otros 5 forman la W.
+   - **Horizontal / Vertical** (arriba de la pizarra): en vertical la red queda
+     de lado a lado, con tu equipo abajo y el rival arriba (cómodo en el
+     celular). Es solo la vista: la jugada es la misma y se ve igual en las dos;
+     los textos y nombres quedan siempre derechos. Se recuerda en cada
+     navegador y vale también para *Presentar*.
    - *Agregar* suma jugadores, pelota, conos, entrenadores y carros.
    - *Mover* para arrastrar; *Flecha desplazamiento*, *Flecha pelota*,
      *Flecha curva* y *Curva punteada* para dibujar arrastrando sobre la

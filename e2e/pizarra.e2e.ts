@@ -115,3 +115,20 @@ test('el texto se puede dejar sin borde', async ({ page }) => {
   await page.locator('.floating-panel button', { hasText: 'Con borde' }).click();
   await expect.poll(async () => (await savedElements(page)).find((e) => e.kind === 'text')?.outline).toBeUndefined();
 });
+
+test('en la pizarra vertical se arrastra en la dirección de la pantalla y la opción se recuerda', async ({ page }) => {
+  await page.locator('.orientation-switch button', { hasText: 'Vertical' }).click();
+  await page.evaluate(() => document.querySelector('.board-stage')!.scrollIntoView());
+  const player = (await savedElements(page)).find((e) => e.kind === 'player' && e.team === 'A')!;
+  const [x, y] = await boardPoint(page, player.x as number, player.y as number);
+  // Hacia arriba en la pantalla = hacia la red (x más grande en la cancha).
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, y - 50, { steps: 5 });
+  await page.mouse.up();
+  const moved = (await savedElements(page)).find((e) => e.id === player.id)!;
+  expect(moved.x as number).toBeGreaterThan(player.x as number);
+  expect(moved.y).toBeCloseTo(player.y as number, 5);
+  await page.reload();
+  await expect(page.locator('svg.board.vertical')).toBeVisible();
+});

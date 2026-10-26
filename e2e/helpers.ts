@@ -13,15 +13,21 @@ export async function openDemoExercise(page: Page) {
   await page.click('.welcome-ghost');
   await page.goto(`./#/ejercicios/${EXERCISE}`);
   await page.locator('svg.board').waitFor();
+  // Que la pizarra quede a la vista (el mouse solo toca lo que está en pantalla).
+  await page.evaluate(() => document.querySelector('.board-stage')!.scrollIntoView());
 }
 
 /** Punto de la pantalla que corresponde a (x, y) en metros de la pizarra. */
 export async function boardPoint(page: Page, x: number, y: number): Promise<[number, number]> {
-  const m = await page.evaluate(() => {
-    const ctm = document.querySelector<SVGSVGElement>('svg.board')!.getScreenCTM()!;
-    return [ctm.a, ctm.d, ctm.e, ctm.f];
-  });
-  return [m[0] * x + m[2], m[1] * y + m[3]];
+  // El grupo de la cancha puede estar girado (pizarra vertical).
+  return page.evaluate(
+    ([px, py]) => {
+      const ctm = document.querySelector<SVGGElement>('svg.board .board-content')!.getScreenCTM()!;
+      const p = new DOMPoint(px, py).matrixTransform(ctm);
+      return [p.x, p.y] as [number, number];
+    },
+    [x, y],
+  );
 }
 
 /** Elige una herramienta sin que la página se desplace (como un clic real en la barra). */

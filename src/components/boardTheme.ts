@@ -1,3 +1,4 @@
+import { VIEW } from '../domain/court';
 import type { Team } from '../domain/types';
 
 export type Tool =
@@ -37,3 +38,10 @@ export const DISPLAY_FONT = "'Barlow Condensed', 'Arial Narrow', sans-serif";
 
 /** El líbero usa otra camiseta. */
 export const LIBERO_COLORS: Record<Team, string> = { A: '#B07A3C', B: '#A0525F' };
+
+/** viewBox de la pizarra, horizontal o vertical (girada -90°). */
+export function boardViewBox(vertical = false): string {
+  return vertical
+    ? `${VIEW.minY} ${-(VIEW.minX + VIEW.width)} ${VIEW.height} ${VIEW.width}`
+    : `${VIEW.minX} ${VIEW.minY} ${VIEW.width} ${VIEW.height}`;
+}

@@ -135,13 +135,33 @@ export function FloatingPanel({
     const stage = stageRef.current;
     const svg = svgRef.current;
     const card = cardRef.current;
-    const ctm = svg?.getScreenCTM();
-    if (!stage || !card || !ctm) return;
+    // La cancha puede estar girada (pizarra vertical): se usa el grupo que la contiene.
+    const content = svg?.querySelector<SVGGraphicsElement>('.board-content') ?? svg;
+    const ctm = content?.getScreenCTM();
+    if (!stage || !card || !ctm || !svg) return;
     const box = stage.getBoundingClientRect();
-    const toPx = (x: number, y: number) => ({ x: ctm.a * x + ctm.e - box.left, y: ctm.d * y + ctm.f - box.top });
-    const b = elementBounds(element);
-    const topLeft = toPx(b.x1, b.y1);
-    const bottomRight = toPx(b.x2, b.y2);
+    // Lo que ocupa el elemento en la pantalla: el dibujo real si está, o su medida calculada.
+    const node = svg.querySelector(`[data-id="${CSS.escape(element.id)}"]`);
+    let rect: { left: number; top: number; right: number; bottom: number };
+    if (node) {
+      const r = node.getBoundingClientRect();
+      // Un margen para que la flechita de la tarjeta no tape los puntos de agarre.
+      const pad = 10;
+      rect = { left: r.left - box.left - pad, top: r.top - box.top - pad, right: r.right - box.left + pad, bottom: r.bottom - box.top + pad };
+    } else {
+      const b = elementBounds(element);
+      const corners = [
+        [b.x1, b.y1],
+        [b.x2, b.y1],
+        [b.x1, b.y2],
+        [b.x2, b.y2],
+      ].map(([x, y]) => new DOMPoint(x, y).matrixTransform(ctm));
+      const xs = corners.map((p) => p.x - box.left);
+      const ys = corners.map((p) => p.y - box.top);
+      rect = { left: Math.min(...xs), top: Math.min(...ys), right: Math.max(...xs), bottom: Math.max(...ys) };
+    }
+    const topLeft = { x: rect.left, y: rect.top };
+    const bottomRight = { x: rect.right, y: rect.bottom };
     const centerX = (topLeft.x + bottomRight.x) / 2;
     const height = card.offsetHeight;
 

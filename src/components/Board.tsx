@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { createContext, useContext, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, Ref } from 'react';
 import {
   ATTACK_LINE_DIST,
@@ -36,7 +36,7 @@ import type {
   Zone,
 } from '../domain/types';
 import { positionShort } from '../domain/types';
-import { COURT_COLORS, DISPLAY_FONT, LIBERO_COLORS, SELECTION_COLOR, TEAM_COLORS } from './boardTheme';
+import { COURT_COLORS, DISPLAY_FONT, LIBERO_COLORS, SELECTION_COLOR, TEAM_COLORS, boardViewBox } from './boardTheme';
 import type { Tool } from './boardTheme';
 
 
@@ -54,6 +54,19 @@ if (measureCanvas) {
 /** En pantallas táctiles los puntos de agarre se agrandan para tocarlos con el dedo. */
 const TOUCH = typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
 const HANDLE = TOUCH ? 1.8 : 1;
+
+/** Pizarra vertical: misma jugada, dibujada girada (red horizontal, equipo A abajo). */
+const VerticalContext = createContext(false);
+/** Para dejar derechos los textos y fichas cuando la pizarra está girada. */
+const useUpright = () => (useContext(VerticalContext) ? ' rotate(90)' : '');
+
+/**
+ * Punto a (sx, sy) de distancia en la pantalla (sx a la derecha, sy hacia
+ * arriba) de (x, y), según cómo esté girada la pizarra.
+ */
+function screenOffset(x: number, y: number, sx: number, sy: number, vertical: boolean) {
+  return vertical ? clampToView(x + sy, y + sx) : clampToView(x + sx, y - sy);
+}
 
 interface BoardProps {
   elements: BoardElement[];
@@ -74,6 +87,8 @@ interface BoardProps {
   onComment?: (id: string) => void;
   /** Avisa cuando empieza y termina el arrastre de un elemento (para esconder su tarjeta mientras tanto). */
   onDraggingChange?: (dragging: boolean) => void;
+  /** Dibujar la cancha vertical (red horizontal, equipo A abajo). */
+  vertical?: boolean;
 }
 
 /**
@@ -139,17 +154,15 @@ const ZONE_LABEL: Record<Zone, { depth: number; lateral: number }> = {
   6: { depth: 7.8, lateral: 4.5 },
 };
 
-function svgPoint(svg: SVGSVGElement, clientX: number, clientY: number) {
-  const pt = svg.createSVGPoint();
-  pt.x = clientX;
-  pt.y = clientY;
-  const ctm = svg.getScreenCTM();
+/** Punto de la pantalla en metros de la cancha (según el grupo que contiene la cancha, que puede estar girado). */
+function svgPoint(content: SVGGraphicsElement, clientX: number, clientY: number) {
+  const ctm = content.getScreenCTM();
   if (!ctm) return { x: 0, y: 0 };
-  const p = pt.matrixTransform(ctm.inverse());
+  const p = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse());
   return { x: p.x, y: p.y };
 }
 
-function applyDrag(el: BoardElement, drag: Drag | null): BoardElement {
+function applyDrag(el: BoardElement, drag: Drag | null, vertical = false): BoardElement {
   if (!drag || drag.type !== 'element' || drag.id !== el.id) return el;
   const { dx, dy, part } = drag;
   if (isSegment(el)) {
@@ -160,7 +173,8 @@ function applyDrag(el: BoardElement, drag: Drag | null): BoardElement {
       ...(part !== 'start' ? { x2: el.x2 + dx, y2: el.y2 + dy } : {}),
     };
   }
-  if (el.kind === 'text' && (part === 'width' || part === 'scale')) return resizeText(el, drag.ox, drag.oy, dx, dy, part);
+  // En la pizarra vertical, el ancho del texto crece hacia la derecha de la pantalla, que es +y en la cancha.
+  if (el.kind === 'text' && (part === 'width' || part === 'scale')) return resizeText(el, drag.ox, drag.oy, dx, dy, part, vertical);
   const p = clampToView(el.x + dx, el.y + dy);
   return { ...el, ...p };
 }
@@ -168,11 +182,11 @@ function applyDrag(el: BoardElement, drag: Drag | null): BoardElement {
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** Agranda o achica el cuadro de texto (borde: ancho; esquina: tamaño de letra). */
-function resizeText(el: TextElement, ox: number, oy: number, dx: number, dy: number, part: 'width' | 'scale'): TextElement {
+function resizeText(el: TextElement, ox: number, oy: number, dx: number, dy: number, part: 'width' | 'scale', vertical: boolean): TextElement {
   const box = textBox(el);
   if (part === 'width') {
     // El texto está centrado: el cuadro crece hacia los dos lados.
-    const width = Math.max(textMinWidth(el), box.width + 2 * dx);
+    const width = Math.max(textMinWidth(el), box.width + 2 * (vertical ? dy : dx));
     return { ...el, width: round2(width) };
   }
   // Escala según cuánto se alejó la esquina del centro del texto.
@@ -200,11 +214,13 @@ export function Board({
   onDelete,
   onComment,
   onDraggingChange,
+  vertical = false,
 }: BoardProps) {
   const [drag, setDrag] = useState<Drag | null>(null);
+  const contentRef = useRef<SVGGElement>(null);
   const playersById = new Map(players.map((p) => [p.id, p]));
 
-  const point = (e: ReactPointerEvent<SVGSVGElement>) => svgPoint(e.currentTarget, e.clientX, e.clientY);
+  const point = (e: ReactPointerEvent<SVGSVGElement>) => svgPoint(contentRef.current ?? e.currentTarget, e.clientX, e.clientY);
 
   const startElementDrag = (
     e: ReactPointerEvent<SVGElement>,
@@ -219,7 +235,7 @@ export function Board({
     const svg = e.currentTarget.ownerSVGElement;
     if (!svg) return;
     svg.setPointerCapture(e.pointerId);
-    const p = svgPoint(svg, e.clientX, e.clientY);
+    const p = svgPoint(contentRef.current ?? svg, e.clientX, e.clientY);
     onSelect(id);
     setDrag({ type: 'element', id, part, ox: p.x, oy: p.y, dx: 0, dy: 0 });
     onDraggingChange?.(true);
@@ -273,7 +289,7 @@ export function Board({
     if (!drag) return;
     if (drag.type === 'element') {
       const el = elements.find((x) => x.id === drag.id);
-      if (el && (drag.dx !== 0 || drag.dy !== 0)) onUpdate(applyDrag(el, drag));
+      if (el && (drag.dx !== 0 || drag.dy !== 0)) onUpdate(applyDrag(el, drag, vertical));
     } else if (Math.hypot(drag.x2 - drag.x1, drag.y2 - drag.y1) > 0.3) {
       if (drag.type === 'shadow') onAddElement?.(drawnShadow(drag));
       else onAddArrow(drawnArrow(drag));
@@ -281,7 +297,7 @@ export function Board({
     endDrag();
   };
 
-  const shown = elements.map((el) => applyDrag(el, drag));
+  const shown = elements.map((el) => applyDrag(el, drag, vertical));
   // Abajo las sombras del bloqueo, después las flechas y arriba el resto.
   const shadows = shown.filter((e): e is BlockShadowElement => e.kind === 'shadow');
   const arrows = shown.filter((e): e is ArrowElement => e.kind === 'arrow');
@@ -289,10 +305,11 @@ export function Board({
   const selectedEl = shown.find((e) => e.id === selectedId) ?? null;
 
   return (
+    <VerticalContext.Provider value={vertical}>
     <svg
       ref={svgRef}
-      className={`board tool-${tool}${readOnly ? ' read-only' : ''}`}
-      viewBox={`${VIEW.minX} ${VIEW.minY} ${VIEW.width} ${VIEW.height}`}
+      className={`board tool-${tool}${readOnly ? ' read-only' : ''}${vertical ? ' vertical' : ''}`}
+      viewBox={boardViewBox(vertical)}
       xmlns="http://www.w3.org/2000/svg"
       fontFamily="Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif"
       onPointerDown={onBackgroundDown}
@@ -316,6 +333,8 @@ export function Board({
           </marker>
         ))}
       </defs>
+      {/* Todo lo de la cancha, girado si la pizarra está vertical. */}
+      <g ref={contentRef} className="board-content" transform={vertical ? 'rotate(-90)' : undefined}>
 
       <Court showZones={showZones} />
 
@@ -343,6 +362,7 @@ export function Board({
 
       {points.map((el) => {
         const selected = el.id === selectedId;
+        const up = vertical ? ' rotate(90)' : '';
         const down = (e: ReactPointerEvent<SVGElement>) => startElementDrag(e, el.id);
         switch (el.kind) {
           case 'player':
@@ -357,7 +377,7 @@ export function Board({
             );
           case 'ball':
             return (
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})`} onPointerDown={down}>
+              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
                 {selected && <Halo r={0.4} />}
                 <circle r={0.24} fill="#ffffff" stroke="#1e3a8a" strokeWidth={0.05} />
                 <path d="M-0.24,0 Q0,-0.12 0.24,0 M-0.08,-0.22 Q0.06,0 -0.08,0.22" fill="none" stroke="#2563eb" strokeWidth={0.04} />
@@ -365,14 +385,14 @@ export function Board({
             );
           case 'cone':
             return (
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})`} onPointerDown={down}>
+              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
                 {selected && <Halo r={0.4} />}
                 <polygon points="0,-0.28 0.25,0.2 -0.25,0.2" fill="#fde047" stroke="#713f12" strokeWidth={0.04} />
               </g>
             );
           case 'coach':
             return (
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})`} onPointerDown={down}>
+              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
                 {selected && <Halo r={0.55} />}
                 <rect x={-0.38} y={-0.38} width={0.76} height={0.76} rx={0.12} fill="#111827" stroke="#ffffff" strokeWidth={0.05} />
                 <text textAnchor="middle" dominantBaseline="central" fontSize={0.4} fontWeight={700} fill="#ffffff">E</text>
@@ -390,7 +410,7 @@ export function Board({
             );
           case 'cart':
             return (
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})`} onPointerDown={down}>
+              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
                 {selected && <Halo r={0.6} />}
                 <rect x={-0.45} y={-0.3} width={0.9} height={0.6} rx={0.06} fill="#78350f" stroke="#ffffff" strokeWidth={0.04} />
                 {[-0.22, 0, 0.22].map((cx) => (
@@ -406,7 +426,9 @@ export function Board({
       {onComment && !readOnly && !drag && selectedEl?.kind === 'player' && (
         <CommentButton element={selectedEl} onComment={() => onComment(selectedEl.id)} />
       )}
+      </g>
     </svg>
+    </VerticalContext.Provider>
   );
 }
 
@@ -415,6 +437,9 @@ function Halo({ r }: { r: number }) {
 }
 
 function Court({ showZones }: { showZones: boolean }) {
+  const vertical = useContext(VerticalContext);
+  // Textos derechos aunque la cancha esté girada.
+  const upright = (x: number, y: number) => (vertical ? `rotate(90 ${x} ${y})` : undefined);
   const line = { stroke: COURT_COLORS.lines, strokeWidth: 0.05 };
   const B = COURT_COLORS.band;
   const board = COURT_COLORS.boardDepth;
@@ -458,7 +483,7 @@ function Court({ showZones }: { showZones: boolean }) {
           ZONES.map((z) => {
             const c = toCourt(team, ZONE_LABEL[z].depth, ZONE_LABEL[z].lateral);
             return (
-              <text key={`${team}${z}`} x={c.x} y={c.y} textAnchor="middle" dominantBaseline="central" fontFamily={DISPLAY_FONT} fontSize={0.95} fontWeight={700} fill={COURT_COLORS.zoneText} opacity={0.35}>
+              <text key={`${team}${z}`} x={c.x} y={c.y} transform={upright(c.x, c.y)} textAnchor="middle" dominantBaseline="central" fontFamily={DISPLAY_FONT} fontSize={0.95} fontWeight={700} fill={COURT_COLORS.zoneText} opacity={0.35}>
                 {z}
               </text>
             );
@@ -467,12 +492,16 @@ function Court({ showZones }: { showZones: boolean }) {
       <line x1={NET_X} y1={-0.7} x2={NET_X} y2={COURT_WIDTH + 0.7} stroke={COURT_COLORS.net} strokeWidth={0.14} />
       <circle cx={NET_X} cy={-0.8} r={0.16} fill={COURT_COLORS.net} />
       <circle cx={NET_X} cy={COURT_WIDTH + 0.8} r={0.16} fill={COURT_COLORS.net} />
-      <text x={NET_X / 2} y={-1.4} textAnchor="middle" fontFamily={DISPLAY_FONT} fontSize={0.66} fontWeight={700} letterSpacing={0.06} fill="#ffffff">
-        EQUIPO A
-      </text>
-      <text x={NET_X + NET_X / 2} y={-1.4} textAnchor="middle" fontFamily={DISPLAY_FONT} fontSize={0.66} fontWeight={700} letterSpacing={0.06} fill="#ffffff">
-        EQUIPO B
-      </text>
+      {(['A', 'B'] as Team[]).map((team) => {
+        // Horizontal: arriba de cada mitad. Vertical: en la franja de abajo (A) y de arriba (B).
+        const x = vertical ? (team === 'A' ? -1.15 : COURT_LENGTH + 1.65) : team === 'A' ? NET_X / 2 : NET_X + NET_X / 2;
+        const y = vertical ? COURT_WIDTH / 2 : -1.4;
+        return (
+          <text key={team} x={x} y={y} transform={upright(x, y)} textAnchor="middle" fontFamily={DISPLAY_FONT} fontSize={0.66} fontWeight={700} letterSpacing={0.06} fill="#ffffff">
+            EQUIPO {team}
+          </text>
+        );
+      })}
     </g>
   );
 }
@@ -491,7 +520,7 @@ function Arrow({
   const mid = midPoint(arrow);
   const color = arrowColor(arrow);
   return (
-    <g className={onPointerDown ? 'el' : undefined}>
+    <g className={onPointerDown ? 'el' : undefined} data-id={arrow.id}>
       {selected && (
         <path className="ui-only" d={d} fill="none" stroke={SELECTION_COLOR} strokeOpacity={0.45} strokeWidth={0.3} strokeLinecap="round" pointerEvents="none" />
       )}
@@ -534,8 +563,9 @@ function PlayerMark({
 }) {
   const caption = player ? `${player.name} · ${positionShort(player.position)}` : '';
   const commentLines = token.comment ? wrapText(token.comment, 24) : [];
+  const up = useUpright();
   return (
-    <g className="el" transform={`translate(${token.x} ${token.y})`} onPointerDown={onPointerDown}>
+    <g className="el" transform={`translate(${token.x} ${token.y})${up}`} onPointerDown={onPointerDown} data-id={token.id}>
       {selected && <Halo r={0.6} />}
       <circle
         r={0.42}
@@ -575,31 +605,33 @@ function PlayerMark({
 }
 
 /** Dónde va el tachito: arriba a la derecha del elemento (o del medio de la flecha). */
-function deleteButtonSpot(el: BoardElement) {
+/** Dónde va el tachito: arriba a la derecha del elemento (en la pantalla, aunque la pizarra esté girada). */
+function deleteButtonSpot(el: BoardElement, vertical: boolean) {
   if (el.kind === 'arrow') {
     const m = midPoint(el);
-    return clampToView(m.x + 0.6, m.y - 0.6);
+    return screenOffset(m.x, m.y, 0.6, 0.6, vertical);
   }
   if (el.kind === 'shadow') {
-    return clampToView((el.x1 + el.x2) / 2 + 0.5, (el.y1 + el.y2) / 2 - 0.5);
+    return screenOffset((el.x1 + el.x2) / 2, (el.y1 + el.y2) / 2, 0.5, 0.5, vertical);
   }
   if (el.kind === 'text') {
     const box = textBox(el);
     // Arriba a la derecha, sin tapar los agarres del borde y la esquina.
     const pad = textPadding(textFontSize(el));
-    return clampToView(el.x + box.width / 2 + pad.x + 0.35, el.y - box.height / 2 - pad.y - 0.3);
+    return screenOffset(el.x, el.y, box.width / 2 + pad.x + 0.35, box.height / 2 + pad.y + 0.3, vertical);
   }
   const offset = el.kind === 'player' ? 0.62 : 0.5;
-  return clampToView(el.x + offset, el.y - offset);
+  return screenOffset(el.x, el.y, offset, offset, vertical);
 }
 
 /** Botón redondo con un tachito de basura que borra el elemento seleccionado. */
 function DeleteButton({ element, onDelete }: { element: BoardElement; onDelete: () => void }) {
-  const p = deleteButtonSpot(element);
+  const vertical = useContext(VerticalContext);
+  const p = deleteButtonSpot(element, vertical);
   return (
     <g
       className="delete-button ui-only"
-      transform={`translate(${p.x} ${p.y})`}
+      transform={`translate(${p.x} ${p.y})${vertical ? ' rotate(90)' : ''}`}
       role="button"
       aria-label="Eliminar elemento"
       tabIndex={0}
@@ -636,7 +668,7 @@ function Shadow({
 }) {
   const points = shadowPoints(shadow);
   return (
-    <g className={onPointerDown ? 'el' : undefined}>
+    <g className={onPointerDown ? 'el' : undefined} data-id={shadow.id}>
       <polygon
         points={points}
         fill="#0E1A2B"
@@ -685,10 +717,11 @@ function TextMark({
   const box = textBox(element);
   const top = -box.height / 2;
   const pad = textPadding(size);
+  const up = useUpright();
   // Contorno contrastante para que se lea sobre la madera o la franja azul (se puede sacar).
   const halo = element.outline === false ? 'none' : element.color.toUpperCase() === '#FFFFFF' ? '#0E1A2B' : '#FFFFFF';
   return (
-    <g className="el" transform={`translate(${element.x} ${element.y})`} onPointerDown={onPointerDown}>
+    <g className="el" transform={`translate(${element.x} ${element.y})${up}`} onPointerDown={onPointerDown} data-id={element.id}>
       {/* Área para tocarlo y arrastrarlo. */}
       <rect x={-box.width / 2 - pad.x} y={top - pad.y} width={box.width + 2 * pad.x} height={box.height + 2 * pad.y} fill="transparent" />
       <text
@@ -759,12 +792,13 @@ const COMMENT_COLOR = '#1F3C9C';
 
 /** Botón al lado del tachito para escribir un comentario del jugador. */
 function CommentButton({ element, onComment }: { element: PlayerToken; onComment: () => void }) {
-  const d = deleteButtonSpot(element);
-  const p = clampToView(d.x + 0.78, d.y);
+  const vertical = useContext(VerticalContext);
+  const d = deleteButtonSpot(element, vertical);
+  const p = screenOffset(d.x, d.y, 0.78, 0, vertical);
   return (
     <g
       className="comment-button ui-only"
-      transform={`translate(${p.x} ${p.y})`}
+      transform={`translate(${p.x} ${p.y})${vertical ? ' rotate(90)' : ''}`}
       role="button"
       aria-label="Comentar jugador"
       tabIndex={0}

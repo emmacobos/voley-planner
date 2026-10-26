@@ -5278,3 +5278,29 @@ input.num {
   visibility: hidden !important;
   pointer-events: none;
 }
+
+/* Pizarra vertical: más alta que ancha, centrada */
+.board.vertical {
+  width: min(100%, calc((100vh - 210px) * 0.625));
+  margin-inline: auto;
+}
+
+.presentation-board .board.vertical {
+  width: min(100%, calc((100dvh - 250px) * 0.625));
+}
+
+.orientation-switch button {
+  min-height: 34px;
+  padding: 0.25rem 0.7rem;
+}
+
+@media (max-width: 700px) {
+  .board.vertical {
+    width: 100%;
+    max-height: none;
+  }
+
+  .orientation-label {
+    display: none;
+  }
+}

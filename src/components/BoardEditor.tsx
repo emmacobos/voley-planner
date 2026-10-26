@@ -35,6 +35,7 @@ import { POSITIONS, SITUATIONS } from '../domain/types';
 import { downloadSvgAsPng, slugify } from '../utils/exportPng';
 import { exportPlayVideo, videoSupport } from '../utils/exportVideo';
 import { Board, DEFAULT_BEND } from './Board';
+import { useBoardOrientation } from '../utils/boardOrientation';
 import { FloatingPanel } from './FloatingPanel';
 import { FloatingPanelReady } from './floatingPanelReady';
 import { Presentation } from './Presentation';
@@ -91,6 +92,8 @@ export function BoardEditor({
   const [tool, setTool] = useState<Tool>('select');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showZones, setShowZones] = useState(true);
+  const vertical = useBoardOrientation((s) => s.vertical);
+  const setVertical = useBoardOrientation((s) => s.setVertical);
   const [rotationTeam, setRotationTeam] = useState<Team>('A');
   const [rotation, setRotation] = useState<Zone>(1);
   const [attackSide, setAttackSide] = useState<AttackSide>('zona4');
@@ -382,6 +385,26 @@ export function BoardEditor({
             <button className="icon-button" onClick={redo} disabled={!future.length || playing} title="Rehacer (Ctrl+Shift+Z)" aria-label="Rehacer">
               <Icon d="m15 14 5-5-5-5M20 9H10a6 6 0 0 0 0 12h3" />
             </button>
+            <div className="segmented orientation-switch" role="group" aria-label="Orientación de la pizarra">
+              <button
+                className={!vertical ? 'active' : ''}
+                aria-pressed={!vertical}
+                onClick={() => setVertical(false)}
+                title="Pizarra horizontal: la red de arriba a abajo"
+              >
+                <Icon d="M3 7h18v10H3zM12 7v10" />
+                <span className="orientation-label">Horizontal</span>
+              </button>
+              <button
+                className={vertical ? 'active' : ''}
+                aria-pressed={vertical}
+                onClick={() => setVertical(true)}
+                title="Pizarra vertical: la red de lado a lado, tu equipo abajo (cómodo en el celular)"
+              >
+                <Icon d="M7 3h10v18H7zM7 12h10" />
+                <span className="orientation-label">Vertical</span>
+              </button>
+            </div>
             <label className="check">
               <input type="checkbox" checked={showZones} onChange={(e) => setShowZones(e.target.checked)} /> Zonas
             </label>
@@ -449,6 +472,7 @@ export function BoardEditor({
             tool={tool}
             readOnly={playing}
             showZones={showZones}
+            vertical={vertical}
             onSelect={setSelectedId}
             onUpdate={updateElement}
             onAddArrow={addArrow}
