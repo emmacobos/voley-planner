@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { AccountMenu } from './components/AccountMenu';
 import { BallLogo } from './components/BallLogo';
 import { DemoBanner } from './components/DemoBanner';
@@ -9,6 +9,9 @@ import { ImportDialog } from './components/ImportDialog';
 import { SessionList } from './components/SessionList';
 import { ThemeToggle } from './components/ThemeToggle';
 import { useHashRoute } from './hooks/useHashRoute';
+
+/** Si el menú de la izquierda está achicado (en este navegador). */
+const MENU_KEY = 'voley-planner-menu';
 
 // Cada pantalla se descarga recién cuando se abre, así la app arranca más rápido.
 const CalendarPage = lazy(() => import('./components/CalendarPage').then((m) => ({ default: m.CalendarPage })));
@@ -28,6 +31,29 @@ const SessionPrint = lazy(() => import('./components/SessionPrint').then((m) => 
 
 export default function App() {
   const route = useHashRoute();
+  // Menú de la izquierda: en la compu se achica a solo íconos (se recuerda); en el celular se abre encima.
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(MENU_KEY) === 'cerrado';
+    } catch {
+      return false;
+    }
+  });
+  const [drawer, setDrawer] = useState(false);
+  const toggleMenu = () => {
+    if (window.matchMedia('(max-width: 800px)').matches) {
+      setDrawer((d) => !d);
+      return;
+    }
+    setCollapsed((c) => {
+      try {
+        localStorage.setItem(MENU_KEY, c ? 'abierto' : 'cerrado');
+      } catch {
+        // Sin almacenamiento: no se recuerda.
+      }
+      return !c;
+    });
+  };
 
   // Jugada compartida por link: se muestra sola, sin el resto de la app.
   if (route.name === 'shared-play') {
@@ -39,8 +65,9 @@ export default function App() {
   }
 
   return (
-    <div className={`app route-${route.name}`}>
-      <aside className="sidebar">
+    <div className={`app route-${route.name}${collapsed ? ' menu-collapsed' : ''}${drawer ? ' drawer-open' : ''}`}>
+      {drawer && <div className="menu-backdrop" onClick={() => setDrawer(false)} aria-hidden="true" />}
+      <aside className="sidebar" id="menu-principal">
         <a className="brand" href="#/sesiones" aria-label="Voley Planner, inicio">
           <BallLogo />
           <span className="brand-text">
@@ -48,34 +75,34 @@ export default function App() {
             <span className="brand-bottom">Planner</span>
           </span>
         </a>
-        <nav aria-label="Principal">
-          <a className={route.name.startsWith('session') ? 'active' : ''} href="#/sesiones">
+        <nav aria-label="Principal" onClick={() => setDrawer(false)}>
+          <a className={route.name.startsWith('session') ? 'active' : ''} href="#/sesiones" title="Sesiones">
             <NavIcon d="M9 3h6v3H9zM7 4.5H5.5A1.5 1.5 0 0 0 4 6v14a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 20V6a1.5 1.5 0 0 0-1.5-1.5H17M8 11h8M8 15h5" />
-            Sesiones
+            <span className="nav-label">Sesiones</span>
           </a>
-          <a className={route.name === 'calendar' ? 'active' : ''} href="#/calendario">
+          <a className={route.name === 'calendar' ? 'active' : ''} href="#/calendario" title="Calendario">
             <NavIcon d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8 2v4M16 2v4M3 10h18M7.5 14h2M11 14h2M14.5 14h2M7.5 17.5h2M11 17.5h2" />
-            Calendario
+            <span className="nav-label">Calendario</span>
           </a>
-          <a className={route.name.startsWith('match') ? 'active' : ''} href="#/partidos">
+          <a className={route.name.startsWith('match') ? 'active' : ''} href="#/partidos" title="Partidos">
             <NavIcon d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 3c-2.5 3-3 6-2.5 9.5M3.6 8.5c3.4-.6 6.4.4 8.9 3.5M12.5 12c-1.5 3.5-4.2 5.6-7.6 6.3M12.5 12c3.8.2 6.4 1.6 8.2 4.3M12.5 12c2.1-3.2 4.8-5 8-5.2" />
-            Partidos
+            <span className="nav-label">Partidos</span>
           </a>
-          <a className={route.name === 'season' ? 'active' : ''} href="#/temporada">
+          <a className={route.name === 'season' ? 'active' : ''} href="#/temporada" title="Temporada">
             <NavIcon d="M3 12h4l3-8 4 16 3-8h4" />
-            Temporada
+            <span className="nav-label">Temporada</span>
           </a>
-          <a className={route.name.startsWith('exercise') || route.name === 'library' ? 'active' : ''} href="#/ejercicios">
+          <a className={route.name.startsWith('exercise') || route.name === 'library' ? 'active' : ''} href="#/ejercicios" title="Ejercicios">
             <NavIcon d="M3 5h18v14H3zM12 5v14M7 5v14M17 5v14" />
-            Ejercicios
+            <span className="nav-label">Ejercicios</span>
           </a>
-          <a className={route.name === 'roster' || route.name === 'player' ? 'active' : ''} href="#/plantel">
+          <a className={route.name === 'roster' || route.name === 'player' ? 'active' : ''} href="#/plantel" title="Planteles">
             <NavIcon d="M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M17.5 11.5a2.5 2.5 0 1 0 0-5M17 14.6c2.3.3 3.9 2 4.5 4.9" />
-            Planteles
+            <span className="nav-label">Planteles</span>
           </a>
-          <a className={route.name === 'data' ? 'active' : ''} href="#/datos">
+          <a className={route.name === 'data' ? 'active' : ''} href="#/datos" title="Tus datos">
             <NavIcon d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-            Tus datos
+            <span className="nav-label">Tus datos</span>
           </a>
         </nav>
         <Credits />
@@ -84,6 +111,23 @@ export default function App() {
       <div className="app-body">
         {/* Tema y cuenta, siempre a la vista arriba a la derecha. */}
         <header className="topbar">
+          <button
+            className="icon-button menu-toggle"
+            onClick={toggleMenu}
+            aria-label={collapsed || !drawer ? 'Abrir o cerrar el menú' : 'Cerrar el menú'}
+            aria-controls="menu-principal"
+            aria-expanded={drawer || !collapsed}
+            title="Menú"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+          {/* En el celular, con el menú cerrado, la marca queda a la vista arriba. */}
+          <a className="topbar-brand" href="#/sesiones" aria-label="Voley Planner, inicio">
+            <BallLogo />
+            <span>Voley Planner</span>
+          </a>
           <ThemeToggle />
           <AccountMenu />
         </header>

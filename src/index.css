@@ -5795,3 +5795,110 @@ input.num {
   box-shadow: 0 8px 20px rgb(0 0 0 / 0.3);
   white-space: nowrap;
 }
+
+/* ===== Menú hamburguesa ===== */
+.topbar .menu-toggle {
+  margin-right: auto;
+}
+
+.sidebar {
+  transition: flex-basis 0.2s ease, padding 0.2s ease;
+}
+
+/* En la compu: el menú se achica a una franja con los íconos. */
+@media (min-width: 801px) {
+  .app.menu-collapsed .sidebar {
+    flex-basis: 68px;
+    padding: 1.5rem 0.55rem;
+    align-items: center;
+  }
+
+  .app.menu-collapsed .brand {
+    padding: 0;
+  }
+
+  .app.menu-collapsed .brand-text,
+  .app.menu-collapsed .nav-label,
+  .app.menu-collapsed .sidebar .credits {
+    display: none;
+  }
+
+  .app.menu-collapsed .sidebar nav a {
+    justify-content: center;
+    padding: 0.7rem;
+  }
+}
+
+/* En el celular: el menú se abre encima, desde la izquierda. */
+@media (max-width: 800px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(270px, 82vw);
+    height: 100vh;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 1.5rem;
+    padding: 1.5rem 1rem;
+    z-index: 70;
+    transform: translateX(-105%);
+    transition: transform 0.22s ease;
+    overflow-y: auto;
+  }
+
+  .app.drawer-open .sidebar {
+    transform: none;
+    box-shadow: 8px 0 30px rgb(0 0 0 / 0.35);
+  }
+
+  .sidebar nav {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .sidebar nav a {
+    padding: 0.75rem 0.8rem;
+  }
+
+  .sidebar nav a.active {
+    box-shadow: inset 3px 0 0 var(--ball);
+  }
+
+  .menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 65;
+    background: rgb(14 12 10 / 0.5);
+  }
+}
+
+.topbar-brand {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .topbar .menu-toggle {
+    margin-right: 0;
+  }
+
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-right: auto;
+    color: var(--text);
+    text-decoration: none;
+    font-family: var(--display);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .topbar-brand svg {
+    width: 28px;
+    height: 28px;
+  }
+}
