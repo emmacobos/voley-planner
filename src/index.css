@@ -5761,3 +5761,7 @@ input.num {
 .groups-picker .chip:not(.on) {
   opacity: 0.6;
 }
+
+.groups-picker .row > * {
+  flex: 0 0 auto;
+}
