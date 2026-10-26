@@ -111,6 +111,13 @@ export interface ExtraCourt extends CourtInfo {
   teamNames?: TeamNames;
 }
 
+/** Máquina lanzadora de pelotas: tira hacia donde apunta su caño. */
+export interface MachineElement extends Positioned {
+  kind: 'machine';
+  /** Hacia dónde apunta, en grados (0: hacia la derecha de la cancha horizontal). */
+  rotation?: number;
+}
+
 /** Nombres que se muestran en la cancha en lugar de "Equipo A" y "Equipo B". */
 export interface TeamNames {
   A?: string;
@@ -180,6 +187,7 @@ export type PointElement =
   | CartElement
   | HoopElement
   | StepElement
+  | MachineElement
   | TextElement;
 
 /** Elementos definidos por dos extremos (se arrastran por sus puntas). */

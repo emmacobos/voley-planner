@@ -18,6 +18,7 @@ const TITLES: Record<BoardElement['kind'], string> = {
   cart: 'Carro de pelotas',
   hoop: 'Aro de precisión',
   step: 'Banquito / cajón',
+  machine: 'Máquina lanzadora',
   arrow: 'Flecha',
   shadow: 'Sombra del bloqueo',
   text: 'Texto',

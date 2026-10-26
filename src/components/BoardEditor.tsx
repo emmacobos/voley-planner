@@ -100,9 +100,9 @@ const TRANSITION_MS = 1200;
 const noop = () => {};
 const ZONES: Zone[] = [1, 2, 3, 4, 5, 6];
 
-type AddKind = 'playerA' | 'playerB' | 'ball' | 'cone' | 'coach' | 'cart' | 'hoop' | 'step';
+type AddKind = 'playerA' | 'playerB' | 'ball' | 'cone' | 'coach' | 'cart' | 'hoop' | 'step' | 'machine';
 
-const DEFAULT_SPOT: Record<'ball' | 'cone' | 'coach' | 'cart' | 'hoop' | 'step', { x: number; y: number }> = {
+const DEFAULT_SPOT: Record<'ball' | 'cone' | 'coach' | 'cart' | 'hoop' | 'step' | 'machine', { x: number; y: number }> = {
   ball: { x: NET_X - 1, y: 4.5 },
   cone: { x: NET_X - 3, y: 1 },
   coach: { x: -1.5, y: 4.5 },
@@ -111,6 +111,8 @@ const DEFAULT_SPOT: Record<'ball' | 'cone' | 'coach' | 'cart' | 'hoop' | 'step',
   hoop: { x: NET_X + 7, y: 1.5 },
   // Banquito cerca de la red (por ejemplo, para atacar o bloquear desde arriba).
   step: { x: NET_X - 1.2, y: 6.5 },
+  // Máquina del otro lado de la red, tirando hacia el equipo A (como un saque).
+  machine: { x: NET_X + 7, y: 4.5 },
 };
 
 const ADD_BUTTONS: { kind: AddKind; label: string }[] = [
@@ -122,6 +124,7 @@ const ADD_BUTTONS: { kind: AddKind; label: string }[] = [
   { kind: 'cart', label: '+ Carro de pelotas' },
   { kind: 'hoop', label: '+ Aro de precisión' },
   { kind: 'step', label: '+ Banquito / cajón' },
+  { kind: 'machine', label: '+ Máquina lanzadora' },
 ];
 
 export function BoardEditor({
@@ -257,6 +260,7 @@ export function BoardEditor({
       // Los aros miden 1 m: se separan más para que no se encimen.
       if (kind === 'hoop') el.y += offset * 1.4;
       if (kind === 'step') el.y -= offset;
+      if (kind === 'machine') el = { ...el, rotation: 180 } as PointElement;
     }
     // En media cancha no se ve el otro lado: lo que caería ahí va del lado visible.
     if (half && el.x > NET_X + 0.5) el = { ...el, x: el.kind === 'player' ? NET_X + 0.5 : NET_X - 2.5 };
@@ -1182,16 +1186,27 @@ function SelectedPanel({
       </div>
     );
   }
-  if (element.kind === 'step') {
+  if (element.kind === 'step' || element.kind === 'machine') {
+    const machine = element.kind === 'machine';
+    // El banquito es igual de un lado que del otro (0 a 179°); la máquina apunta a un lado (0 a 359°).
+    const turn = machine ? 360 : 180;
     const rotation = element.rotation ?? 0;
-    const setRotation = (deg: number) => onUpdate({ ...element, rotation: ((Math.round(deg) % 180) + 180) % 180 });
+    const setRotation = (deg: number) => onUpdate({ ...element, rotation: ((Math.round(deg) % turn) + turn) % turn });
     return (
       <div className="stack">
         <label className="field">
           <span className="field-row">
             Giro <output>{rotation}°</output>
           </span>
-          <input type="range" min={0} max={179} step={5} value={rotation} onChange={(e) => setRotation(Number(e.target.value))} aria-label="Giro del banquito" />
+          <input
+            type="range"
+            min={0}
+            max={turn - 1}
+            step={5}
+            value={rotation}
+            onChange={(e) => setRotation(Number(e.target.value))}
+            aria-label={machine ? 'Hacia dónde apunta la máquina' : 'Giro del banquito'}
+          />
         </label>
         <div className="row">
           <button onClick={() => setRotation(rotation - 45)} title="Girar 45° a la izquierda">
@@ -1202,7 +1217,11 @@ function SelectedPanel({
           </button>
           <button onClick={() => setRotation(rotation + 90)}>Girar 90°</button>
         </div>
-        <p className="hint">Para saltar o pararse arriba: arrastralo y giralo hasta dejarlo como en la cancha.</p>
+        <p className="hint">
+          {machine
+            ? 'El caño marca hacia dónde tira. Sumale una flecha de pelota para mostrar la trayectoria.'
+            : 'Para saltar o pararse arriba: arrastralo y giralo hasta dejarlo como en la cancha.'}
+        </p>
       </div>
     );
   }

@@ -138,8 +138,12 @@ test('se agregan aros de precisión (con color), el carro de pelotas y el banqui
   await page.locator('.floating-panel .color-swatch[aria-label="Azul"]').click();
   await page.locator('button', { hasText: '+ Carro de pelotas' }).click();
   await page.locator('button', { hasText: '+ Banquito / cajón' }).click();
+  await page.locator('button', { hasText: '+ Máquina lanzadora' }).click();
+  await page.locator('.floating-panel button', { hasText: '↻ 45°' }).click();
   const els = await savedElements(page);
   expect(els.some((e) => e.kind === 'step')).toBe(true);
+  // La máquina arranca apuntando hacia el equipo A y se puede girar.
+  expect(els.find((e) => e.kind === 'machine')?.rotation).toBe(225);
   expect(els.find((e) => e.kind === 'hoop')?.color).toBe('#2F7DD1');
   expect(els.some((e) => e.kind === 'cart')).toBe(true);
 });

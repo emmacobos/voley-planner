@@ -457,6 +457,29 @@ export function Board({
                 <line x1={-0.33} y1={0} x2={0.33} y2={0} stroke="#5c3a1a" strokeWidth={0.02} opacity={0.6} />
               </g>
             );
+          case 'machine':
+            return (
+              // Gira con la cancha y apunta hacia donde tira.
+              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y}) rotate(${el.rotation ?? 0}) scale(1.5)`} onPointerDown={down} data-id={el.id}>
+                {selected && <Halo r={0.85} />}
+                {/* Máquina lanzadora vista desde arriba: base, ruedas, tolva con pelotas y caño hacia adelante. */}
+                <rect x={-0.48} y={-0.4} width={0.9} height={0.8} rx={0.1} fill="#000000" opacity={0.25} />
+                {[-0.42, 0.42].map((y) => (
+                  <rect key={y} x={-0.42} y={y - 0.07} width={0.26} height={0.14} rx={0.05} fill="#111111" />
+                ))}
+                <rect x={-0.5} y={-0.36} width={0.86} height={0.72} rx={0.12} fill="#3E4A5A" stroke="#ffffff" strokeWidth={0.05} />
+                <rect x={0.3} y={-0.11} width={0.52} height={0.22} rx={0.06} fill="#2b2925" stroke="#ffffff" strokeWidth={0.04} />
+                <circle cx={-0.12} cy={0} r={0.24} fill="#1c1915" stroke="#d8d2c4" strokeWidth={0.03} />
+                {[
+                  [-0.2, -0.08, '#F2C744'],
+                  [-0.04, -0.08, '#ffffff'],
+                  [-0.12, 0.08, '#2F5DA8'],
+                ].map(([cx, cy, fill]) => (
+                  <circle key={`${cx}${cy}`} cx={cx as number} cy={cy as number} r={0.075} fill={fill as string} />
+                ))}
+                <path d="M0.88 -0.1 L1.05 0 L0.88 0.1 Z" fill="#E3C48B" />
+              </g>
+            );
           case 'hoop':
             return (
               <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})`} onPointerDown={down} data-id={el.id}>

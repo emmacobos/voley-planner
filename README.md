@@ -50,7 +50,9 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      navegador y vale también para *Presentar*.
    - *Agregar* suma jugadores, pelota, conos, entrenadores, carros de pelotas,
      aros de precisión (en rojo, amarillo, azul o verde, para marcar a dónde
-     sacar o atacar) y banquitos o cajones (para saltar o pararse arriba). Los
+     sacar o atacar), banquitos o cajones (para saltar o pararse arriba) y la
+     máquina lanzadora de pelotas (su caño marca hacia dónde tira y se gira
+     desde su tarjeta). Los
      aros y banquitos quedan en el piso, debajo de las jugadoras.
      El banquito se gira desde su tarjeta (de a 45° o 90°, o con la barra).
    - **Varias canchas (estaciones):** con *+ Agregar cancha* un ejercicio puede
