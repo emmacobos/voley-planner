@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoGroups, courtOfGroup, groupAtCourt, makeGroups, movePlayer, reshuffleGroups, rotationTable } from './stations';
+import { autoGroups, courtOfGroup, fillCourtWithGroup, groupAtCourt, makeGroups, movePlayer, reshuffleGroups, rotationTable } from './stations';
 import type { Player, Position } from './types';
 
 const player = (n: number, position: Position): Player => ({ id: `p${n}`, squadId: 's', name: `J${n}`, number: n, position });
@@ -71,5 +71,35 @@ describe('cambiar los grupos', () => {
     expect(moved[0].playerIds).not.toContain(id);
     expect(moved[2].playerIds.at(-1)).toBe(id);
     expect(moved[1]).toBe(groups[1]);
+  });
+});
+
+describe('las fichas de cada cancha con el grupo que está ahí', () => {
+  const ps = [1, 2, 3, 4, 5, 6].map((n) => player(n, 'punta'));
+  const home = ['p1', 'p2', 'p3'];
+  const next = ['p4', 'p5', 'p6'];
+  const tokens = [
+    // La entrenadora puso a la 3 en esta ficha del equipo A…
+    { id: 't1', kind: 'player' as const, team: 'A' as const, label: '3', playerId: 'p3', x: 2, y: 2 },
+    // …y estas dos quedaron sin jugadora (una es del equipo B).
+    { id: 't2', kind: 'player' as const, team: 'A' as const, label: '1', x: 3, y: 3 },
+    { id: 't3', kind: 'player' as const, team: 'B' as const, label: '1', x: 12, y: 3 },
+    { id: 'pelota', kind: 'ball' as const, x: 9, y: 4 },
+  ];
+
+  it('en la primera vuelta respeta lo acomodado y completa el resto (también el equipo B)', () => {
+    const shown = fillCourtWithGroup(tokens, home, home, ps);
+    expect(shown.map((e) => (e.kind === 'player' ? e.playerId : e.kind))).toEqual(['p3', 'p1', 'p2', 'ball']);
+  });
+
+  it('al rotar, cada lugar lo ocupa la jugadora en ese lugar del grupo que llegó', () => {
+    const shown = fillCourtWithGroup(tokens, home, next, ps);
+    expect(shown.map((e) => (e.kind === 'player' ? e.playerId : e.kind))).toEqual(['p6', 'p4', 'p5', 'ball']);
+    expect(shown[0]).toMatchObject({ label: '6', x: 2, y: 2 });
+  });
+
+  it('si el grupo que llega tiene menos jugadoras, las fichas que sobran quedan sin nombre', () => {
+    const shown = fillCourtWithGroup(tokens, home, ['p4'], ps);
+    expect(shown.map((e) => (e.kind === 'player' ? e.playerId : e.kind))).toEqual([undefined, 'p4', undefined, 'ball']);
   });
 });

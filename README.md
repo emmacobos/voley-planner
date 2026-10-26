@@ -69,7 +69,9 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    - **Grupos que rotan** (con 2 o 3 canchas): repartí a las jugadoras del
      ejercicio en grupos de colores (se arman solos, parejos por puesto; *Repartir
      de nuevo* mezcla distinto, y cada jugadora se arrastra a otro grupo). Arriba de cada cancha se ve qué grupo
-     está ahí; **Rotar grupos ↻** pasa a cada grupo a la cancha siguiente
+     está ahí, y las fichas de jugadoras de esa cancha (de los dos equipos) se
+     completan con ese grupo; **Rotar grupos ↻** pasa a cada grupo a la cancha
+     siguiente y cada jugadora que llega ocupa el lugar de la que se fue
      (también desde *Presentar*). Con los minutos por estación calcula el
      total, y el PDF de la sesión trae la tabla de rotación.
    - *Equipos*: cambiá "Equipo A" y "Equipo B" por los nombres que quieras

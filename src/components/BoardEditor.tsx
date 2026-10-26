@@ -76,6 +76,13 @@ interface BoardEditorProps {
   courtBadges?: Record<string, ReactNode>;
   /** Controles extra para la presentación de todas las canchas (por ejemplo, rotar grupos). */
   overviewControls?: ReactNode;
+  /**
+   * Cómo se muestran los elementos de cada cancha (por ejemplo, las fichas con
+   * las jugadoras del grupo que está ahí). No cambia lo guardado.
+   */
+  displayElements?: (courtId: string, elements: BoardElement[]) => BoardElement[];
+  /** Las dos camisetas son del plantel (entrenamiento): el equipo B también usa jugadoras. */
+  bothTeamsOurs?: boolean;
   onActivate?: (courtId: string) => void;
 }
 
@@ -136,6 +143,8 @@ export function BoardEditor({
   onActivate,
   courtBadges,
   overviewControls,
+  displayElements,
+  bothTeamsOurs = false,
 }: BoardEditorProps) {
   const [current, setCurrent] = useState(0);
   const [tool, setTool] = useState<Tool>('select');
@@ -290,7 +299,10 @@ export function BoardEditor({
   const placeFormation = (phase: Phase) => {
     const pool = exercisePlayers.length ? exercisePlayers : roster;
     const assign = system === '4-2' ? assignLineup42 : system === '6-0' ? assignLineup60 : assignLineup;
-    const lineup = rotationTeam === 'A' ? assign(pool) : {};
+    // En el equipo B, solo si las dos camisetas son del plantel, con las que no están en el A.
+    const inA = new Set(frame.elements.flatMap((e) => (e.kind === 'player' && e.team === 'A' && e.playerId ? [e.playerId] : [])));
+    const lineup =
+      rotationTeam === 'A' ? assign(pool) : bothTeamsOurs ? assign(pool.filter((p) => !inA.has(p.id))) : {};
     const tokens = formationTokens(rotationTeam, rotation, phase, { system, lineup, attackSide, setterZone });
     const replaced = formationTokenIds(rotationTeam);
     const keep = (e: BoardElement) =>
@@ -388,10 +400,19 @@ export function BoardEditor({
   };
   const checks = (['A', 'B'] as Team[]).map((team) => frameRuleStatus(frame, team, nameOf));
 
+  const show = (id: string, els: BoardElement[]) => (displayElements ? displayElements(id, els) : els);
+  /** Lo que se mueve en la pizarra se guarda con sus datos reales (no con la jugadora que se muestra). */
+  const updateFromBoard = (el: BoardElement) => {
+    const orig = frame.elements.find((e) => e.id === el.id);
+    if (displayElements && orig?.kind === 'player' && el.kind === 'player') {
+      updateElement({ ...el, playerId: orig.playerId, label: orig.label, role: orig.role });
+    } else updateElement(el);
+  };
+
   const activeBoard = (
     <Board
       svgRef={svgRef}
-      elements={elements}
+      elements={show(courtId, elements)}
       players={allPlayers}
       selectedId={selectedId}
       tool={tool}
@@ -401,7 +422,7 @@ export function BoardEditor({
       teamNames={teamNames}
       half={half}
       onSelect={setSelectedId}
-      onUpdate={updateElement}
+      onUpdate={updateFromBoard}
       onAddArrow={addArrow}
       onAddElement={addDrawn}
       onDelete={removeElement}
@@ -432,7 +453,13 @@ export function BoardEditor({
               ...(others ?? []),
             ]
               .sort((x, y) => x.position - y.position)
-              .map((c) => ({ id: c.id, name: c.label, frames: c.frames, half: c.half, teamNames: c.teamNames }))}
+              .map((c) => ({
+                id: c.id,
+                name: c.label,
+                frames: c.frames.map((f) => ({ ...f, elements: show(c.id, f.elements) })),
+                half: c.half,
+                teamNames: c.teamNames,
+              }))}
             players={allPlayers}
             badges={courtBadges}
             controls={overviewControls}
@@ -632,9 +659,12 @@ export function BoardEditor({
                       </header>
                       {courtBadges?.[c.id]}
                       <Board
-                        elements={elementsAtProgress(
-                          (c as OtherCourt).frames.map((f) => f.elements),
-                          Math.min(playing ? progress : current, (c as OtherCourt).frames.length - 1),
+                        elements={show(
+                          c.id,
+                          elementsAtProgress(
+                            (c as OtherCourt).frames.map((f) => f.elements),
+                            Math.min(playing ? progress : current, (c as OtherCourt).frames.length - 1),
+                          ),
                         )}
                         players={allPlayers}
                         selectedId={null}

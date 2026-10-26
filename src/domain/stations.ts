@@ -1,4 +1,4 @@
-import type { Player, Position, StationGroup } from './types';
+import type { BoardElement, Player, PlayerToken, Position, StationGroup } from './types';
 
 /**
  * Circuito por estaciones: las jugadoras se reparten en grupos y cada grupo
@@ -78,4 +78,45 @@ export function makeGroups(players: Player[], count: number, newId: () => string
     color: GROUP_COLORS[i % GROUP_COLORS.length],
     playerIds,
   }));
+}
+
+/**
+ * Las fichas de jugadoras de una cancha, completadas con el grupo que está ahí
+ * en esta vuelta. Cada ficha es un "lugar": si en la primera vuelta tiene una
+ * jugadora del grupo de esa cancha, ese lugar es el de esa jugadora dentro del
+ * grupo; las fichas sin jugadora toman los lugares libres, en orden. En otra
+ * vuelta, cada lugar lo ocupa la jugadora que está en ese lugar del grupo que
+ * llegó. Las fichas de los dos equipos cuentan (en estaciones juegan todas).
+ */
+export function fillCourtWithGroup(
+  elements: BoardElement[],
+  home: string[] | undefined,
+  current: string[] | undefined,
+  players: Player[],
+): BoardElement[] {
+  if (!home || !current) return elements;
+  const tokens = elements.filter((e): e is PlayerToken => e.kind === 'player');
+  const slot = new Map<string, number>();
+  const taken = new Set<number>();
+  for (const t of tokens) {
+    const i = t.playerId ? home.indexOf(t.playerId) : -1;
+    if (i >= 0 && !taken.has(i)) {
+      slot.set(t.id, i);
+      taken.add(i);
+    }
+  }
+  let free = 0;
+  for (const t of tokens) {
+    if (slot.has(t.id)) continue;
+    while (taken.has(free)) free++;
+    slot.set(t.id, free);
+    taken.add(free);
+  }
+  const byId = new Map(players.map((p) => [p.id, p]));
+  return elements.map((e) => {
+    if (e.kind !== 'player') return e;
+    const player = byId.get(current[slot.get(e.id)!] ?? '');
+    if (!player) return e.playerId && !current.includes(e.playerId) ? { ...e, playerId: undefined } : e;
+    return { ...e, playerId: player.id, label: String(player.number), role: player.position };
+  });
 }

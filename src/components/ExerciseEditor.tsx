@@ -7,7 +7,7 @@ import { CONTENTS, exerciseContents } from '../domain/season';
 import { MAIN_COURT, MAX_COURTS, courtLabel, cutToHalfCourt, exerciseCourts, halfCourtLosses, updateCourt } from '../domain/courts';
 import { newId } from '../domain/ids';
 import { emptyFrame } from '../store';
-import { groupAtCourt } from '../domain/stations';
+import { fillCourtWithGroup, groupAtCourt } from '../domain/stations';
 import { BoardEditor } from './BoardEditor';
 import { GroupBadge, GroupsPanel, RotationControls } from './GroupsPanel';
 
@@ -385,6 +385,17 @@ export function ExerciseEditor({ id }: { id: string }) {
         }
         onActivate={setActive}
         courtBadges={badges}
+        bothTeamsOurs
+        displayElements={
+          exercise.groups?.length && courts.length > 1
+            ? (id, els) => {
+                const i = courts.findIndex((c) => c.id === id);
+                const home = groupAtCourt(exercise.groups!, courts.length, 0, i);
+                const now = groupAtCourt(exercise.groups!, courts.length, currentRound, i);
+                return fillCourtWithGroup(els, home?.playerIds, now?.playerIds ?? [], allPlayers);
+              }
+            : undefined
+        }
         overviewControls={
           exercise.groups?.length ? <RotationControls round={currentRound} rounds={rounds} onRound={setRound} /> : undefined
         }

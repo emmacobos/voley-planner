@@ -240,3 +240,25 @@ test('grupos que rotan entre las canchas', async ({ page }) => {
   await expect.poll(() => count(1)).toBe(a1 + 1);
   expect(await count(0)).toBe(a0 - 1);
 });
+
+test('al rotar, las fichas de cada cancha muestran a las jugadoras del grupo que llegó (también en el equipo B)', async ({ page }) => {
+  await page.locator('button', { hasText: '+ Agregar cancha' }).click();
+  await page.locator('summary', { hasText: 'Grupos que rotan' }).click();
+  await page.locator('.groups-picker button', { hasText: 'Marcar todas' }).click();
+  await page.locator('button', { hasText: 'Armar 2 grupos' }).click();
+  // En la cancha 2 (la que se edita) se agrega una ficha del equipo B.
+  await page.locator('button', { hasText: '+ Jugador B' }).click();
+  await page.mouse.click(20, 500);
+  const captions = (i: number) =>
+    page.locator('.court-cell').nth(i).locator('svg.board text').evaluateAll((ts) => ts.map((t) => t.textContent).filter((t) => t?.includes('·')));
+  const groupNames = async (i: number) =>
+    (await page.locator('.group-col').nth(i).locator('.drag-chip').allInnerTexts()).map((t) => t.replace(/^\d+\s*/, '').trim());
+  const g1 = await groupNames(0);
+  const g2 = await groupNames(1);
+  const first = await captions(1);
+  expect(first).toHaveLength(1);
+  expect(g2.some((n) => first[0]!.startsWith(n))).toBe(true);
+  await page.locator('.groups-head button', { hasText: 'Rotar grupos' }).click();
+  const after = await captions(1);
+  expect(g1.some((n) => after[0]!.startsWith(n))).toBe(true);
+});
