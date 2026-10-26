@@ -20,7 +20,7 @@ export function CourtsOverview({ courts, players, onOpen }: { courts: Court[]; p
   const last = steps - 1;
   const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [titles, setTitles] = useState(true);
+
   const progressRef = useRef(progress);
   const rootRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -73,9 +73,6 @@ export function CourtsOverview({ courts, players, onOpen }: { courts: Court[]; p
             </button>
           ))}
         </div>
-        <label className="check">
-          <input type="checkbox" checked={titles} onChange={(e) => setTitles(e.target.checked)} /> Títulos de las canchas
-        </label>
         <button
           onClick={() => rootRef.current?.requestFullscreen?.().catch(() => {})}
           title="Ver las canchas a pantalla completa (por ejemplo en una tele)"
@@ -89,17 +86,13 @@ export function CourtsOverview({ courts, players, onOpen }: { courts: Court[]; p
           const step = Math.min(index, court.frames.length - 1);
           return (
             <section key={court.id} className="court-card">
-              {titles && (
-                <>
-                  <header>
-                    <b>{courtLabel(court, i)}</b>
-                    <button className="link-button" onClick={() => onOpen(court.id)}>
-                      Editar
-                    </button>
-                  </header>
-                  {court.objective && <p className="court-objective">{court.objective}</p>}
-                </>
-              )}
+              <header>
+                <b>{courtLabel(court, i)}</b>
+                <button className="link-button" onClick={() => onOpen(court.id)}>
+                  Editar
+                </button>
+              </header>
+              {court.objective && <p className="court-objective">{court.objective}</p>}
               <Board
                 elements={elementsAtProgress(
                   court.frames.map((f) => f.elements),

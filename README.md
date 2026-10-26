@@ -57,9 +57,12 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      tener hasta 3 canchas, cada una con su nombre, su objetivo y su propia
      jugada (pasos). Cada cancha puede ser **entera o media cancha** (solo el
      lado del equipo A y la red). En **▶ Todas juntas** se ven una al lado de la
-     otra y se reproducen a la vez (las que tienen menos pasos quedan en el
-     último); se pueden ocultar sus títulos y verlas a pantalla completa. El PDF
-     de la sesión muestra todas las canchas.
+     otra, más chicas, con la barra de herramientas y el panel de siempre: tocás
+     una cancha y la editás ahí mismo (cada una con su deshacer). *Reproducir*
+     las mueve a todas a la vez (las que tienen menos pasos quedan en el último)
+     y *Presentar* las muestra juntas a pantalla completa. La casilla *Nombres
+     de los equipos en las canchas* saca "Equipo A / B" de todas. El PDF de la
+     sesión muestra todas las canchas.
    - *Equipos*: cambiá "Equipo A" y "Equipo B" por los nombres que quieras
      (por ejemplo "Nosotras" y el rival), o sacarlos de la cancha. Se guardan con el ejercicio y se
      ven en la presentación, el video, el link y el PDF. En el plan de partido,

@@ -5425,3 +5425,93 @@ input.num {
   margin: 0.6rem 0 0.3rem;
   font-size: 0.95rem;
 }
+
+/* Editar varias canchas juntas: una al lado de la otra (en vertical) o una abajo de la otra. */
+.board-stage.multi {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.7rem;
+  padding: 0.7rem;
+  border-radius: 20px;
+  background: var(--navy);
+}
+
+.board-stage.multi.vertical.count-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.board-stage.multi.vertical.count-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.court-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.35rem;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.court-cell.active {
+  border-color: #c99a4e;
+  background: rgb(201 154 78 / 0.08);
+  cursor: default;
+}
+
+.court-cell header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+  color: #f3ead8;
+  font-size: 0.9rem;
+}
+
+.court-cell header span {
+  font-size: 0.72rem;
+  color: #c9b48a;
+}
+
+.court-cell.active header span {
+  color: #e3c48b;
+  font-weight: 700;
+}
+
+.court-cell .board,
+.court-cell .board.vertical {
+  width: 100%;
+  max-height: calc(100vh - 230px);
+  margin: 0;
+  box-shadow: none;
+}
+
+.court-cell:not(.active) .board {
+  opacity: 0.85;
+}
+
+.courts-presentation {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1rem 1.5rem;
+  overflow: auto;
+  background: radial-gradient(120% 120% at 50% 0%, #2a2216 0%, #050505 70%);
+  color: #fff;
+}
+
+@media (max-width: 700px) {
+  .board-stage.multi.vertical.count-2,
+  .board-stage.multi.vertical.count-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.courts-presentation .frames button:not(.primary) {
+  color: var(--text);
+}

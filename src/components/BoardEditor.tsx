@@ -40,6 +40,7 @@ import { useBoardOrientation } from '../utils/boardOrientation';
 import { HOOP_COLORS } from './boardTheme';
 import { FloatingPanel } from './FloatingPanel';
 import { FloatingPanelReady } from './floatingPanelReady';
+import { CourtsOverview } from './CourtsOverview';
 import { Presentation } from './Presentation';
 import { ShareLinkDialog } from './ShareLinkDialog';
 import type { Tool } from './boardTheme';
@@ -62,9 +63,29 @@ interface BoardEditorProps {
   onTeamNamesChange?: (names: TeamNames) => void;
   /** Media cancha: solo el lado del equipo A y la red. */
   half?: boolean;
+  /** Cancha que se edita (para guardar el historial de deshacer de cada una). */
+  courtId?: string;
+  /** Nombre de la cancha que se edita (en la vista de varias canchas). */
+  courtLabel?: string;
+  /** Las otras canchas del ejercicio, para editarlas todas juntas (tocar una la elige). */
+  others?: OtherCourt[];
+  /** Lugar de esta cancha entre todas (para ordenarlas). */
+  courtPosition?: number;
+  onActivate?: (courtId: string) => void;
+}
+
+/** Otra cancha que se muestra al lado en la vista de varias canchas. */
+export interface OtherCourt {
+  id: string;
+  label: string;
+  position: number;
+  frames: Frame[];
+  half?: boolean;
+  teamNames?: TeamNames;
 }
 
 const TRANSITION_MS = 1200;
+const noop = () => {};
 const ZONES: Zone[] = [1, 2, 3, 4, 5, 6];
 
 type AddKind = 'playerA' | 'playerB' | 'ball' | 'cone' | 'coach' | 'cart' | 'hoop' | 'step';
@@ -103,6 +124,11 @@ export function BoardEditor({
   teamNames,
   onTeamNamesChange,
   half = false,
+  courtId = 'principal',
+  courtLabel,
+  others,
+  courtPosition = 0,
+  onActivate,
 }: BoardEditorProps) {
   const [current, setCurrent] = useState(0);
   const [tool, setTool] = useState<Tool>('select');
@@ -114,8 +140,24 @@ export function BoardEditor({
   const [rotation, setRotation] = useState<Zone>(1);
   const [attackSide, setAttackSide] = useState<AttackSide>('zona4');
   const [setterZone, setSetterZone] = useState<SetterZone>(3);
-  const [past, setPast] = useState<Frame[][]>([]);
-  const [future, setFuture] = useState<Frame[][]>([]);
+  // Historial para deshacer y rehacer, de cada cancha por separado.
+  const [history, setHistory] = useState<Record<string, { past: Frame[][]; future: Frame[][] }>>({});
+  const past = history[courtId]?.past ?? [];
+  const future = history[courtId]?.future ?? [];
+  const setPast = (fn: Frame[][] | ((p: Frame[][]) => Frame[][])) =>
+    setHistory((h) => {
+      const cur = h[courtId] ?? { past: [], future: [] };
+      return { ...h, [courtId]: { ...cur, past: typeof fn === 'function' ? fn(cur.past) : fn } };
+    });
+  const setFuture = (next: Frame[][]) =>
+    setHistory((h) => ({ ...h, [courtId]: { past: h[courtId]?.past ?? [], future: next } }));
+  // Al pasar a otra cancha se deselecciona lo que estaba elegido.
+  const [shownCourt, setShownCourt] = useState(courtId);
+  if (shownCourt !== courtId) {
+    setShownCourt(courtId);
+    setSelectedId(null);
+  }
+  const multi = !!others?.length;
   const [progress, setProgress] = useState<number | null>(null);
   const [speed, setSpeed] = useState(1);
   const [presenting, setPresenting] = useState(false);
@@ -132,8 +174,13 @@ export function BoardEditor({
   const frame = frames[index];
   const playing = progress !== null;
   const elements = playing
-    ? elementsAtProgress(frames.map((f) => f.elements), progress)
+    ? elementsAtProgress(
+        frames.map((f) => f.elements),
+        Math.min(progress, frames.length - 1),
+      )
     : frame.elements;
+  /** Pasos de la reproducción: con varias canchas, los de la que tiene más. */
+  const stepCount = Math.max(frames.length, ...(others ?? []).map((o) => o.frames.length));
   const selected = frame.elements.find((e) => e.id === selectedId) ?? null;
 
   const commit = (next: Frame[]) => {
@@ -269,16 +316,16 @@ export function BoardEditor({
     onChange(frames.map((f, i) => (i === index ? { ...f, note } : f)));
 
   const play = () => {
-    if (frames.length < 2) return;
+    if (stepCount < 2) return;
     setSelectedId(null);
-    const from = index >= frames.length - 1 ? 0 : index;
+    const from = current >= stepCount - 1 ? 0 : Math.min(current, stepCount - 1);
     progressRef.current = from;
     setProgress(from);
   };
 
   // Reproducción de la animación. Cada cambio de velocidad reinicia el reloj
   // desde el progreso actual.
-  const last = frames.length - 1;
+  const last = stepCount - 1;
   useEffect(() => {
     if (!playing) return;
     let raf = 0;
@@ -334,12 +381,60 @@ export function BoardEditor({
   };
   const checks = (['A', 'B'] as Team[]).map((team) => frameRuleStatus(frame, team, nameOf));
 
+  const activeBoard = (
+    <Board
+      svgRef={svgRef}
+      elements={elements}
+      players={allPlayers}
+      selectedId={selectedId}
+      tool={tool}
+      readOnly={playing}
+      showZones={showZones}
+      vertical={vertical}
+      teamNames={teamNames}
+      half={half}
+      onSelect={setSelectedId}
+      onUpdate={updateElement}
+      onAddArrow={addArrow}
+      onAddElement={addDrawn}
+      onDelete={removeElement}
+      onComment={(id) => {
+        setSelectedId(id);
+        setFocusField({ id, field: 'comment' });
+      }}
+      onDraggingChange={setDragging}
+    />
+  );
+
   return (
     <div className="board-editor">
       {sharing && (
         <ShareLinkDialog title={title} frames={frames} players={allPlayers} teamNames={teamNames} half={half} onClose={() => setSharing(false)} />
       )}
-      {presenting && (
+      {presenting && multi && (
+        <div className="courts-presentation" role="dialog" aria-label={`Presentación: ${title}`}>
+          <header className="presentation-top">
+            <h2>{title}</h2>
+            <button className="presentation-close" onClick={() => setPresenting(false)} aria-label="Cerrar presentación" title="Cerrar">
+              ×
+            </button>
+          </header>
+          <CourtsOverview
+            courts={[
+              { id: courtId, label: courtLabel ?? 'Cancha', position: courtPosition, frames, half, teamNames },
+              ...(others ?? []),
+            ]
+              .sort((x, y) => x.position - y.position)
+              .map((c) => ({ id: c.id, name: c.label, frames: c.frames, half: c.half, teamNames: c.teamNames }))}
+            players={allPlayers}
+            onOpen={(id) => {
+              setPresenting(false);
+              onActivate?.(id);
+            }}
+          />
+        </div>
+      )}
+      {presenting && !multi && (
         <Presentation
           title={title}
           frames={frames}
@@ -498,29 +593,54 @@ export function BoardEditor({
           </div>
         </div>
 
-        <div className="board-stage" ref={stageRef}>
-          <Board
-            svgRef={svgRef}
-            elements={elements}
-            players={allPlayers}
-            selectedId={selectedId}
-            tool={tool}
-            readOnly={playing}
-            showZones={showZones}
-            vertical={vertical}
-            teamNames={teamNames}
-            half={half}
-            onSelect={setSelectedId}
-            onUpdate={updateElement}
-            onAddArrow={addArrow}
-            onAddElement={addDrawn}
-            onDelete={removeElement}
-            onComment={(id) => {
-              setSelectedId(id);
-              setFocusField({ id, field: 'comment' });
-            }}
-            onDraggingChange={setDragging}
-          />
+        <div className={`board-stage${multi ? ` multi count-${(others?.length ?? 0) + 1}${vertical ? ' vertical' : ''}` : ''}`} ref={stageRef}>
+          {multi
+            ? [
+                { id: courtId, label: courtLabel ?? 'Cancha', position: courtPosition, active: true as const },
+                ...(others ?? []).map((o) => ({ ...o, active: false as const })),
+              ]
+                .sort((x, y) => x.position - y.position)
+                .map((c) =>
+                  c.active ? (
+                    <section key={c.id} className="court-cell active">
+                      <header>
+                        <b>{c.label}</b>
+                        <span>Editando</span>
+                      </header>
+                      {activeBoard}
+                    </section>
+                  ) : (
+                    <section
+                      key={c.id}
+                      className="court-cell"
+                      title="Tocá para editar esta cancha"
+                      onPointerDownCapture={() => onActivate?.(c.id)}
+                    >
+                      <header>
+                        <b>{c.label}</b>
+                        <span>Tocá para editar</span>
+                      </header>
+                      <Board
+                        elements={elementsAtProgress(
+                          (c as OtherCourt).frames.map((f) => f.elements),
+                          Math.min(playing ? progress : current, (c as OtherCourt).frames.length - 1),
+                        )}
+                        players={allPlayers}
+                        selectedId={null}
+                        tool="select"
+                        readOnly
+                        showZones={showZones}
+                        vertical={vertical}
+                        teamNames={(c as OtherCourt).teamNames}
+                        half={(c as OtherCourt).half}
+                        onSelect={noop}
+                        onUpdate={noop}
+                        onAddArrow={noop}
+                      />
+                    </section>
+                  ),
+                )
+            : activeBoard}
           {selected && !playing && (
             <FloatingPanel
               element={selected}
@@ -544,7 +664,7 @@ export function BoardEditor({
         </div>
 
         <div className="frames">
-          <button className="primary play-button" onClick={playing ? () => setProgress(null) : play} disabled={frames.length < 2}>
+          <button className="primary play-button" onClick={playing ? () => setProgress(null) : play} disabled={stepCount < 2}>
             {playing ? <Icon d="M7 6h10v12H7z" filled /> : <Icon d="M7 4.5v15l13-7.5z" filled />}
             {playing ? 'Detener' : 'Reproducir'}
           </button>

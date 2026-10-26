@@ -8,15 +8,16 @@ import { MAIN_COURT, MAX_COURTS, courtLabel, exerciseCourts, updateCourt } from 
 import { newId } from '../domain/ids';
 import { emptyFrame } from '../store';
 import { BoardEditor } from './BoardEditor';
-import { CourtsOverview } from './CourtsOverview';
 
 export function ExerciseEditor({ id }: { id: string }) {
   const exercise = useAppStore((s) => s.exercises.find((e) => e.id === id));
   const allPlayers = useAppStore((s) => s.players);
   const squads = useAppStore((s) => s.squads);
   const updateExercise = useAppStore((s) => s.updateExercise);
-  /** Cancha que se está editando, o 'todas' para verlas juntas. */
+  /** Cancha que se está editando. */
   const [active, setActive] = useState<string>(MAIN_COURT);
+  /** Todas las canchas a la vista, una al lado de la otra (se edita la que se toca). */
+  const [together, setTogether] = useState(false);
 
   if (!exercise) {
     return (
@@ -35,12 +36,23 @@ export function ExerciseEditor({ id }: { id: string }) {
   const courts = exerciseCourts(exercise);
   const courtIndex = Math.max(0, courts.findIndex((c) => c.id === active));
   const court = courts[courtIndex];
-  const showAll = active === 'todas' && courts.length > 1;
+  const showAll = together && courts.length > 1;
+  const namesShown = courts.every((c) => !c.teamNames?.hidden);
+  /** Mostrar u ocultar "Equipo A / B" en todas las canchas a la vez. */
+  const setNamesShown = (show: boolean) => {
+    const names = (t?: { A?: string; B?: string; hidden?: boolean }) => ({ ...t, hidden: show ? undefined : true });
+    update({
+      teamNames: names(exercise.teamNames),
+      ...(exercise.extraCourts ? { extraCourts: exercise.extraCourts.map((c) => ({ ...c, teamNames: names(c.teamNames) })) } : {}),
+    });
+  };
   const setCourt = (patch: Parameters<typeof updateCourt>[2]) => update(updateCourt(exercise, court.id, patch));
   const addCourt = () => {
     const id = newId();
     update({ extraCourts: [...(exercise.extraCourts ?? []), { id, name: '', objective: '', frames: [emptyFrame()] }] });
     setActive(id);
+    // Con dos o más canchas, se empieza viéndolas juntas.
+    setTogether(true);
   };
   const removeCourt = () => {
     if (!confirm(`¿Borrar ${courtLabel(court, courtIndex)} con su jugada?`)) return;
@@ -194,17 +206,26 @@ export function ExerciseEditor({ id }: { id: string }) {
               role="tab"
               aria-selected={!showAll && c.id === court.id}
               className={!showAll && c.id === court.id ? 'active' : ''}
-              onClick={() => setActive(c.id)}
+              onClick={() => {
+                setActive(c.id);
+                setTogether(false);
+              }}
             >
               {courtLabel(c, i)}
             </button>
           ))}
           {courts.length > 1 && (
-            <button role="tab" aria-selected={showAll} className={showAll ? 'active' : ''} onClick={() => setActive('todas')}>
+            <button role="tab" aria-selected={showAll} className={showAll ? 'active' : ''} onClick={() => setTogether(true)}>
               ▶ Todas juntas
             </button>
           )}
         </div>
+        {showAll && (
+          <label className="check">
+            <input type="checkbox" checked={namesShown} onChange={(e) => setNamesShown(e.target.checked)} /> Nombres de los
+            equipos en las canchas
+          </label>
+        )}
         {courts.length < MAX_COURTS && (
           <button onClick={addCourt} title="Otra cancha al lado, para trabajar en estaciones al mismo tiempo">
             + Agregar cancha
@@ -212,63 +233,68 @@ export function ExerciseEditor({ id }: { id: string }) {
         )}
       </div>
 
-      {showAll ? (
-        <CourtsOverview courts={courts} players={allPlayers} onOpen={setActive} />
-      ) : (
-        <>
-          <div className="court-settings">
-            {courts.length > 1 && (
-              <>
-                <input
-                  value={court.name ?? ''}
-                  onChange={(e) => setCourt({ name: e.target.value })}
-                  placeholder={`Cancha ${courtIndex + 1}: nombre (ej.: Saque y recepción)`}
-                  aria-label="Nombre de la cancha"
-                />
-                <input
-                  value={court.objective ?? ''}
-                  onChange={(e) => setCourt({ objective: e.target.value })}
-                  placeholder="Objetivo de esta cancha"
-                  aria-label="Objetivo de la cancha"
-                />
-              </>
-            )}
-            <div className="segmented" role="group" aria-label="Tamaño de la cancha">
-              <button className={!court.half ? 'active' : ''} aria-pressed={!court.half} onClick={() => setCourt({ half: false })}>
-                Cancha entera
-              </button>
-              <button
-                className={court.half ? 'active' : ''}
-                aria-pressed={!!court.half}
-                onClick={() => setCourt({ half: true })}
-                title="Solo un lado de la red: para trabajos de un solo equipo"
-              >
-                Media cancha
-              </button>
-            </div>
-            {court.id !== MAIN_COURT && (
-              <button className="danger" onClick={removeCourt}>
-                Borrar cancha
-              </button>
-            )}
-          </div>
+      <div className="court-settings">
+        {courts.length > 1 && (
+          <>
+            <input
+              value={court.name ?? ''}
+              onChange={(e) => setCourt({ name: e.target.value })}
+              placeholder={`Cancha ${courtIndex + 1}: nombre (ej.: Saque y recepción)`}
+              aria-label="Nombre de la cancha"
+            />
+            <input
+              value={court.objective ?? ''}
+              onChange={(e) => setCourt({ objective: e.target.value })}
+              placeholder="Objetivo de esta cancha"
+              aria-label="Objetivo de la cancha"
+            />
+          </>
+        )}
+        <div className="segmented" role="group" aria-label="Tamaño de la cancha">
+          <button className={!court.half ? 'active' : ''} aria-pressed={!court.half} onClick={() => setCourt({ half: false })}>
+            Cancha entera
+          </button>
+          <button
+            className={court.half ? 'active' : ''}
+            aria-pressed={!!court.half}
+            onClick={() => setCourt({ half: true })}
+            title="Solo un lado de la red: para trabajos de un solo equipo"
+          >
+            Media cancha
+          </button>
+        </div>
+        {court.id !== MAIN_COURT && (
+          <button className="danger" onClick={removeCourt}>
+            Borrar cancha
+          </button>
+        )}
+      </div>
 
-          <BoardEditor
-            key={`${exercise.id}-${court.id}`}
-            frames={court.frames}
-            onChange={(frames) => setCourt({ frames })}
-            allPlayers={allPlayers}
-            roster={roster}
-            exercisePlayers={exercisePlayers}
-            title={courts.length > 1 ? `${exercise.name} · ${courtLabel(court, courtIndex)}` : exercise.name}
-            system={exercise.system}
-            onSystemChange={(system) => update({ system })}
-            teamNames={court.teamNames}
-            onTeamNamesChange={(teamNames) => setCourt({ teamNames })}
-            half={court.half}
-          />
-        </>
-      )}
+      <BoardEditor
+        key={exercise.id}
+        courtId={court.id}
+        courtLabel={courtLabel(court, courtIndex)}
+        courtPosition={courtIndex}
+        others={
+          showAll
+            ? courts
+                .map((c, i) => ({ id: c.id, label: courtLabel(c, i), position: i, frames: c.frames, half: c.half, teamNames: c.teamNames }))
+                .filter((c) => c.id !== court.id)
+            : undefined
+        }
+        onActivate={setActive}
+        frames={court.frames}
+        onChange={(frames) => setCourt({ frames })}
+        allPlayers={allPlayers}
+        roster={roster}
+        exercisePlayers={exercisePlayers}
+        title={courts.length > 1 && !showAll ? `${exercise.name} · ${courtLabel(court, courtIndex)}` : exercise.name}
+        system={exercise.system}
+        onSystemChange={(system) => update({ system })}
+        teamNames={court.teamNames}
+        onTeamNamesChange={(teamNames) => setCourt({ teamNames })}
+        half={court.half}
+      />
     </div>
   );
 }

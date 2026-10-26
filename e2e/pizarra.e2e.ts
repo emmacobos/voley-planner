@@ -151,11 +151,16 @@ test('varias canchas: cada una con su jugada, media cancha y todas juntas', asyn
   await page.locator('button', { hasText: '+ Jugador A' }).click();
   await expect(page.locator('svg.board.half')).toBeVisible();
   await page.locator('.board-side input[type="checkbox"]').first().uncheck();
-  await expect(page.locator('svg.board text', { hasText: 'EQUIPO A' })).toHaveCount(0);
+  // Al agregar una cancha se ven todas juntas: los nombres se sacan solo de la que se edita.
+  await expect(page.locator('.court-cell.active svg.board text', { hasText: 'EQUIPO A' })).toHaveCount(0);
+  await expect(page.locator('svg.board text', { hasText: 'EQUIPO A' })).toHaveCount(1);
 
-  await page.locator('.courts-bar button', { hasText: 'Todas juntas' }).click();
-  await expect(page.locator('.court-card')).toHaveCount(2);
-  await expect(page.locator('.court-card').nth(1)).toContainText('Ataque');
+  await expect(page.locator('.court-cell')).toHaveCount(2);
+  await expect(page.locator('.court-cell.active')).toContainText('Ataque');
+  // Tocar la otra cancha la elige para editarla, sin salir de la vista de todas.
+  await page.locator('.court-cell').first().click({ position: { x: 40, y: 40 } });
+  await expect(page.locator('.court-cell.active')).toContainText('Cancha 1');
+  await expect(page.locator('.court-cell')).toHaveCount(2);
 
   const ex = await page.evaluate(() =>
     JSON.parse(localStorage.getItem('voley-planner')!).state.exercises.find((e: { id: string }) => e.id === 'ejemplo-ejercicio-k1'),
