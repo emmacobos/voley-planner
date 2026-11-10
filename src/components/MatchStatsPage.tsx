@@ -3,22 +3,26 @@ import { formatDate } from '../domain/sessions';
 import { newId } from '../domain/ids';
 import {
   SKILLS,
+  highlights,
   percent,
   playerStats,
   replay,
   resultInfo,
   rotationStats,
+  matchFinished,
   setFinished,
+  setsCount,
   setsResult,
   skillInfo,
   skillSummary,
 } from '../domain/stats';
 import type { Side } from '../domain/stats';
-import type { MatchStats, Player, StatEvent, StatSkill } from '../domain/types';
+import type { BestOf, MatchStats, Player, StatEvent, StatSkill } from '../domain/types';
 import { positionShort } from '../domain/types';
 import { navigate } from '../hooks/useHashRoute';
 import { useAppStore } from '../store';
 import { hasSeenTutorial } from '../utils/tutorials';
+import { BestOfPicker } from './BestOfPicker';
 import { StatsTutorial } from './StatsTutorial';
 
 const ROTATIONS = [1, 6, 5, 4, 3, 2];
@@ -42,6 +46,14 @@ export function MatchStatsPage({ id }: { id: string }) {
   }
 
   const stats: MatchStats = match.stats ?? { events: [] };
+  const downloadPdf = async () => {
+    try {
+      const { downloadStatsPdf } = await import('../utils/statsPdf');
+      await downloadStatsPdf(match, allPlayers);
+    } catch {
+      alert('No se pudo armar el PDF. Probá de nuevo.');
+    }
+  };
   const setEvents = (events: StatEvent[]) => updateMatch(match.id, { stats: { events } });
   const squadPlayers = allPlayers.filter((p) => p.squadId === match.squadId);
   const players = (squadPlayers.length ? squadPlayers : allPlayers).slice().sort((a, b) => a.number - b.number);
@@ -76,9 +88,12 @@ export function MatchStatsPage({ id }: { id: string }) {
           onChange={setEvents}
           result={match.result}
           onSaveResult={(result) => updateMatch(match.id, { result })}
+          bestOf={match.bestOf ?? 5}
+          onBestOfChange={(bestOf) => updateMatch(match.id, { bestOf })}
+          onDownloadPdf={downloadPdf}
         />
       ) : (
-        <Summary stats={stats} players={players} allPlayers={allPlayers} />
+        <Summary stats={stats} players={players} allPlayers={allPlayers} onDownloadPdf={downloadPdf} />
       )}
 
       {tutorial && <StatsTutorial onClose={() => setTutorial(false)} />}
@@ -92,12 +107,18 @@ function LiveEntry({
   onChange,
   result,
   onSaveResult,
+  bestOf,
+  onBestOfChange,
+  onDownloadPdf,
 }: {
   stats: MatchStats;
   players: Player[];
   onChange: (events: StatEvent[]) => void;
   result: string;
   onSaveResult: (result: string) => void;
+  bestOf: BestOf;
+  onBestOfChange: (bestOf: BestOf) => void;
+  onDownloadPdf: () => void;
 }) {
   const state = replay(stats);
   const events = stats.events;
@@ -125,7 +146,7 @@ function LiveEntry({
   };
 
   const current = state.current;
-  const finished = current ? setFinished(current) : false;
+  const finished = current ? setFinished(current, bestOf) : false;
   const playerName = (pid: string | null) => {
     const p = players.find((x) => x.id === pid);
     return p ? `#${p.number} ${firstName(p)}` : 'Equipo';
@@ -137,6 +158,9 @@ function LiveEntry({
         number={state.sets.length + 1}
         rotation={state.rotation}
         serving={current ? (state.serving === 'nosotros' ? 'rival' : 'nosotros') : 'nosotros'}
+        bestOf={bestOf}
+        // A cuántos sets se elige antes del primero (después se cambia en los datos del partido).
+        onBestOfChange={current ? undefined : onBestOfChange}
         onCancel={current ? () => setStarting(false) : undefined}
         onStart={(rotation, serving) => {
           onChange([...events, { id: newId(), type: 'set', rotation, serving }]);
@@ -147,9 +171,8 @@ function LiveEntry({
   }
 
   const options = skill ? skillInfo(skill).results : [];
-  const won = state.sets.filter((s) => setFinished(s) && s.us > s.them).length;
-  const lost = state.sets.filter((s) => setFinished(s) && s.them > s.us).length;
-  const matchOver = won === 3 || lost === 3;
+  const { won, lost } = setsCount(state.sets, bestOf);
+  const matchOver = matchFinished(state.sets, bestOf);
 
   return (
     <div className="stats-live">
@@ -160,8 +183,8 @@ function LiveEntry({
         </div>
         <div className="score-center">
           <span className="score-set">Set {current.number}</span>
-          <span className="score-sets" title="Sets ganados y perdidos">
-            Sets {won} – {lost}
+          <span className="score-sets" title={`Sets ganados y perdidos (partido al mejor de ${bestOf})`}>
+            Sets {won} – {lost} <small>· a {bestOf}</small>
           </span>
           <label className="rotation-chip" title="Rotación: en qué zona está el armador. Cambiala si no coincide con la cancha.">
             R
@@ -200,11 +223,14 @@ function LiveEntry({
           </b>
           <div className="row">
             {matchOver ? (
-              setsResult(state.sets) !== result && (
-                <button className="primary" onClick={() => onSaveResult(setsResult(state.sets))}>
-                  Guardar resultado {setsResult(state.sets)}
-                </button>
-              )
+              <>
+                {setsResult(state.sets, bestOf) !== result && (
+                  <button className="primary" onClick={() => onSaveResult(setsResult(state.sets, bestOf))}>
+                    Guardar resultado {setsResult(state.sets, bestOf)}
+                  </button>
+                )}
+                <button onClick={onDownloadPdf}>⬇ Descargar estadísticas (PDF)</button>
+              </>
             ) : (
               <button className="primary" onClick={() => setStarting(true)}>
                 Empezar el set {current.number + 1}
@@ -304,12 +330,16 @@ function StartSet({
   number,
   rotation: initialRotation,
   serving: initialServing,
+  bestOf,
+  onBestOfChange,
   onStart,
   onCancel,
 }: {
   number: number;
   rotation: number;
   serving: Side;
+  bestOf: BestOf;
+  onBestOfChange?: (bestOf: BestOf) => void;
   onStart: (rotation: number, serving: Side) => void;
   onCancel?: () => void;
 }) {
@@ -318,6 +348,12 @@ function StartSet({
   return (
     <section className="panel start-set">
       <h2>Empezar el set {number}</h2>
+      {onBestOfChange && (
+        <div className="field">
+          ¿A cuántos sets se juega?
+          <BestOfPicker value={bestOf} onChange={onBestOfChange} />
+        </div>
+      )}
       <div className="field">
         ¿En qué rotación arrancamos? (zona del armador)
         <div className="rotation-pad">
@@ -403,7 +439,17 @@ function RecentEvents({ stats, playerName }: { stats: MatchStats; playerName: (i
 
 const show = (n: number | null | undefined, suffix = '') => (n === null || n === undefined ? '—' : `${n}${suffix}`);
 
-function Summary({ stats, players, allPlayers }: { stats: MatchStats; players: Player[]; allPlayers: Player[] }) {
+function Summary({
+  stats,
+  players,
+  allPlayers,
+  onDownloadPdf,
+}: {
+  stats: MatchStats;
+  players: Player[];
+  allPlayers: Player[];
+  onDownloadPdf: () => void;
+}) {
   const state = replay(stats);
   const [set, setSet] = useState(0);
   const rows = playerStats(stats, set || undefined);
@@ -419,20 +465,19 @@ function Summary({ stats, players, allPlayers }: { stats: MatchStats; players: P
     );
   }
 
-  const totalRec = rotations.reduce((a, r) => a + r.receiving, 0);
-  const totalSO = rotations.reduce((a, r) => a + r.sideOut, 0);
-  const totalSrv = rotations.reduce((a, r) => a + r.serving, 0);
-  const totalBrk = rotations.reduce((a, r) => a + r.breaks, 0);
-  const played = rotations.filter((r) => r.receiving >= 2);
-  const weakest = played.length ? played.reduce((a, b) => (b.sideOut / b.receiving < a.sideOut / a.receiving ? b : a)) : null;
-  const bestReceiver = ordered
-    .map((r) => ({ r, s: skillSummary('recepcion', r.skills.recepcion) }))
-    .filter((x) => x.s.total >= 3 && x.r.playerId)
-    .sort((a, b) => (b.s as { positive: number }).positive - (a.s as { positive: number }).positive)[0];
-  const topScorer = ordered.filter((r) => r.playerId).sort((a, b) => b.points - a.points)[0];
+  const { sideOut, breaks, weakest, bestReceiver, topScorer } = highlights(ordered, rotations);
+  const totalRec = sideOut.of;
+  const totalSO = sideOut.won;
+  const totalSrv = breaks.of;
+  const totalBrk = breaks.won;
 
   return (
     <div className="stats-summary">
+      <div className="summary-actions">
+        <button className="primary" onClick={onDownloadPdf} title="Resultado, lo más destacado y las planillas por jugadora, rotación y set">
+          ⬇ Descargar PDF
+        </button>
+      </div>
       <div className="segmented set-filter" role="group" aria-label="Set">
         <button className={set === 0 ? 'active' : ''} onClick={() => setSet(0)}>
           Todo el partido
@@ -459,7 +504,7 @@ function Summary({ stats, players, allPlayers }: { stats: MatchStats; players: P
             Puntos ganados sacando: {totalBrk} de {totalSrv}
           </small>
         </article>
-        {topScorer && topScorer.points > 0 && (
+        {topScorer && (
           <article>
             <span>Más puntos</span>
             <b>{find(topScorer.playerId)?.name ?? '—'}</b>
@@ -469,8 +514,8 @@ function Summary({ stats, players, allPlayers }: { stats: MatchStats; players: P
         {bestReceiver && (
           <article>
             <span>Mejor recepción</span>
-            <b>{find(bestReceiver.r.playerId)?.name}</b>
-            <small>{show((bestReceiver.s as { positive: number | null }).positive, ' %')} positiva</small>
+            <b>{find(bestReceiver.playerId)?.name}</b>
+            <small>{show(bestReceiver.positive, ' %')} positiva</small>
           </article>
         )}
         {weakest && (

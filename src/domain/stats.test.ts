@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nextRotation, playerStats, replay, rotationStats, setFinished, setsResult, skillSummary } from './stats';
+import { nextRotation, playerStats, replay, matchFinished, rotationStats, setFinished, setsResult, setsToWin, skillSummary } from './stats';
 import type { MatchStats, StatEvent, StatSkill } from './types';
 
 let n = 0;
@@ -60,6 +60,22 @@ describe('estadísticas de partido', () => {
     ])).toBe('2-1');
   });
 
+  it('a 3 sets: el tercero se juega a 15 y gana quien gana 2', () => {
+    expect(setFinished({ number: 3, us: 15, them: 12 }, 3)).toBe(true);
+    expect(setFinished({ number: 3, us: 15, them: 12 })).toBe(false);
+    const sets = [
+      { number: 1, us: 25, them: 20 },
+      { number: 2, us: 18, them: 25 },
+      { number: 3, us: 15, them: 11 },
+    ];
+    expect(setsResult(sets, 3)).toBe('2-1');
+    expect(matchFinished(sets, 3)).toBe(true);
+    expect(matchFinished(sets.slice(0, 2), 3)).toBe(false);
+    expect(matchFinished(sets)).toBe(false);
+    expect(setsToWin(3)).toBe(2);
+    expect(setsToWin()).toBe(3);
+  });
+
   it('resume por jugadora y por rotación', () => {
     const stats: MatchStats = {
       events: [
@@ -103,7 +119,7 @@ describe('partido de ejemplo', () => {
     const played = buildDemoData(new Date(2026, 9, 14)).matches.find((m) => m.stats)!;
     const state = replay(played.stats);
     expect(played.result).toBe(setsResult(state.sets));
-    expect(state.sets.every(setFinished)).toBe(true);
+    expect(state.sets.every((s) => setFinished(s))).toBe(true);
     expect(playerStats(played.stats).length).toBeGreaterThan(5);
   });
 });

@@ -1,4 +1,4 @@
-import type { MatchStats, StatEvent, StatSkill } from './types';
+import type { BestOf, MatchStats, StatEvent, StatSkill } from './types';
 
 /**
  * Estadísticas de partido: se anota cada acción (quién, qué fundamento y cómo
@@ -140,17 +140,35 @@ export function replay(stats: MatchStats | undefined): MatchState {
   return state;
 }
 
-/** Si el set ya está terminado (25 puntos, o 15 en el quinto, con 2 de diferencia). */
-export function setFinished(set: SetScore): boolean {
-  const target = set.number === 5 ? 15 : 25;
+/** Sets que hay que ganar para llevarse el partido (2 a 3 sets, 3 a 5 sets). */
+export const setsToWin = (bestOf: BestOf = 5) => Math.ceil(bestOf / 2);
+
+/**
+ * Si el set ya está terminado: 25 puntos con 2 de diferencia, o 15 en el set
+ * decisivo (el quinto, o el tercero si se juega a 3 sets).
+ */
+export function setFinished(set: SetScore, bestOf: BestOf = 5): boolean {
+  const target = set.number === bestOf ? 15 : 25;
   return Math.max(set.us, set.them) >= target && Math.abs(set.us - set.them) >= 2;
 }
 
-/** Resultado en sets, por ejemplo "3-1" (cuenta solo los sets terminados). */
-export function setsResult(sets: SetScore[]): string {
-  const done = sets.filter(setFinished);
+/** Sets ganados y perdidos (solo los terminados). */
+export function setsCount(sets: SetScore[], bestOf: BestOf = 5): { won: number; lost: number } {
+  const done = sets.filter((s) => setFinished(s, bestOf));
   const won = done.filter((s) => s.us > s.them).length;
-  return `${won}-${done.length - won}`;
+  return { won, lost: done.length - won };
+}
+
+/** Resultado en sets, por ejemplo "3-1" (cuenta solo los sets terminados). */
+export function setsResult(sets: SetScore[], bestOf: BestOf = 5): string {
+  const { won, lost } = setsCount(sets, bestOf);
+  return `${won}-${lost}`;
+}
+
+/** Si alguno ya ganó los sets necesarios. */
+export function matchFinished(sets: SetScore[], bestOf: BestOf = 5): boolean {
+  const { won, lost } = setsCount(sets, bestOf);
+  return Math.max(won, lost) >= setsToWin(bestOf);
 }
 
 export interface SkillCount {
@@ -249,3 +267,36 @@ export function rotationStats(state: MatchState, set?: number): RotationStats[] 
 }
 
 export const percent = pct;
+
+export interface Highlights {
+  sideOut: { won: number; of: number };
+  breaks: { won: number; of: number };
+  /** Rotación con menor side-out (con al menos 2 puntos recibiendo). */
+  weakest: RotationStats | null;
+  /** Jugadora con mejor recepción positiva (con al menos 3 recepciones). */
+  bestReceiver: { playerId: string; positive: number | null } | null;
+  /** Jugadora con más puntos. */
+  topScorer: { playerId: string; points: number } | null;
+}
+
+/** Lo más destacado del partido o de un set: side-out, break, quién hizo más puntos, etc. */
+export function highlights(rows: PlayerStats[], rotations: RotationStats[]): Highlights {
+  const sum = (f: (r: RotationStats) => number) => rotations.reduce((a, r) => a + f(r), 0);
+  const played = rotations.filter((r) => r.receiving >= 2);
+  const weakest = played.length ? played.reduce((a, b) => (b.sideOut / b.receiving < a.sideOut / a.receiving ? b : a)) : null;
+  const receivers = rows
+    .filter((r): r is PlayerStats & { playerId: string } => !!r.playerId)
+    .map((r) => ({ playerId: r.playerId, s: skillSummary('recepcion', r.skills.recepcion) as { total: number; positive: number | null } }))
+    .filter((x) => x.s.total >= 3)
+    .sort((a, b) => (b.s.positive ?? 0) - (a.s.positive ?? 0));
+  const scorer = rows
+    .filter((r): r is PlayerStats & { playerId: string } => !!r.playerId)
+    .sort((a, b) => b.points - a.points)[0];
+  return {
+    sideOut: { won: sum((r) => r.sideOut), of: sum((r) => r.receiving) },
+    breaks: { won: sum((r) => r.breaks), of: sum((r) => r.serving) },
+    weakest,
+    bestReceiver: receivers[0] ? { playerId: receivers[0].playerId, positive: receivers[0].s.positive } : null,
+    topScorer: scorer && scorer.points > 0 ? { playerId: scorer.playerId, points: scorer.points } : null,
+  };
+}

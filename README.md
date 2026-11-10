@@ -178,7 +178,11 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    (de todo el partido o de cada set) están el side-out y el break, la tabla
    por jugadora (puntos, errores, saque, recepción positiva, eficacia de
    ataque, bloqueo y defensa), cada rotación con su side-out y break, y la
-   *rotación a trabajar*. La primera vez se abre un tutorial paso a paso
+   *rotación a trabajar*. **Descargar PDF** baja todo eso en una planilla
+   lista para imprimir o mandar (también al terminar el partido). Los partidos
+   pueden ser **a 5 sets** (gana quien gana 3; el quinto a 15) o **a 3 sets**
+   (gana quien gana 2; el tercero a 15): se elige en los datos del partido o
+   antes de empezar el primer set. La primera vez se abre un tutorial paso a paso
    (después, con **¿Cómo se usa?**). El ejemplo trae un partido jugado con
    estadísticas.
 10. **Temporada:** el año dividido en etapas de varias semanas

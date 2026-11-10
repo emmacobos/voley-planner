@@ -5983,3 +5983,14 @@ input.num {
   margin: 0;
   flex: 1 1 220px;
 }
+
+/* Botón para descargar las estadísticas en PDF */
+.summary-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.score-sets small {
+  opacity: 0.7;
+  font-weight: 500;
+}

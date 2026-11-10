@@ -397,6 +397,9 @@ export interface MatchPlan {
   teamNames?: TeamNames;
 }
 
+/** Partido al mejor de 3 sets (gana quien gana 2) o de 5 (gana quien gana 3). */
+export type BestOf = 3 | 5;
+
 /** Partido del calendario. */
 export interface Match {
   id: string;
@@ -413,6 +416,8 @@ export interface Match {
   notes: string;
   /** Resultado en sets, por ejemplo "3-1" (se carga después). */
   result: string;
+  /** A cuántos sets se juega: al mejor de 3 o de 5 (sin valor, 5). */
+  bestOf?: BestOf;
   plan?: MatchPlan;
   /** Estadísticas anotadas durante el partido. */
   stats?: MatchStats;

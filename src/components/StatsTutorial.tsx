@@ -159,8 +159,9 @@ const STEPS: { title: string; art: ReactNode; text: ReactNode }[] = [
           cómo les fue en cada rotación. Abajo hay una explicación de cada número.
         </p>
         <p>
-          Al terminar, la app ofrece guardar el resultado (por ejemplo 3-1) en el partido. Todo queda guardado y se
-          sincroniza con el resto del cuerpo técnico.
+          Al terminar, la app ofrece guardar el resultado (por ejemplo 3-1, o 2-1 si se juega a 3 sets) y{' '}
+          <b>descargar las estadísticas en PDF</b> (también desde Resumen). Todo queda guardado y se sincroniza con el
+          resto del cuerpo técnico.
         </p>
       </>
     ),

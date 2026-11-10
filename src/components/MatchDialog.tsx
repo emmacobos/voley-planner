@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Match, Squad } from '../domain/types';
+import { BestOfPicker } from './BestOfPicker';
 
 /** Ficha de un partido: rival, fecha, local/visitante, lugar, torneo, resultado y notas. */
 export function MatchDialog({
@@ -93,9 +94,13 @@ export function MatchDialog({
               onChange={(e) => onChange({ competition: e.target.value })}
             />
           </label>
+          <div className="field">
+            Sets
+            <BestOfPicker value={match.bestOf ?? 5} onChange={(bestOf) => onChange({ bestOf })} />
+          </div>
           <label className="field">
             Resultado (sets)
-            <input value={match.result} placeholder="Ej.: 3-1" maxLength={9} onChange={(e) => onChange({ result: e.target.value })} />
+            <input value={match.result} placeholder={(match.bestOf ?? 5) === 3 ? 'Ej.: 2-1' : 'Ej.: 3-1'} maxLength={9} onChange={(e) => onChange({ result: e.target.value })} />
           </label>
           <label className="field span-2">
             Notas
