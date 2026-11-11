@@ -156,7 +156,9 @@ const STEPS: { title: string; art: ReactNode; text: ReactNode }[] = [
       <>
         <p>
           En <b>Resumen</b> ves el partido entero o cada set: puntos y errores por jugadora, saque, recepción y ataque, y
-          cómo les fue en cada rotación. Abajo hay una explicación de cada número.
+          cómo les fue en cada rotación. Más abajo, el <b>informe del partido</b>: de dónde salieron los puntos, las
+          rachas de cada set, una ficha por jugadora y qué conviene trabajar en los entrenamientos (con un ejercicio que
+          podés sumar a la próxima sesión).
         </p>
         <p>
           Al terminar, la app ofrece guardar el resultado (por ejemplo 3-1, o 2-1 si se juega a 3 sets) y{' '}

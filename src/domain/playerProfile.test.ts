@@ -24,9 +24,10 @@ describe('ficha de la jugadora', () => {
 
   it('junta las estadísticas de los partidos', () => {
     const lines = playerMatches(lucia.id, demo.matches);
-    expect(lines).toHaveLength(1);
+    // El partido de ejemplo y los dos anteriores.
+    expect(lines).toHaveLength(3);
     const total = sumStats(lucia.id, lines.map((l) => l.stats));
-    expect(total.points).toBe(lines[0].stats.points);
+    expect(total.points).toBe(lines.reduce((a, l) => a + l.stats.points, 0));
     expect(keyNumbers(total).attack.total).toBeGreaterThan(0);
     // Dos veces el mismo partido suma el doble.
     expect(sumStats(lucia.id, [lines[0].stats, lines[0].stats]).points).toBe(lines[0].stats.points * 2);

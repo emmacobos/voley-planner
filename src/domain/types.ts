@@ -421,6 +421,8 @@ export interface Match {
   plan?: MatchPlan;
   /** Estadísticas anotadas durante el partido. */
   stats?: MatchStats;
+  /** Conclusiones del cuerpo técnico después del partido (salen en el informe). */
+  conclusions?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -178,8 +178,16 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    (de todo el partido o de cada set) están el side-out y el break, la tabla
    por jugadora (puntos, errores, saque, recepción positiva, eficacia de
    ataque, bloqueo y defensa), cada rotación con su side-out y break, y la
-   *rotación a trabajar*. **Descargar PDF** baja todo eso en una planilla
-   lista para imprimir o mandar (también al terminar el partido). Los partidos
+   *rotación a trabajar*. Debajo está el **informe del partido**: de dónde
+   salieron los puntos (los nuestros y los del rival, separando sus puntos de
+   nuestros errores), los momentos de cada set (mejor y peor racha, y cómo fue
+   el final del set), una ficha por jugadora (balance, sus números contra el
+   promedio del equipo, lo mejor y lo que tiene que trabajar), **qué trabajar
+   en los entrenamientos** (de lo más urgente a lo menos, con un ejercicio
+   sugerido y el botón para sumarlo a la próxima sesión), la comparación con
+   los partidos anteriores del plantel y las conclusiones del cuerpo técnico.
+   **Descargar informe (PDF)** baja todo eso listo para imprimir o mandar
+   (también al terminar el partido). Los partidos
    pueden ser **a 5 sets** (gana quien gana 3; el quinto a 15) o **a 3 sets**
    (gana quien gana 2; el tercero a 15): se elige en los datos del partido o
    antes de empezar el primer set. La primera vez se abre un tutorial paso a paso

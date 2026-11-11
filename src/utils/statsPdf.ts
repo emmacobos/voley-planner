@@ -1,7 +1,9 @@
 import { outcome } from '../domain/matches';
 import { formatDate } from '../domain/sessions';
 import { highlights, percent, playerStats, replay, rotationStats, setFinished, setsResult, skillSummary } from '../domain/stats';
-import type { Match, Player } from '../domain/types';
+import { playerCards, pointSources, previousWithStats, setMoments, suggestExercise, trends, workItems } from '../domain/report';
+import type { Exercise, Match, Player } from '../domain/types';
+import { positionLabel } from '../domain/types';
 import { slugify } from './exportPng';
 
 /** Colores de la app (tinta, dorado, vino) para el PDF. */
@@ -21,7 +23,11 @@ const show = (n: number | null | undefined, suffix = '') => (n === null || n ===
  * la planilla por jugadora, por rotación y por set. La librería del PDF se
  * carga recién al tocar el botón.
  */
-export async function downloadStatsPdf(match: Match, players: Player[]): Promise<void> {
+export async function downloadStatsPdf(
+  match: Match,
+  players: Player[],
+  context: { matches: Match[]; exercises: Exercise[] } = { matches: [], exercises: [] },
+): Promise<void> {
   const [{ jsPDF }, { autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
@@ -232,11 +238,202 @@ export async function downloadStatsPdf(match: Match, players: Player[]): Promise
   doc.setFontSize(8);
   notes.forEach((n, i) => doc.text(n, M, y + i * 4.5));
 
+  // ---------------------------------------------------------------------
+  // Informe del partido: análisis y qué trabajar
+  doc.addPage();
+  const H0 = doc.internal.pageSize.getHeight();
+  doc.setFillColor(...INK);
+  doc.rect(0, 0, W, 18, 'F');
+  doc.setTextColor(...GOLD);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text(`INFORME DEL PARTIDO  ·  vs ${match.opponent || 'rival sin nombre'}`, M, 12);
+  y = 28;
+  /** Pasa a otra hoja si lo que sigue no entra. */
+  const room = (needed: number) => {
+    if (y + needed > H0 - 14) {
+      doc.addPage();
+      y = 20;
+    }
+  };
+
+  // Conclusiones del cuerpo técnico (lo primero que conviene leer)
+  const conclusions = match.conclusions?.trim();
+  if (conclusions) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    const lines = doc.splitTextToSize(conclusions, W - 2 * M - 8) as string[];
+    heading('Conclusiones del cuerpo técnico', y);
+    doc.setDrawColor(...LINE);
+    doc.setFillColor(...CARD);
+    doc.roundedRect(M, y + 3, W - 2 * M, lines.length * 4.8 + 6, 2, 2, 'FD');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...INK);
+    doc.text(lines, M + 4, y + 9);
+    y += lines.length * 4.8 + 18;
+  }
+
+  // De dónde salieron los puntos
+  const src = pointSources(stats);
+  heading('De dónde salieron los puntos', y);
+  y += 4;
+  const bar = (title: string, parts: [string, number, [number, number, number]][]) => {
+    const total = parts.reduce((a, p) => a + p[1], 0);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTED);
+    doc.text(`${title} (${total})`, M, y + 4);
+    y += 6;
+    let x = M;
+    const width = W - 2 * M;
+    for (const [, value, color] of parts) {
+      if (!value || !total) continue;
+      const w = (value / total) * width;
+      doc.setFillColor(...color);
+      doc.rect(x, y, w, 7, 'F');
+      if (w > 8) {
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.text(String(value), x + w / 2, y + 4.8, { align: 'center' });
+      }
+      x += w;
+    }
+    y += 11;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    let lx = M;
+    for (const [label, value, color] of parts) {
+      if (!value) continue;
+      const text = `${label} ${value}`;
+      doc.setFillColor(...color);
+      doc.rect(lx, y - 2.6, 3, 3, 'F');
+      doc.setTextColor(...INK);
+      doc.text(text, lx + 4.5, y);
+      lx += doc.getTextWidth(text) + 10;
+    }
+    y += 5;
+  };
+  bar('Nuestros puntos', [
+    ['Ataque', src.ours.ataque, [28, 25, 21]],
+    ['Saque', src.ours.saque, [138, 106, 47]],
+    ['Bloqueo', src.ours.bloqueo, [85, 97, 58]],
+    ['Errores del rival', src.ours.rivalError, [181, 169, 143]],
+  ]);
+  bar('Puntos del rival', [
+    ['Puntos del rival', src.theirs.rival, [122, 20, 36]],
+    ['Nos bloquearon', src.theirs.blocked, [160, 82, 95]],
+    ['Aces del rival', src.theirs.aces, [196, 106, 118]],
+    ['Errores de ataque', src.theirs.attackErrors, [180, 35, 24]],
+    ['Errores de saque', src.theirs.serveErrors, [221, 107, 77]],
+    ['Errores de bloqueo', src.theirs.blockErrors, [236, 154, 124]],
+  ]);
+  const share = percent(src.theirs.ownErrors, src.theirs.total);
+  if (share !== null) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...(share >= 30 ? ([138, 83, 0] as [number, number, number]) : GREEN));
+    doc.text(`${share} % de los puntos del rival fueron errores nuestros de saque, ataque o bloqueo (${src.theirs.ownErrors} de ${src.theirs.total}).`, M, y + 1);
+    y += 9;
+  }
+
+  // Para trabajar
+  const work = workItems(stats, players, bestOf);
+  room(30);
+  heading('Para trabajar en los entrenamientos', y);
+  autoTable(doc, {
+    ...tableStyle,
+    startY: y + 3,
+    styles: { ...tableStyle.styles, halign: 'left', fontSize: 9, cellPadding: 2 },
+    head: [['#', 'Qué', 'Por qué', 'Ejercicio sugerido']],
+    body: work.length
+      ? work.map((w, i) => {
+          const s = suggestExercise(w, context.exercises);
+          return [i + 1, w.title, w.why, s ? `${s.exercise.name}${s.kind === 'biblioteca' ? ' (biblioteca)' : ''}` : '-'];
+        })
+      : [['-', 'Nada flojo que se destaque', 'Los números del partido no muestran un punto débil claro.', '-']],
+    columnStyles: { 0: { cellWidth: 8, halign: 'center', fontStyle: 'bold' }, 1: { cellWidth: 52, fontStyle: 'bold' }, 3: { cellWidth: 62 } },
+  });
+  y = lastY() + 10;
+
+  // Momentos del partido
+  room(30);
+  heading('Momentos del partido', y);
+  const run = (r: { length: number; from: string; to: string; rotation: number } | null) =>
+    r ? `${r.length} seguidos (de ${r.from} a ${r.to}, R${r.rotation})` : '-';
+  autoTable(doc, {
+    ...tableStyle,
+    startY: y + 3,
+    head: [['Set', 'Marcador', 'Mejor racha', 'Peor racha', 'Final del set']],
+    body: setMoments(stats, bestOf).map((m) => [
+      m.number,
+      `${m.us}-${m.them}`,
+      run(m.bestRun),
+      run(m.worstRun),
+      m.closing.played ? `${m.closing.won} de ${m.closing.played} (desde ${m.closing.from})` : '-',
+    ]),
+  });
+  y = lastY() + 10;
+
+  // Ficha de cada jugadora
+  room(30);
+  heading('Ficha de cada jugadora', y);
+  autoTable(doc, {
+    ...tableStyle,
+    startY: y + 3,
+    styles: { ...tableStyle.styles, halign: 'left', fontSize: 8.5, cellPadding: 1.8, valign: 'top' },
+    head: [['Jugadora', 'Balance', 'Sus números (el equipo)', 'Lo mejor', 'A trabajar']],
+    body: playerCards(stats, players).map((c) => {
+      const p = find(c.playerId);
+      return [
+        `${p ? `#${p.number} ${p.name}` : 'Jugadora'}\n${p ? positionLabel(p.position) : ''}`,
+        `${c.balance > 0 ? '+' : ''}${c.balance}\n${c.points} pts · ${c.errors} err`,
+        c.metrics.map((m) => `${m.label} ${m.measure}: ${m.value} % (${show(m.team, ' %')})`).join('\n'),
+        c.strengths.join('\n') || '-',
+        c.weaknesses.join('\n') || '-',
+      ];
+    }),
+    columnStyles: { 0: { cellWidth: 44, fontStyle: 'bold' }, 1: { cellWidth: 24, halign: 'center' }, 2: { cellWidth: 62 } },
+    didParseCell: (data) => {
+      if (data.section !== 'body') return;
+      if (data.column.index === 3) data.cell.styles.textColor = GREEN;
+      if (data.column.index === 4) data.cell.styles.textColor = WINE;
+    },
+  });
+  y = lastY() + 10;
+
+  // Comparado con los partidos anteriores
+  const previous = previousWithStats(context.matches, match);
+  room(28);
+  heading('Comparado con los partidos anteriores', y);
+  if (previous.length) {
+    autoTable(doc, {
+      ...tableStyle,
+      startY: y + 3,
+      margin: { left: M, right: W / 2 },
+      head: [['Indicador', 'Este partido', `Promedio (${previous.length} anteriores)`, 'Diferencia']],
+      body: trends(match, previous).map((t) => {
+        const diff = t.value !== null && t.average !== null ? t.value - t.average : null;
+        const verdict = diff === null || diff === 0 ? '' : diff > 0 === t.higherIsBetter ? ' mejor' : ' peor';
+        return [t.label, show(t.value, t.suffix), show(t.average, t.suffix), diff === null ? '-' : `${diff > 0 ? '+' : ''}${diff}${verdict}`];
+      }),
+      columnStyles: { 0: { halign: 'left' } },
+    });
+    y = lastY() + 10;
+  } else {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...MUTED);
+    doc.text('No hay partidos anteriores de este plantel con estadísticas para comparar.', M, y + 7);
+    y += 15;
+  }
+
   // Pie de página
   const pages = doc.getNumberOfPages();
   const H = doc.internal.pageSize.getHeight();
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(...MUTED);
     doc.text('Hecho con Voley Planner', M, H - 7);

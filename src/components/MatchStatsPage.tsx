@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { formatDate } from '../domain/sessions';
 import { newId } from '../domain/ids';
 import {
@@ -23,6 +24,7 @@ import { navigate } from '../hooks/useHashRoute';
 import { useAppStore } from '../store';
 import { hasSeenTutorial } from '../utils/tutorials';
 import { BestOfPicker } from './BestOfPicker';
+import { MatchReport } from './MatchReport';
 import { StatsTutorial } from './StatsTutorial';
 
 const ROTATIONS = [1, 6, 5, 4, 3, 2];
@@ -49,7 +51,8 @@ export function MatchStatsPage({ id }: { id: string }) {
   const downloadPdf = async () => {
     try {
       const { downloadStatsPdf } = await import('../utils/statsPdf');
-      await downloadStatsPdf(match, allPlayers);
+      const { matches, exercises } = useAppStore.getState();
+      await downloadStatsPdf(match, allPlayers, { matches, exercises });
     } catch {
       alert('No se pudo armar el PDF. Probá de nuevo.');
     }
@@ -93,7 +96,9 @@ export function MatchStatsPage({ id }: { id: string }) {
           onDownloadPdf={downloadPdf}
         />
       ) : (
-        <Summary stats={stats} players={players} allPlayers={allPlayers} onDownloadPdf={downloadPdf} />
+        <Summary stats={stats} players={players} allPlayers={allPlayers} onDownloadPdf={downloadPdf}>
+          <MatchReport match={match} players={allPlayers} />
+        </Summary>
       )}
 
       {tutorial && <StatsTutorial onClose={() => setTutorial(false)} />}
@@ -444,11 +449,14 @@ function Summary({
   players,
   allPlayers,
   onDownloadPdf,
+  children,
 }: {
   stats: MatchStats;
   players: Player[];
   allPlayers: Player[];
   onDownloadPdf: () => void;
+  /** Informe del partido, debajo de las tablas. */
+  children?: ReactNode;
 }) {
   const state = replay(stats);
   const [set, setSet] = useState(0);
@@ -475,7 +483,7 @@ function Summary({
     <div className="stats-summary">
       <div className="summary-actions">
         <button className="primary" onClick={onDownloadPdf} title="Resultado, lo más destacado y las planillas por jugadora, rotación y set">
-          ⬇ Descargar PDF
+          ⬇ Descargar informe (PDF)
         </button>
       </div>
       <div className="segmented set-filter" role="group" aria-label="Set">
@@ -628,6 +636,8 @@ function Summary({
           })}
         </div>
       </section>
+
+      {children}
 
       <Glossary />
     </div>

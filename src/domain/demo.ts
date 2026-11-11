@@ -119,8 +119,8 @@ function playFrames(players: Player[]): Frame[] {
  * da lo mismo). La recepción en R4 sale floja a propósito, para que el resumen
  * muestre una "rotación a trabajar".
  */
-function demoStats(players: Player[]): MatchStats {
-  let seed = 23;
+function demoStats(players: Player[], start = 23): MatchStats {
+  let seed = start;
   const rand = () => {
     seed = (seed * 16807) % 2147483647;
     return (seed - 1) / 2147483646;
@@ -376,6 +376,23 @@ export function buildDemoData(today: Date = new Date()): DemoData {
     createdAt: now,
     updatedAt: now,
   };
+  // Dos partidos anteriores con estadísticas, para comparar en el informe del partido.
+  const older = (key: string, weeksAgo: number, opponent: string, seed: number): Match => {
+    const d = new Date(lastSaturday.getFullYear(), lastSaturday.getMonth(), lastSaturday.getDate() - 7 * weeksAgo);
+    const stats = demoStats(players, seed);
+    return {
+      ...pastMatch,
+      id: id(key),
+      date: todayISO(d),
+      opponent,
+      home: weeksAgo % 2 === 0,
+      venue: weeksAgo % 2 === 0 ? 'Gimnasio del club' : `Club ${opponent}`,
+      notes: '',
+      result: setsResult(replay(stats).sets),
+      stats,
+    };
+  };
+  const olderMatches = [older('partido-anterior', 1, 'Unión Norte', 7), older('partido-anterior-2', 2, 'Sporting Sur', 41)];
   const monday = new Date(sessionDay.getFullYear(), sessionDay.getMonth(), sessionDay.getDate() - ((sessionDay.getDay() + 6) % 7));
   const week: WeekPlan = {
     id: `${todayISO(monday)}_${squad.id}`,
@@ -415,7 +432,7 @@ export function buildDemoData(today: Date = new Date()): DemoData {
 
   return {
     phases,
-    matches: [pastMatch, match],
+    matches: [pastMatch, ...olderMatches, match],
     weeks: [week],
     squads: [squad],
     players,
