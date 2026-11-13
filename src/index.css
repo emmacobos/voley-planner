@@ -655,7 +655,7 @@ main {
   font-family: var(--display);
   font-size: 2rem;
   font-weight: 700;
-  text-transform: uppercase;
+  /* El nombre se ve tal cual se escribe (mayúsculas y minúsculas). */
   letter-spacing: 0.01em;
   border-color: transparent;
   background: transparent;
@@ -2400,8 +2400,7 @@ input.num {
   color: #fff;
   font-family: var(--display);
   font-size: 1.8rem;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
 }
 
 .presentation-close {
