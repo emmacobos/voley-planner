@@ -39,6 +39,45 @@ export function SharedPlayPage({ code }: { code: string }) {
       teamNames={play.teamNames}
       half={play.half}
       fullscreen={false}
+      aside={
+        play.info
+          ? (step, go) => (
+              <div className="shared-info">
+                <h3>Sobre el ejercicio</h3>
+                {play.info?.meta?.length ? (
+                  <div className="shared-chips">
+                    {play.info.meta.map((m) => (
+                      <span key={m}>{m}</span>
+                    ))}
+                  </div>
+                ) : null}
+                {play.info?.objective && (
+                  <>
+                    <h4>Objetivo</h4>
+                    <p>{play.info.objective}</p>
+                  </>
+                )}
+                {play.info?.description && (
+                  <>
+                    <h4>Descripción</h4>
+                    <p className="shared-description">{play.info.description}</p>
+                  </>
+                )}
+                {play.frames.length > 1 && (
+                  <ol className="shared-steps">
+                    {play.frames.map((f, i) => (
+                      <li key={f.id}>
+                        <button className={i === step ? 'active' : ''} onClick={() => go(i)} aria-current={i === step ? 'step' : undefined}>
+                          <b>{i + 1}</b> {f.note || `Paso ${i + 1}`}
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            )
+          : undefined
+      }
       onClose={() => navigate('/')}
       footer={
         <p className="presentation-credit">

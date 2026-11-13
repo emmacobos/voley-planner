@@ -276,6 +276,8 @@ export interface Exercise {
   system?: GameSystem;
   /** Qué se trabaja (si falta, se deduce del nombre y el objetivo). */
   contents?: Content[];
+  /** false: la descripción (notas) no se muestra en el link compartido. */
+  shareDescription?: boolean;
   /** Nombres de los equipos en la pizarra. */
   teamNames?: TeamNames;
   /** Cancha principal (la de `frames`): nombre, objetivo y si es media cancha. */

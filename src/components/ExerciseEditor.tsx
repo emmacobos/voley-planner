@@ -153,7 +153,7 @@ export function ExerciseEditor({ id }: { id: string }) {
             />
           </label>
           <label className="field span-3">
-            Notas / consignas
+            Descripción (organización, consignas, variantes)
             <textarea
               rows={3}
               value={exercise.notes}
@@ -410,6 +410,21 @@ export function ExerciseEditor({ id }: { id: string }) {
         teamNames={court.teamNames}
         onTeamNamesChange={(teamNames) => setCourt({ teamNames })}
         half={court.half}
+        description={{
+          text: exercise.notes,
+          onChange: (notes) => update({ notes }),
+          shared: exercise.shareDescription !== false,
+          onSharedChange: (shared) => update({ shareDescription: shared }),
+        }}
+        shareInfo={{
+          objective: exercise.objective,
+          description: exercise.shareDescription !== false ? exercise.notes : undefined,
+          meta: [
+            EXERCISE_TYPES.find((t) => t.value === exercise.type)?.label ?? '',
+            `${exercise.durationMin} min`,
+            `Intensidad ${INTENSITIES.find((i) => i.value === exercise.intensity)?.label.toLowerCase() ?? ''}`,
+          ].filter(Boolean),
+        }}
       />
     </div>
   );

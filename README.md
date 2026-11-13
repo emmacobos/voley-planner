@@ -135,7 +135,13 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    por WhatsApp. **Compartir link** arma un link de solo lectura: quien lo
    abre ve la jugada animada paso a paso, sin cuenta (la jugada viaja
    comprimida dentro del link, no se guarda en ningún lado). Se copia, se
-   manda por WhatsApp o se comparte desde el celular.
+   manda por WhatsApp o se comparte desde el celular. En la misma fila, a la derecha,
+   el botón **Descripción** abre un panel al costado de la pizarra para
+   escribir la organización, las consignas, las variantes y la puntuación
+   (con botones rápidos para cada título). Se guarda sola y, si está tildado
+   *Mostrarla al compartir el link*, quien abre el link la ve al lado de la
+   cancha junto con el objetivo, el tipo, la duración, la intensidad y los
+   pasos.
 6. **Sesiones → Nueva sesión:** fecha, hora, plantel, objetivo y convocados.
    La sesión arranca con 5 bloques (90 minutos) que podés cambiar, reordenar
    o borrar. A cada bloque le agregás ejercicios de la biblioteca (con su

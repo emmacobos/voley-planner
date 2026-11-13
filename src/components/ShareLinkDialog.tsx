@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Frame, Player, TeamNames } from '../domain/types';
 import { encodePlay, sharedPlayData, sharedPlayUrl } from '../utils/sharePlay';
+import type { SharedInfo } from '../utils/sharePlay';
 
 /** Arma el link de solo lectura de una jugada y ofrece copiarlo o mandarlo. */
 export function ShareLinkDialog({
@@ -9,6 +10,7 @@ export function ShareLinkDialog({
   players,
   teamNames,
   half = false,
+  info,
   onClose,
 }: {
   title: string;
@@ -16,18 +18,22 @@ export function ShareLinkDialog({
   players: Player[];
   teamNames?: TeamNames;
   half?: boolean;
+  /** Objetivo y descripción del ejercicio, para mostrarlos al costado de la cancha. */
+  info?: SharedInfo;
   onClose: () => void;
 }) {
   const [url, setUrl] = useState<string | null>(null);
+  // Mientras el cuadro está abierto no cambian (se toman al abrirlo).
+  const [shared] = useState(info);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    encodePlay(sharedPlayData(title, frames, players, teamNames, half)).then((code) => alive && setUrl(sharedPlayUrl(code)));
+    encodePlay(sharedPlayData(title, frames, players, teamNames, half, shared)).then((code) => alive && setUrl(sharedPlayUrl(code)));
     return () => {
       alive = false;
     };
-  }, [title, frames, players, teamNames, half]);
+  }, [title, frames, players, teamNames, half, shared]);
 
   const copy = async () => {
     if (!url) return;
@@ -38,7 +44,9 @@ export function ShareLinkDialog({
       prompt('Copiá el link:', url);
     }
   };
-  const message = url ? `${title || 'Jugada'} — miralo animado: ${url}` : '';
+  const objective = shared?.objective?.trim();
+  const message = url ? `${title || 'Jugada'}${objective ? `\nObjetivo: ${objective}` : ''}\nMiralo animado: ${url}` : '';
+  const includes = [objective && 'el objetivo', shared?.description?.trim() && 'la descripción'].filter(Boolean);
 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
@@ -51,6 +59,7 @@ export function ShareLinkDialog({
           Cualquiera con el link ve la jugada animada, paso a paso, <b>sin cuenta</b> y sin poder cambiarla. Sirve para
           mandarla al grupo antes del entrenamiento.
         </p>
+        {includes.length > 0 && <p className="hint share-includes">✓ Lleva {includes.join(' y ')} del ejercicio, al costado de la cancha.</p>}
         <input className="share-url" readOnly value={url ?? 'Armando el link…'} onFocus={(e) => e.target.select()} aria-label="Link" />
         <div className="row share-actions">
           <button className="primary" onClick={copy} disabled={!url}>

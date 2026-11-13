@@ -312,3 +312,28 @@ test('con el lápiz se dibuja a mano alzada, en el color elegido, y el trazo se 
   await page.keyboard.press('Delete');
   expect((await savedElements(page)).filter((e) => e.kind === 'draw')).toHaveLength(0);
 });
+
+test('la descripción se escribe en el panel del costado y se ve al lado de la cancha en el link compartido', async ({ page }) => {
+  await page.locator('.description-toggle').click();
+  const panel = page.locator('.description-panel');
+  await expect(panel.locator('textarea')).toBeFocused();
+  await panel.locator('button', { hasText: 'Consignas' }).click();
+  await page.keyboard.type('Recepción alta');
+  await expect(panel.locator('textarea')).toHaveValue('Consignas:\n• Recepción alta');
+  await expect
+    .poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('voley-planner')!).state.exercises.find((e: { id: string }) => e.id === 'ejemplo-ejercicio-k1').notes))
+    .toBe('Consignas:\n• Recepción alta');
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
+  await expect(page.locator('.description-toggle .description-check')).toBeVisible();
+
+  await page.locator('button', { hasText: 'Compartir link' }).click();
+  await expect(page.locator('.share-includes')).toContainText('la descripción');
+  const url = await page.locator('.share-url').inputValue();
+  await page.goto(url);
+  const info = page.locator('.shared-info');
+  await expect(info).toContainText('Recepción alta');
+  await expect(info.locator('.shared-steps button')).toHaveCount(3);
+  await info.locator('.shared-steps button').nth(1).click();
+  await expect(info.locator('.shared-steps button').nth(1)).toHaveAttribute('aria-current', 'step');
+});

@@ -35,6 +35,7 @@ export function Presentation({
   footer,
   teamNames,
   half = false,
+  aside,
 }: {
   title: string;
   frames: Frame[];
@@ -47,6 +48,8 @@ export function Presentation({
   footer?: ReactNode;
   teamNames?: TeamNames;
   half?: boolean;
+  /** Panel al costado de la cancha (por ejemplo, la descripción del ejercicio compartido). */
+  aside?: (step: number, go: (step: number) => void) => ReactNode;
 }) {
   const last = frames.length - 1;
   const [progress, setProgress] = useState(Math.min(startAt, last));
@@ -216,50 +219,8 @@ export function Presentation({
   );
   const note = frames[index]?.note;
 
-  return (
-    <div className="presentation" ref={rootRef} role="dialog" aria-label={`Presentación: ${title}`}>
-      <header className="presentation-top">
-        <h2>{title}</h2>
-        <div className="ink-tools">
-          <button
-            className={`ink-toggle${drawing ? ' active' : ''}`}
-            onClick={() => setDrawing(!drawing)}
-            aria-pressed={drawing}
-            title="Marcar a mano sobre la jugada (D). No se guarda."
-          >
-            ✏ {drawing ? 'Marcando' : 'Marcar'}
-          </button>
-          {drawing &&
-            INK.map((c) => (
-              <button
-                key={c.value}
-                className={`ink-color${ink === c.value ? ' active' : ''}`}
-                style={{ background: c.value }}
-                onClick={() => setInk(c.value)}
-                aria-label={c.label}
-                aria-pressed={ink === c.value}
-                title={c.label}
-              />
-            ))}
-          {(drawing || stepStrokes.length > 0 || stepPast.length > 0) && (
-            <>
-              <button onClick={undoInk} disabled={!stepPast.length} aria-label="Deshacer la última marca" title="Deshacer (Ctrl+Z)">
-                ↶
-              </button>
-              <button onClick={redoInk} disabled={!stepFuture.length} aria-label="Rehacer la marca" title="Rehacer (Ctrl+Shift+Z)">
-                ↷
-              </button>
-              <button className="ink-clear" onClick={clearInk} disabled={!stepStrokes.length} title="Borrar todas las marcas de este paso (se puede deshacer)">
-                Borrar marcas
-              </button>
-            </>
-          )}
-        </div>
-        <button className="presentation-close" onClick={onClose} aria-label="Cerrar presentación" title="Cerrar (Esc)">
-          ×
-        </button>
-      </header>
-
+  const main = (
+    <>
       <div className="presentation-board">
         <div className="ink-canvas">
         <Board
@@ -324,6 +285,61 @@ export function Presentation({
           <option value={2}>2×</option>
         </select>
       </footer>
+    </>
+  );
+
+  return (
+    <div className="presentation" ref={rootRef} role="dialog" aria-label={`Presentación: ${title}`}>
+      <header className="presentation-top">
+        <h2>{title}</h2>
+        <div className="ink-tools">
+          <button
+            className={`ink-toggle${drawing ? ' active' : ''}`}
+            onClick={() => setDrawing(!drawing)}
+            aria-pressed={drawing}
+            title="Marcar a mano sobre la jugada (D). No se guarda."
+          >
+            ✏ {drawing ? 'Marcando' : 'Marcar'}
+          </button>
+          {drawing &&
+            INK.map((c) => (
+              <button
+                key={c.value}
+                className={`ink-color${ink === c.value ? ' active' : ''}`}
+                style={{ background: c.value }}
+                onClick={() => setInk(c.value)}
+                aria-label={c.label}
+                aria-pressed={ink === c.value}
+                title={c.label}
+              />
+            ))}
+          {(drawing || stepStrokes.length > 0 || stepPast.length > 0) && (
+            <>
+              <button onClick={undoInk} disabled={!stepPast.length} aria-label="Deshacer la última marca" title="Deshacer (Ctrl+Z)">
+                ↶
+              </button>
+              <button onClick={redoInk} disabled={!stepFuture.length} aria-label="Rehacer la marca" title="Rehacer (Ctrl+Shift+Z)">
+                ↷
+              </button>
+              <button className="ink-clear" onClick={clearInk} disabled={!stepStrokes.length} title="Borrar todas las marcas de este paso (se puede deshacer)">
+                Borrar marcas
+              </button>
+            </>
+          )}
+        </div>
+        <button className="presentation-close" onClick={onClose} aria-label="Cerrar presentación" title="Cerrar (Esc)">
+          ×
+        </button>
+      </header>
+
+      {aside ? (
+        <div className="presentation-body">
+          <div className="presentation-main">{main}</div>
+          <aside className="presentation-aside">{aside(index, go)}</aside>
+        </div>
+      ) : (
+        main
+      )}
       <p className="presentation-hint">← → pasos · Espacio reproducir · D marcar · Ctrl+Z deshacer marca · Esc salir</p>
       {footer}
     </div>

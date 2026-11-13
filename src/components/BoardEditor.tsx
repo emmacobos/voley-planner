@@ -45,7 +45,10 @@ import { FloatingPanel } from './FloatingPanel';
 import { FloatingPanelReady } from './floatingPanelReady';
 import { CourtsOverview } from './CourtsOverview';
 import { Presentation } from './Presentation';
+import { DescriptionButton, DescriptionPanel } from './DescriptionPanel';
+import type { DescriptionProps } from './DescriptionPanel';
 import { ShareLinkDialog } from './ShareLinkDialog';
+import type { SharedInfo } from '../utils/sharePlay';
 import type { Tool } from './boardTheme';
 
 interface BoardEditorProps {
@@ -86,6 +89,10 @@ interface BoardEditorProps {
   /** Las dos camisetas son del plantel (entrenamiento): el equipo B también usa jugadoras. */
   bothTeamsOurs?: boolean;
   onActivate?: (courtId: string) => void;
+  /** Descripción del ejercicio: botón arriba de la pizarra y panel al costado. */
+  description?: DescriptionProps;
+  /** Lo que lleva el link compartido además de la jugada (objetivo, descripción…). */
+  shareInfo?: SharedInfo;
 }
 
 /** Otra cancha que se muestra al lado en la vista de varias canchas. */
@@ -150,7 +157,10 @@ export function BoardEditor({
   overviewControls,
   displayElements,
   bothTeamsOurs = false,
+  description,
+  shareInfo,
 }: BoardEditorProps) {
+  const [descriptionOpen, setDescriptionOpen] = useState(false);
   const [current, setCurrent] = useState(0);
   const [tool, setTool] = useState<Tool>('select');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -449,7 +459,15 @@ export function BoardEditor({
   return (
     <div className="board-editor">
       {sharing && (
-        <ShareLinkDialog title={title} frames={frames} players={allPlayers} teamNames={teamNames} half={half} onClose={() => setSharing(false)} />
+        <ShareLinkDialog
+          title={title}
+          frames={frames}
+          players={allPlayers}
+          teamNames={teamNames}
+          half={half}
+          info={shareInfo}
+          onClose={() => setSharing(false)}
+        />
       )}
       {presenting && multi && (
         <div className="courts-presentation" role="dialog" aria-label={`Presentación: ${title}`}>
@@ -650,8 +668,13 @@ export function BoardEditor({
               <Icon d="M3 4h18v12H3zM8 20h8M12 16v4" />
               Presentar
             </button>
+            {description && (
+              <DescriptionButton text={description.text} open={descriptionOpen} onToggle={() => setDescriptionOpen((o) => !o)} />
+            )}
           </div>
         </div>
+
+        {description && descriptionOpen && <DescriptionPanel {...description} onClose={() => setDescriptionOpen(false)} />}
 
         {tool === 'draw' && (
           <div className="pen-bar" role="group" aria-label="Lápiz">

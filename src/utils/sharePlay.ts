@@ -12,6 +12,15 @@ export interface SharedPlay {
   players: Pick<Player, 'id' | 'name' | 'number' | 'position'>[];
   teamNames?: TeamNames;
   half?: boolean;
+  /** Datos del ejercicio que se muestran al costado de la cancha. */
+  info?: SharedInfo;
+}
+
+export interface SharedInfo {
+  objective?: string;
+  description?: string;
+  /** Tipo, duración, intensidad… */
+  meta?: string[];
 }
 
 const toBase64Url = (bytes: Uint8Array) => {
@@ -32,7 +41,19 @@ async function pipe(bytes: Uint8Array, stream: CompressionStream | Decompression
 }
 
 /** Arma lo que se comparte: los pasos y los datos de las jugadoras que aparecen. */
-export function sharedPlayData(title: string, frames: Frame[], players: Player[], teamNames?: TeamNames, half = false): SharedPlay {
+export function sharedPlayData(
+  title: string,
+  frames: Frame[],
+  players: Player[],
+  teamNames?: TeamNames,
+  half = false,
+  info?: SharedInfo,
+): SharedPlay {
+  const cleanInfo: SharedInfo = {
+    ...(info?.objective?.trim() ? { objective: info.objective.trim() } : {}),
+    ...(info?.description?.trim() ? { description: info.description.trim() } : {}),
+    ...(info?.meta?.length ? { meta: info.meta } : {}),
+  };
   const used = new Set(frames.flatMap((f) => f.elements.flatMap((e) => (e.kind === 'player' && e.playerId ? [e.playerId] : []))));
   return {
     v: 1,
@@ -41,6 +62,7 @@ export function sharedPlayData(title: string, frames: Frame[], players: Player[]
     players: players.filter((p) => used.has(p.id)).map(({ id, name, number, position }) => ({ id, name, number, position })),
     ...(teamNames?.A || teamNames?.B || teamNames?.hidden ? { teamNames } : {}),
     ...(half ? { half } : {}),
+    ...(cleanInfo.objective || cleanInfo.description ? { info: cleanInfo } : {}),
   };
 }
 
