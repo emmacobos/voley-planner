@@ -6,6 +6,7 @@ import type { SharedWorkspace, ShareRole } from './state';
  */
 const auth = () => import('./auth');
 const sharing = () => import('./sharing');
+const playLinks = () => import('./playLinks');
 
 export const initAuth = async () => (await auth()).initAuth();
 export const resolveImport = async (upload: boolean) => (await auth()).resolveImport(upload);
@@ -21,3 +22,6 @@ export const stopSharingWith = async (email: string) => (await sharing()).stopSh
 export const retryInvites = async () => (await sharing()).retryInvites();
 export const sendVerification = async () => (await sharing()).sendVerification();
 export const recheckVerification = async () => (await sharing()).recheckVerification();
+
+export const saveSharedPlay = async (code: string) => (await playLinks()).saveSharedPlay(code);
+export const loadSharedPlay = async (id: string) => (await playLinks()).loadSharedPlay(id);

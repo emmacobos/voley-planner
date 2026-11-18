@@ -33,6 +33,8 @@ Correr lint, tests y build antes de cada commit (y `test:e2e` si se toca la piza
   la dueña) e `invites/{email}/from/{uid}` (lo que ve la persona invitada, rol `ver` o `editar`). Las reglas
   dan acceso a quien tiene invitación y email verificado. Para probar en local contra los emuladores:
   `VITE_FIREBASE_EMULATOR=1 npm run dev` con `firebase emulators:start --only auth,firestore` (puertos 9099 y 8089).
+- Links cortos de jugadas (`src/cloud/playLinks.ts`): `jugadas/{id}` con la jugada comprimida; se leen
+  con el id, se crean sin cuenta y no se pueden listar, cambiar ni borrar.
 - Proyecto Firebase `voley-planner` (plan Spark). Las reglas están en `firestore.rules` y se
   publican a mano en la consola de Firebase: si cambian, avisarle a la usuaria.
 

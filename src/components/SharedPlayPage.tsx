@@ -1,29 +1,34 @@
 import { useEffect, useState } from 'react';
 import type { Player } from '../domain/types';
 import { navigate } from '../hooks/useHashRoute';
+import { loadSharedPlay } from '../cloud/client';
 import { decodePlay } from '../utils/sharePlay';
 import type { SharedPlay } from '../utils/sharePlay';
 import { Presentation } from './Presentation';
 
 /** Jugada abierta desde un link compartido: se ve animada, sin cuenta. */
-export function SharedPlayPage({ code }: { code: string }) {
+export function SharedPlayPage({ code, short = false }: { code: string; short?: boolean }) {
   const [play, setPlay] = useState<SharedPlay | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    decodePlay(code)
+    (short ? loadSharedPlay(code).then(decodePlay) : decodePlay(code))
       .then((p) => alive && setPlay(p))
       .catch(() => alive && setError(true));
     return () => {
       alive = false;
     };
-  }, [code]);
+  }, [code, short]);
 
   if (error) {
     return (
       <div className="empty">
-        <p>Este link de jugada no se pudo abrir: puede estar cortado. Pedile a quien te lo mandó que lo copie de nuevo.</p>
+        <p>
+          {short
+            ? 'Esta jugada no se pudo abrir: revisá la conexión a internet y probá de nuevo, o pedile a quien te la mandó un link nuevo.'
+            : 'Este link de jugada no se pudo abrir: puede estar cortado. Pedile a quien te lo mandó que lo copie de nuevo.'}
+        </p>
         <button onClick={() => navigate('/')}>Ir a Voley Planner</button>
       </div>
     );

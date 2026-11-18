@@ -314,6 +314,8 @@ test('con el lápiz se dibuja a mano alzada, en el color elegido, y el trazo se 
 });
 
 test('la descripción se escribe en el panel del costado y se ve al lado de la cancha en el link compartido', async ({ page }) => {
+  // Sin la nube (las pruebas no escriben en Firebase): el link corto falla y queda el largo, con aviso.
+  await page.route(/firestore\.googleapis\.com/, (route) => route.abort());
   await page.locator('.description-toggle').click();
   const panel = page.locator('.description-panel');
   await expect(panel.locator('textarea')).toBeFocused();
@@ -328,6 +330,8 @@ test('la descripción se escribe en el panel del costado y se ve al lado de la c
 
   await page.locator('button', { hasText: 'Compartir link' }).click();
   await expect(page.locator('.share-includes')).toContainText('la descripción');
+  await expect(page.locator('.share-url')).toHaveValue(/#\/ver\//, { timeout: 12_000 });
+  await expect(page.locator('.share-long')).toContainText('Leer más');
   const url = await page.locator('.share-url').inputValue();
   await page.goto(url);
   const info = page.locator('.shared-info');

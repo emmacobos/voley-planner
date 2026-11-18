@@ -1,7 +1,21 @@
 import { useEffect, useState } from 'react';
 import type { Frame, Player, TeamNames } from '../domain/types';
-import { encodePlay, sharedPlayData, sharedPlayUrl } from '../utils/sharePlay';
+import { saveSharedPlay } from '../cloud/client';
+import { encodePlay, sharedPlayData, sharedPlayUrl, shortPlayUrl } from '../utils/sharePlay';
 import type { SharedInfo } from '../utils/sharePlay';
+
+/** Ids cortos ya guardados en esta visita, para no guardar dos veces la misma jugada. */
+const savedIds = new Map<string, Promise<string>>();
+
+function shortId(code: string): Promise<string> {
+  let id = savedIds.get(code);
+  if (!id) {
+    id = saveSharedPlay(code);
+    savedIds.set(code, id);
+    id.catch(() => savedIds.delete(code));
+  }
+  return id;
+}
 
 /** Arma el link de solo lectura de una jugada y ofrece copiarlo o mandarlo. */
 export function ShareLinkDialog({
@@ -26,10 +40,21 @@ export function ShareLinkDialog({
   // Mientras el cuadro está abierto no cambian (se toman al abrirlo).
   const [shared] = useState(info);
   const [copied, setCopied] = useState(false);
+  /** El link largo (la jugada dentro del link) se usa solo si no se pudo guardar en la nube. */
+  const [long, setLong] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    encodePlay(sharedPlayData(title, frames, players, teamNames, half, shared)).then((code) => alive && setUrl(sharedPlayUrl(code)));
+    encodePlay(sharedPlayData(title, frames, players, teamNames, half, shared)).then(async (code) => {
+      try {
+        const id = await shortId(code);
+        if (alive) setUrl(shortPlayUrl(id));
+      } catch {
+        if (!alive) return;
+        setLong(true);
+        setUrl(sharedPlayUrl(code));
+      }
+    });
     return () => {
       alive = false;
     };
@@ -82,7 +107,14 @@ export function ShareLinkDialog({
             Ver cómo queda
           </a>
         </div>
-        <p className="hint">El link lleva la jugada como está ahora: si después la cambiás, generá uno nuevo.</p>
+        {long ? (
+          <p className="hint share-long">
+            ⚠ No se pudo armar el link corto (¿sin internet?). Este link es largo y WhatsApp puede cortarlo: si pasa, que
+            toquen "Leer más" antes de abrirlo, o cerrá y volvé a compartir cuando haya conexión.
+          </p>
+        ) : (
+          <p className="hint">El link lleva la jugada como está ahora: si después la cambiás, generá uno nuevo.</p>
+        )}
       </div>
     </div>
   );

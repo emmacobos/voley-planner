@@ -43,6 +43,20 @@ service cloud.firestore {
       allow write: if collection != 'shares' && canEdit(userId);
     }
 
+    // Jugadas compartidas por link corto (#/j/{id}): cualquiera con el link la ve; se crean sin cuenta,
+    // no se pueden listar, cambiar ni borrar. Solo el texto de la jugada y la fecha.
+    match /jugadas/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if id.size() >= 8 && id.size() <= 16
+        && request.resource.data.keys().hasOnly(['code', 'createdAt'])
+        && request.resource.data.code is string
+        && request.resource.data.code.size() > 0
+        && request.resource.data.code.size() < 500000
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
     // Invitaciones: las crea la dueña de los datos y las lee la persona invitada.
     match /invites/{email}/from/{ownerId} {
       allow read: if isOwner(ownerId) || (verified() && myEmail() == email);

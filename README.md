@@ -133,8 +133,10 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    graba la jugada animada (con una pausa en cada paso y su descripción abajo)
    y la descarga en MP4 —o WebM si el navegador no graba MP4— para mandarla
    por WhatsApp. **Compartir link** arma un link de solo lectura: quien lo
-   abre ve la jugada animada paso a paso, sin cuenta (la jugada viaja
-   comprimida dentro del link, no se guarda en ningún lado). Se copia, se
+   abre ve la jugada animada paso a paso, sin cuenta. Es un link corto
+   (`#/j/…`): la jugada se guarda en la nube y el link lleva solo su código,
+   así WhatsApp no lo corta. Sin internet arma el link largo de antes (la
+   jugada comprimida dentro del link) y avisa que WhatsApp puede cortarlo. Se copia, se
    manda por WhatsApp o se comparte desde el celular. En la misma fila, a la derecha,
    el botón **Descripción** abre un panel al costado de la pizarra para
    escribir la organización, las consignas, las variantes y la puntuación

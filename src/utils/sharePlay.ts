@@ -82,3 +82,8 @@ export async function decodePlay(code: string): Promise<SharedPlay> {
 export function sharedPlayUrl(code: string): string {
   return `${window.location.origin}${window.location.pathname}#/ver/${code}`;
 }
+
+/** Link corto: la jugada está guardada en la nube con ese id. */
+export function shortPlayUrl(id: string): string {
+  return `${window.location.origin}${window.location.pathname}#/j/${id}`;
+}

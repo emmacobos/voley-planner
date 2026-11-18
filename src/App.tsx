@@ -75,7 +75,7 @@ export default function App() {
   if (route.name === 'shared-play') {
     return (
       <Suspense fallback={<p className="muted page-loading">Cargando la jugada…</p>}>
-        <SharedPlayPage code={route.code} />
+        <SharedPlayPage code={route.code} short={route.short} />
       </Suspense>
     );
   }

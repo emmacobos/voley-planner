@@ -15,11 +15,13 @@ export type Route =
   | { name: 'matches' }
   | { name: 'match'; id: string }
   | { name: 'match-stats'; id: string }
-  | { name: 'shared-play'; code: string };
+  | { name: 'shared-play'; code: string; short?: boolean };
 
 function parse(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   if (parts[0] === 'ver' && parts[1]) return { name: 'shared-play', code: parts[1] };
+  // Link corto: la jugada está guardada en la nube con ese id.
+  if (parts[0] === 'j' && parts[1]) return { name: 'shared-play', code: parts[1], short: true };
   if (parts[0] === 'plantel') return parts[1] ? { name: 'player', id: parts[1] } : { name: 'roster' };
   if (parts[0] === 'calendario') return { name: 'calendar' };
   if (parts[0] === 'temporada') return { name: 'season' };
