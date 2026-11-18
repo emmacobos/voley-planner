@@ -325,7 +325,6 @@ test('la descripción se escribe en el panel del costado y se ve al lado de la c
     .toBe('Consignas:\n• Recepción alta');
   await page.keyboard.press('Escape');
   await expect(panel).toHaveCount(0);
-  await expect(page.locator('.description-toggle .description-check')).toBeVisible();
 
   await page.locator('button', { hasText: 'Compartir link' }).click();
   await expect(page.locator('.share-includes')).toContainText('la descripción');

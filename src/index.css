@@ -6356,14 +6356,6 @@ textarea.conclusions {
   color: var(--gold-ink);
 }
 
-.description-check {
-  padding: 0 0.35rem;
-  border-radius: 99px;
-  background: var(--ok);
-  color: #fff;
-  font-size: 0.7rem;
-}
-
 .description-chevron {
   font-size: 0.8rem;
   opacity: 0.7;

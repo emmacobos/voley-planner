@@ -16,7 +16,7 @@ const SNIPPETS: { label: string; text: string }[] = [
   { label: 'Puntuación', text: 'Puntuación: ' },
 ];
 
-/** Botón "Descripción" de la barra de la pizarra (con un ✓ si ya tiene texto). */
+/** Botón "Descripción" de la barra de la pizarra. */
 export function DescriptionButton({ text, open, onToggle }: { text: string; open: boolean; onToggle: () => void }) {
   const has = text.trim().length > 0;
   return (
@@ -30,11 +30,6 @@ export function DescriptionButton({ text, open, onToggle }: { text: string; open
         <path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5" />
       </svg>
       Descripción
-      {has && (
-        <span className="description-check" aria-label="tiene descripción">
-          ✓
-        </span>
-      )}
       <span className="description-chevron" aria-hidden="true">
         {open ? '◂' : '▸'}
       </span>
