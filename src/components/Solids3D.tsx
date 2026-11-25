@@ -1,6 +1,6 @@
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import type { MachineElement } from '../domain/types';
-import { SELECTION_COLOR } from './boardTheme';
+import { HOOP_COLORS, SELECTION_COLOR } from './boardTheme';
 import { SOLID_HEIGHT } from './solids';
 import type { SolidElement } from './solids';
 
@@ -182,6 +182,30 @@ export function Solid3D({
         ))}
         <line x1={m0.x} y1={m0.y} x2={m1.x} y2={m1.y} stroke="#111111" strokeWidth={Math.max(3, 0.22 * k)} strokeLinecap="round" />
         <circle cx={m1.x} cy={m1.y} r={Math.max(2, 0.11 * k)} fill="#E3C48B" stroke="#111111" strokeWidth={1} />
+      </>
+    );
+  } else if (el.kind === 'hoop') {
+    // Aro de precisión: un aro de 1 m apoyado en el piso, con su grosor.
+    const place = placer(at, el.x, el.y);
+    const color = el.color ?? HOOP_COLORS[0].value;
+    const [R, r, h] = [0.5, 0.43, SOLID_HEIGHT.hoop];
+    size = [2 * R, 2 * R];
+    const ring = (radius: number, z: number) =>
+      Array.from({ length: 40 }, (_, i) => place(radius * Math.cos((i / 40) * 2 * Math.PI), radius * Math.sin((i / 40) * 2 * Math.PI), z));
+    const loop = (list: Pt[]) => `M${list.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L')}Z`;
+    // Pared de afuera y de adentro: una tira de cuadraditos entre el borde de abajo y el de arriba.
+    const wall = (radius: number) => {
+      const [low, high] = [ring(radius, 0), ring(radius, h)];
+      return low.map((p, i) => loop([p, low[(i + 1) % low.length], high[(i + 1) % high.length], high[i]])).join(' ');
+    };
+    body = (
+      <>
+        <path d={`${loop(ring(R + 0.04, 0))} ${loop(ring(r - 0.04, 0))}`} fillRule="evenodd" fill="#000000" fillOpacity={0.25} pointerEvents="none" />
+        <path d={wall(R)} fill={shade(color, 0.6)} pointerEvents="none" />
+        <path d={wall(r)} fill={shade(color, 0.55)} pointerEvents="none" />
+        {/* Lo de adentro del aro se toca también (como en la vista de arriba). */}
+        <path d={loop(ring(r, 0))} fill={color} fillOpacity={0.12} />
+        <path d={`${loop(ring(R, h))} ${loop(ring(r, h))}`} fillRule="evenodd" fill={color} stroke={shade(color, 0.5)} strokeWidth={1} />
       </>
     );
   } else {

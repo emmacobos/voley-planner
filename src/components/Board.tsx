@@ -111,7 +111,7 @@ interface BoardProps {
 }
 
 /** En la vista inclinada, estos elementos se ven parados (con su sombra); el resto queda en el piso. */
-const STANDING = new Set<BoardElement['kind']>(['player', 'ball', 'cone', 'coach', 'cart', 'step', 'machine']);
+const STANDING = new Set<BoardElement['kind']>(['player', 'ball', 'cone', 'coach', 'cart', 'step', 'machine', 'hoop']);
 /** A qué altura (m) se dibuja cada uno parado. */
 const STAND_HEIGHT: Partial<Record<BoardElement['kind'], number>> = { player: 1, coach: 1, ball: 0.9, ...SOLID_HEIGHT };
 /** El piso inclinado se dibuja a esta escala (para que se vea nítido). */

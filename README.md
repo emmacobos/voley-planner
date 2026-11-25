@@ -51,7 +51,7 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    - **Inclinada**: la cancha en perspectiva, como desde la tribuna, con la red
      con su altura y las jugadoras, la pelota, los conos y los entrenadores
      paradas con su sombra; el carro de pelotas, el banquito, la máquina
-     lanzadora y los conos son volúmenes en su tamaño real, que se ven desde el
+     lanzadora, los conos y los aros de precisión son volúmenes en su tamaño real, que se ven desde el
      ángulo de la cámara. Las flechas se despegan del piso según la
      inclinación (más cuanto más acostada está la cancha) y dejan su sombra:
      las de pelota hacen un arco por el aire y las de desplazamiento van un
