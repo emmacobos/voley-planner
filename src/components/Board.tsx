@@ -15,6 +15,7 @@ import {
   TEXT_COLORS,
   TEXT_FONT_RANGE,
   setTextMeasurer,
+  shadowCorners,
   shadowPoints,
   textBox,
   textFontSize,
@@ -717,6 +718,7 @@ export function Board({
             bm={bm}
             elements={points.filter((el) => STANDING.has(el.kind))}
             arrows={arrows}
+            shadows={shadows}
             lift={Math.min(1, Math.max(0, (90 - view3d.tilt) / 80))}
             selectedEl={selectedEl}
             render={(el) => renderPoint(el, false)}
@@ -766,6 +768,7 @@ function StandingLayer({
   bm,
   elements,
   arrows,
+  shadows,
   lift,
   selectedEl,
   render,
@@ -781,6 +784,8 @@ function StandingLayer({
   elements: PointElement[];
   /** Flechas: se dibujan en el aire, más despegadas cuanto más acostada está la cancha (`lift`, de 0 a 1). */
   arrows: ArrowElement[];
+  /** Sombras del bloqueo: se dibujan como un volumen desde las manos del bloqueo hasta el piso. */
+  shadows: BlockShadowElement[];
   lift: number;
   selectedEl: BoardElement | null;
   render: (el: PointElement) => ReactNode;
@@ -886,6 +891,9 @@ function StandingLayer({
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
     >
+      {shadows.map((sh) => (
+        <Shadow3D key={sh.id} shadow={sh} at={at} />
+      ))}
       {order(farSide).map(draw)}
       {net}
       {arrows.map((a) => (
@@ -893,6 +901,46 @@ function StandingLayer({
       ))}
       {order(near).map(draw)}
     </svg>
+  );
+}
+
+/** Altura (m) de las manos del bloqueo, de donde sale la sombra. */
+const BLOCK_HANDS = { bottom: 2.45, top: 3.05 };
+
+/**
+ * Sombra del bloqueo en 3D: el volumen que tapa el bloqueo, desde las manos
+ * (por encima de la red) hasta la zona del piso (que se sigue dibujando en
+ * el piso, donde se agarra). Es translúcida: se ve lo que queda adentro.
+ */
+function Shadow3D({ shadow, at }: { shadow: BlockShadowElement; at: (x: number, y: number, z?: number) => { x: number; y: number } }) {
+  const [s1, e1, e2, s2] = shadowCorners(shadow);
+  const H = BLOCK_HANDS.top;
+  const poly = (list: [{ x: number; y: number }, number][]) =>
+    list
+      .map(([p, z]) => {
+        const q = at(p.x, p.y, z);
+        return `${q.x.toFixed(1)},${q.y.toFixed(1)}`;
+      })
+      .join(' ');
+  const face = { fill: '#000000', fillOpacity: 0.12, stroke: '#000000', strokeOpacity: 0.3, strokeWidth: 1, strokeLinejoin: 'round' as const };
+  return (
+    <g className="shadow-3d" pointerEvents="none">
+      {/* Costados y frente (en el bloqueo). */}
+      <polygon points={poly([[s1, 0], [e1, 0], [s1, H]])} {...face} />
+      <polygon points={poly([[s2, 0], [e2, 0], [s2, H]])} {...face} />
+      <polygon points={poly([[s1, 0], [s2, 0], [s2, H], [s1, H]])} {...face} fillOpacity={0.08} />
+      {/* El "techo": de las manos al fondo de la zona tapada. */}
+      <polygon points={poly([[s1, H], [e1, 0], [e2, 0], [s2, H]])} {...face} fillOpacity={0.16} />
+      {/* Las manos del bloqueo. */}
+      <polygon
+        points={poly([[s1, BLOCK_HANDS.bottom], [s2, BLOCK_HANDS.bottom], [s2, H], [s1, H]])}
+        fill="#e9d3a6"
+        fillOpacity={0.85}
+        stroke="#1c1915"
+        strokeOpacity={0.6}
+        strokeWidth={1}
+      />
+    </g>
   );
 }
 

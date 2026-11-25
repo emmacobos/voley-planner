@@ -55,7 +55,9 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      ángulo de la cámara. Las flechas se despegan del piso según la
      inclinación (más cuanto más acostada está la cancha) y dejan su sombra:
      las de pelota hacen un arco por el aire y las de desplazamiento van un
-     poco por encima del piso. Con *Inclinación* (de 10° a casi de arriba) y *Giro*
+     poco por encima del piso. La sombra del bloqueo es un volumen
+     translúcido que sale de las manos del bloqueo, por encima de la red, y
+     baja hasta la zona tapada en el piso. Con *Inclinación* (de 10° a casi de arriba) y *Giro*
      (de costado, en diagonal o desde atrás de cualquiera de los dos equipos)
      se elige el ángulo. La ruedita del mouse (o + y −) acerca y aleja,
      arrastrando el fondo se mueve la cancha y ⌖ la vuelve a centrar. Con el
