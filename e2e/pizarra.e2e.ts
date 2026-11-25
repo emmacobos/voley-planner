@@ -418,7 +418,8 @@ test('vista inclinada: las fichas se arrastran por el piso y las flechas caen do
   await page.mouse.move(stage.x + stage.width / 2 + 100, stage.y + stage.height / 2 - 40, { steps: 5 });
   await page.mouse.up({ button: 'right' });
   expect(Number(await angle('Giro'))).toBe(turn0 + 30);
-  expect(Number(await angle('Inclinación'))).toBe(tilt0 + 10);
+  // Para arriba la cancha se acuesta (menos inclinación).
+  expect(Number(await angle('Inclinación'))).toBe(tilt0 - 10);
   // El giro es libre: sigue de largo y da la vuelta.
   await page.mouse.move(stage.x + 20, stage.y + stage.height / 2);
   await page.mouse.down({ button: 'right' });

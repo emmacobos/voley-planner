@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boxMap, normalizeTurn, project, toMeters, toPx, turnLabel, unproject, viewMatrix, withCamera, zoomAt } from './perspective';
+import { boxMap, normalizeTurn, orbit, project, toMeters, toPx, turnLabel, unproject, viewMatrix, withCamera, zoomAt } from './perspective';
 
 const W = 960;
 const H = 600;
@@ -89,5 +89,26 @@ describe('vista inclinada', () => {
     expect(normalizeTurn(-190)).toBe(170);
     expect(normalizeTurn(540)).toBe(180);
     expect(normalizeTurn(45)).toBe(45);
+  });
+
+  it('al girar, la cancha no cambia de tamaño ni se corre', () => {
+    const size = (turn: number) => {
+      const m = viewMatrix({ tilt: 30, turn }, W, H, keep);
+      const len = (p: { x: number; y: number }, q: { x: number; y: number }) => Math.hypot(q.x - p.x, q.y - p.y);
+      // Lo que queda de frente (a lo ancho de la pantalla) mide lo mismo en cualquier giro.
+      const along = len(project(m, W / 2 - 50, H / 2), project(m, W / 2 + 50, H / 2));
+      const across = len(project(m, W / 2, H / 2 - 50), project(m, W / 2, H / 2 + 50));
+      return { center: project(m, W / 2, H / 2), span: Math.max(along, across) };
+    };
+    const [s0, s1] = [size(0), size(90)];
+    expect(s1.center.x).toBeCloseTo(s0.center.x, 6);
+    expect(s1.center.y).toBeCloseTo(s0.center.y, 6);
+    expect(s1.span).toBeCloseTo(s0.span, 0);
+  });
+
+  it('con el clic derecho no hay topes: por arriba pasa al otro lado', () => {
+    expect(orbit({ tilt: 80, turn: 10 }, 0, 20)).toEqual({ tilt: 80, turn: -170 });
+    expect(orbit({ tilt: 40, turn: 170 }, 30, 0)).toEqual({ tilt: 40, turn: -160 });
+    expect(orbit({ tilt: 20, turn: 0 }, 0, -100).tilt).toBe(5);
   });
 });

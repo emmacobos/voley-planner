@@ -16,7 +16,7 @@ export interface View3D {
 }
 
 export const DEFAULT_VIEW_3D: View3D = { tilt: 40, turn: 40 };
-export const TILT_RANGE = { min: 10, max: 90 };
+export const TILT_RANGE = { min: 5, max: 90 };
 /** El giro da la vuelta completa. */
 export const TURN_RANGE = { min: -180, max: 180 };
 
@@ -167,18 +167,43 @@ export const toMeters = (b: BoxMap, px: number, py: number) => ({ x: (px - b.off
  * importa (`keep`, en px del piso, con su altura) entre justo en el recuadro.
  */
 export function viewMatrix(view: View3D, w: number, h: number, keep: [number, number, number][], padding = 10): Mat4 {
-  const base = [
-    translate(w / 2, h / 2),
-    perspective(Math.max(w, h) * 1.3),
-    rotateX(90 - view.tilt),
-    rotateZ(-view.turn),
-    translate(-w / 2, -h / 2),
-  ].reduce(multiply);
-  const pts = keep.map(([x, y, z]) => project(base, x, y, z));
-  const xs = pts.map((p) => p.x);
-  const ys = pts.map((p) => p.y);
-  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-  const k = Math.min((w - 2 * padding) / (x1 - x0), (h - 2 * padding) / (y1 - y0));
-  const fit = multiply(translate(w / 2 - (k * (x0 + x1)) / 2, h / 2 - (k * (y0 + y1)) / 2), scale(k));
-  return multiply(fit, base);
+  const base = (turn: number) =>
+    [
+      translate(w / 2, h / 2),
+      perspective(Math.max(w, h) * 1.3),
+      rotateX(90 - view.tilt),
+      rotateZ(-turn),
+      translate(-w / 2, -h / 2),
+    ].reduce(multiply);
+  // El tamaño no depende del giro (es el que entra en todos los giros) y el
+  // centro de la cancha queda quieto: al girar, la cancha no se agranda, ni se
+  // achica, ni se corre.
+  let k = Infinity;
+  for (let turn = 0; turn < 360; turn += 15) {
+    const m = base(turn);
+    for (const [x, y, z] of keep) {
+      const p = project(m, x, y, z);
+      const dx = Math.abs(p.x - w / 2);
+      const dy = Math.abs(p.y - h / 2);
+      if (dx > 0) k = Math.min(k, (w / 2 - padding) / dx);
+      if (dy > 0) k = Math.min(k, (h / 2 - padding) / dy);
+    }
+  }
+  const fit = [translate(w / 2, h / 2), scale(k), translate(-w / 2, -h / 2)].reduce(multiply);
+  return multiply(fit, base(view.turn));
+}
+
+/**
+ * La vista después de arrastrar con el clic derecho, sin topes: el giro da la
+ * vuelta y, al subir la inclinación más allá de la vista de arriba, la cámara
+ * pasa por encima y queda mirando desde el otro lado. Hacia abajo para un poco
+ * antes del piso.
+ */
+export function orbit(start: View3D, dTurn: number, dTilt: number): View3D {
+  const raw = Math.min(180 - TILT_RANGE.min, Math.max(TILT_RANGE.min, start.tilt + dTilt));
+  const over = raw > 90;
+  return {
+    tilt: Math.round(over ? 180 - raw : raw),
+    turn: Math.round(normalizeTurn(start.turn + dTurn + (over ? 180 : 0))),
+  };
 }
