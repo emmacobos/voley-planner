@@ -60,7 +60,8 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      se elige el ángulo. La ruedita del mouse (o + y −) acerca y aleja,
      arrastrando el fondo se mueve la cancha y ⌖ la vuelve a centrar. Con el
      clic derecho apretado y moviendo el mouse se cambia el ángulo: para los
-     costados gira y para arriba o abajo inclina. Se edita
+     costados gira libre (da la vuelta completa) y para arriba o abajo inclina,
+     hasta la vista de arriba. Se edita
      igual: las fichas se arrastran por el piso y las flechas, sombras, textos
      y trazos se dibujan sobre el piso. Vale
      para *Presentar* y el link compartido se ve con el mismo ángulo; el PNG, el

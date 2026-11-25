@@ -419,6 +419,13 @@ test('vista inclinada: las fichas se arrastran por el piso y las flechas caen do
   await page.mouse.up({ button: 'right' });
   expect(Number(await angle('Giro'))).toBe(turn0 + 30);
   expect(Number(await angle('Inclinación'))).toBe(tilt0 + 10);
+  // El giro es libre: sigue de largo y da la vuelta.
+  await page.mouse.move(stage.x + 20, stage.y + stage.height / 2);
+  await page.mouse.down({ button: 'right' });
+  await page.mouse.move(stage.x + 20 + 600, stage.y + stage.height / 2, { steps: 10 });
+  await page.mouse.up({ button: 'right' });
+  const wrapped = ((turn0 + 30 + 180 + 180) % 360) - 180;
+  expect(Number(await angle('Giro'))).toBe(wrapped);
 
   // La presentación también se ve inclinada, y se puede volver a la vista de arriba.
   await page.locator('button.present-button').click();

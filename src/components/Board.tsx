@@ -23,7 +23,7 @@ import {
   wrapText,
 } from '../domain/shadows';
 import { isSegment } from '../domain/types';
-import { DEFAULT_CAMERA, TILT_RANGE, TURN_RANGE, boxMap, project, shrink, toCss, toMeters, toPx, unproject, viewMatrix, withCamera, zoomAt } from '../domain/perspective';
+import { DEFAULT_CAMERA, TILT_RANGE, boxMap, normalizeTurn, project, shrink, toCss, toMeters, toPx, unproject, viewMatrix, withCamera, zoomAt } from '../domain/perspective';
 import type { BoxMap, Camera, Mat4, View3D } from '../domain/perspective';
 import { DEFAULT_DRAW_WIDTH, DRAW_COLORS, drawPath, moveStroke, simplifyStroke, strokeBounds, strokeLength, strokeWidth } from '../domain/drawing';
 import type {
@@ -371,7 +371,8 @@ export function Board({
     const clamp = (v: number, r: { min: number; max: number }) => Math.round(Math.min(r.max, Math.max(r.min, v)));
     // Para los costados gira; para arriba y abajo inclina (arrastrar hacia abajo la acuesta más).
     onView3dChange({
-      turn: clamp(drag.turn0 + (e.clientX - drag.sx) * 0.3, TURN_RANGE),
+      // El giro es libre: da la vuelta completa.
+      turn: Math.round(normalizeTurn(drag.turn0 + (e.clientX - drag.sx) * 0.3)),
       tilt: clamp(drag.tilt0 - (e.clientY - drag.sy) * 0.25, TILT_RANGE),
     });
   };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boxMap, project, toMeters, toPx, turnLabel, unproject, viewMatrix, withCamera, zoomAt } from './perspective';
+import { boxMap, normalizeTurn, project, toMeters, toPx, turnLabel, unproject, viewMatrix, withCamera, zoomAt } from './perspective';
 
 const W = 960;
 const H = 600;
@@ -80,5 +80,14 @@ describe('vista inclinada', () => {
     expect(turnLabel(90)).toBe('desde atrás del equipo A');
     expect(turnLabel(-90)).toBe('desde atrás del equipo B');
     expect(turnLabel(-40)).toBe('en diagonal (lado B)');
+    expect(turnLabel(180)).toBe('del otro costado');
+    expect(turnLabel(135)).toBe('en diagonal (lado A)');
+  });
+
+  it('el giro da la vuelta completa', () => {
+    expect(normalizeTurn(200)).toBe(-160);
+    expect(normalizeTurn(-190)).toBe(170);
+    expect(normalizeTurn(540)).toBe(180);
+    expect(normalizeTurn(45)).toBe(45);
   });
 });

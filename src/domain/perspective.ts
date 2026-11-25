@@ -16,15 +16,24 @@ export interface View3D {
 }
 
 export const DEFAULT_VIEW_3D: View3D = { tilt: 40, turn: 40 };
-export const TILT_RANGE = { min: 10, max: 85 };
-export const TURN_RANGE = { min: -90, max: 90 };
+export const TILT_RANGE = { min: 10, max: 90 };
+/** El giro da la vuelta completa. */
+export const TURN_RANGE = { min: -180, max: 180 };
+
+/** El giro llevado a −180…180 (girar sin topes da la vuelta). */
+export function normalizeTurn(turn: number): number {
+  const t = (((turn + 180) % 360) + 360) % 360 - 180;
+  return t === -180 ? 180 : t;
+}
 
 /** Cómo se llama cada giro. */
 export function turnLabel(turn: number): string {
-  if (turn > 75) return 'desde atrás del equipo A';
-  if (turn < -75) return 'desde atrás del equipo B';
-  if (Math.abs(turn) < 15) return 'de costado';
-  return turn > 0 ? 'en diagonal (lado A)' : 'en diagonal (lado B)';
+  const t = normalizeTurn(turn);
+  const a = Math.abs(t);
+  if (a < 15) return 'de costado';
+  if (a > 165) return 'del otro costado';
+  if (a >= 75 && a <= 105) return t > 0 ? 'desde atrás del equipo A' : 'desde atrás del equipo B';
+  return t > 0 ? 'en diagonal (lado A)' : 'en diagonal (lado B)';
 }
 
 /** Acercar y mover la cancha: el zoom es alrededor del centro y se corre `x`, `y` px. */
