@@ -9,7 +9,7 @@ import {
   clampToView,
   toCourt,
 } from '../domain/court';
-import { ARROW_KINDS, arrowColor, arrowDashed, arrowKind, arrowPath, curveThrough, headMarkerId, midPoint } from '../domain/arrows';
+import { ARROW_KINDS, arrowColor, arrowDashed, arrowHeight, arrowKind, arrowPoints, arrowPath, curveThrough, headMarkerId, midPoint } from '../domain/arrows';
 import {
   DEFAULT_SHADOW,
   TEXT_COLORS,
@@ -656,6 +656,7 @@ export function Board({
           arrow={a}
           selected={a.id === selectedId}
           onPointerDown={(e, part) => startElementDrag(e, a.id, part)}
+          ghost={!!mat}
         />
       ))}
       {drag?.type === 'arrow' && (
@@ -714,6 +715,8 @@ export function Board({
             mat={mat}
             bm={bm}
             elements={points.filter((el) => STANDING.has(el.kind))}
+            arrows={arrows}
+            lift={Math.min(1, Math.max(0, (90 - view3d.tilt) / 80))}
             selectedEl={selectedEl}
             render={(el) => renderPoint(el, false)}
             buttons={(el) => (
@@ -761,6 +764,8 @@ function StandingLayer({
   mat,
   bm,
   elements,
+  arrows,
+  lift,
   selectedEl,
   render,
   buttons,
@@ -773,6 +778,9 @@ function StandingLayer({
   mat: Mat4;
   bm: BoxMap;
   elements: PointElement[];
+  /** Flechas: se dibujan en el aire, más despegadas cuanto más acostada está la cancha (`lift`, de 0 a 1). */
+  arrows: ArrowElement[];
+  lift: number;
   selectedEl: BoardElement | null;
   render: (el: PointElement) => ReactNode;
   buttons: (el: PointElement) => ReactNode;
@@ -879,8 +887,74 @@ function StandingLayer({
     >
       {order(farSide).map(draw)}
       {net}
+      {arrows.map((a) => (
+        <Arrow3D key={a.id} arrow={a} lift={lift} at={at} selected={selectedEl?.id === a.id} onPointerDown={(e) => onElementDown(e, a.id)} />
+      ))}
       {order(near).map(draw)}
     </svg>
+  );
+}
+
+/** Una flecha en 3D: su recorrido en el aire, con su sombra en el piso y la punta (o la pelota) al final. */
+function Arrow3D({
+  arrow,
+  lift,
+  at,
+  selected,
+  onPointerDown,
+}: {
+  arrow: ArrowElement;
+  lift: number;
+  at: (x: number, y: number, z?: number) => { x: number; y: number; depth: number };
+  selected: boolean;
+  onPointerDown: (e: ReactPointerEvent<SVGElement>) => void;
+}) {
+  const N = 28;
+  const path = arrowPoints(arrow, N);
+  const air = path.map((p, i) => at(p.x, p.y, arrowHeight(arrow, i / N, lift)));
+  const floor = path.map((p) => at(p.x, p.y));
+  // Px por metro en el medio de la flecha (para el grosor).
+  const m = path[N / 2];
+  const [c0, c1] = [at(m.x, m.y), at(m.x + 1, m.y)];
+  const k = Math.max(8, Math.hypot(c1.x - c0.x, c1.y - c0.y));
+  const line = (pts: { x: number; y: number }[]) => pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const ballTip = arrowKind(arrow) === 'pelota';
+  const color = ballTip ? '#ffffff' : arrowColor(arrow);
+  const width = Math.max(2, 0.09 * k);
+  const dash = arrowDashed(arrow) ? `${(0.3 * k).toFixed(1)} ${(0.18 * k).toFixed(1)}` : undefined;
+  // Punta: un triángulo en la dirección en que termina (en la pantalla).
+  const [e1, e0] = [air[N], air[N - 2]];
+  const ang = (Math.atan2(e1.y - e0.y, e1.x - e0.x) * 180) / Math.PI;
+  const head = Math.max(6, 0.32 * k);
+  return (
+    <g className="el" data-id={arrow.id} onPointerDown={onPointerDown}>
+      {lift > 0.05 && (
+        <polyline points={line(floor)} fill="none" stroke="#000000" strokeOpacity={0.22} strokeWidth={width} strokeLinecap="round" pointerEvents="none" />
+      )}
+      {selected && (
+        <polyline className="ui-only" points={line(air)} fill="none" stroke={SELECTION_COLOR} strokeOpacity={0.5} strokeWidth={width + 8} strokeLinecap="round" pointerEvents="none" />
+      )}
+      {/* Borde oscuro debajo: le da volumen y la separa del piso. */}
+      <polyline points={line(air)} fill="none" stroke="#000000" strokeOpacity={0.45} strokeWidth={width + 3} strokeLinecap="round" strokeDasharray={dash} pointerEvents="none" />
+      <polyline points={line(air)} fill="none" stroke={color} strokeOpacity={ballTip ? 0.9 : 1} strokeWidth={width} strokeLinecap="round" strokeDasharray={dash} pointerEvents="none" />
+      {ballTip ? (
+        <g transform={`translate(${e1.x} ${e1.y}) scale(${k})`} pointerEvents="none">
+          <BallShape r={0.2} />
+        </g>
+      ) : (
+        <path
+          d={`M0,0 L${-head},${-head * 0.55} L${-head},${head * 0.55}z`}
+          transform={`translate(${e1.x} ${e1.y}) rotate(${ang})`}
+          fill={color}
+          stroke="#000000"
+          strokeOpacity={0.45}
+          strokeWidth={1.5}
+          pointerEvents="none"
+        />
+      )}
+      {/* Para agarrarla por donde se ve. */}
+      <polyline points={line(air)} fill="none" stroke="transparent" strokeWidth={Math.max(14, width + 12)} pointerEvents="stroke" />
+    </g>
   );
 }
 
@@ -1024,10 +1098,13 @@ function Arrow({
   arrow,
   selected,
   onPointerDown,
+  ghost = false,
 }: {
   arrow: ArrowElement;
   selected: boolean;
   onPointerDown?: (e: ReactPointerEvent<SVGElement>, part: ArrowPart) => void;
+  /** Vista inclinada: la flecha se ve en 3D en otra capa; acá quedan solo los agarres. */
+  ghost?: boolean;
 }) {
   const { x1, y1, x2, y2 } = arrow;
   const d = arrowPath(arrow);
@@ -1040,7 +1117,7 @@ function Arrow({
       {selected && (
         <path className="ui-only" d={d} fill="none" stroke={SELECTION_COLOR} strokeOpacity={0.45} strokeWidth={0.3} strokeLinecap="round" pointerEvents="none" />
       )}
-      {ballTip ? (
+      {ghost ? null : ballTip ? (
         <g pointerEvents="none">
           <path d={d} fill="none" stroke="#000000" strokeOpacity={0.18} strokeWidth={0.15} strokeLinecap="round" />
           <path d={d} fill="none" stroke="#ffffff" strokeOpacity={0.7} strokeWidth={0.1} strokeLinecap="round" />

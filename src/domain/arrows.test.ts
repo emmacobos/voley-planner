@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ARROW_KINDS, arrowColor, arrowDashed, arrowKind, arrowPath, curveThrough, headMarkerId, midPoint } from './arrows';
+import { ARROW_KINDS, arrowHeight, arrowPoints, arrowColor, arrowDashed, arrowKind, arrowPath, curveThrough, headMarkerId, midPoint } from './arrows';
 
 const straight = { x1: 0, y1: 0, x2: 4, y2: 0 };
 
@@ -50,5 +50,21 @@ describe('tipos de flecha', () => {
   it('las de desplazamiento son punteadas', () => {
     expect(arrowDashed({ style: 'move' })).toBe(true);
     expect(arrowDashed({ style: 'ball' })).toBe(false);
+  });
+});
+
+describe('flechas en la vista inclinada', () => {
+  const ball = { x1: 0, y1: 0, x2: 10, y2: 0, style: 'ball' as const };
+  it('recorren la flecha de punta a punta', () => {
+    const pts = arrowPoints({ ...ball, curve: 2 }, 10);
+    expect(pts[0]).toEqual({ x: 0, y: 0 });
+    expect(pts[10]).toEqual({ x: 10, y: 0 });
+    expect(pts[5].y).toBeCloseTo(2);
+  });
+  it('la de pelota hace un arco y la de desplazamiento apenas se despega; de arriba quedan en el piso', () => {
+    expect(arrowHeight(ball, 0.5, 1)).toBeGreaterThan(arrowHeight(ball, 0, 1));
+    expect(arrowHeight(ball, 0.5, 1)).toBeCloseTo(0.5 + 2.4);
+    expect(arrowHeight({ ...ball, style: 'move' }, 0.5, 1)).toBeCloseTo(0.3);
+    expect(arrowHeight(ball, 0.5, 0)).toBe(0);
   });
 });

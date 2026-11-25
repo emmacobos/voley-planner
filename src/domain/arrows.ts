@@ -82,3 +82,26 @@ export function arrowDashed(a: Pick<ArrowElement, 'style'>): boolean {
 export function headMarkerId(color: string): string {
   return `head-${color.replace('#', '').toLowerCase()}`;
 }
+
+/** Puntos a lo largo de la flecha (recta o curva), del principio al final. */
+export function arrowPoints(a: ArrowGeom, n = 24): Pt[] {
+  const c = controlPoint(a);
+  return Array.from({ length: n + 1 }, (_, i) => {
+    const t = i / n;
+    const u = 1 - t;
+    return { x: u * u * a.x1 + 2 * u * t * c.x + t * t * a.x2, y: u * u * a.y1 + 2 * u * t * c.y + t * t * a.y2 };
+  });
+}
+
+/**
+ * Altura (m) de la flecha en la vista inclinada, en el punto `t` (0 a 1) del
+ * recorrido. `lift` va de 0 (vista de arriba: pegada al piso) a 1 (cancha
+ * bien acostada). Las de pelota hacen un arco más alto cuanto más larga es la
+ * flecha; las de desplazamiento se despegan un poco del piso.
+ */
+export function arrowHeight(a: Pick<ArrowElement, 'x1' | 'y1' | 'x2' | 'y2' | 'style'>, t: number, lift: number): number {
+  if (a.style === 'move') return 0.3 * lift;
+  const len = Math.hypot(a.x2 - a.x1, a.y2 - a.y1);
+  const arc = Math.min(3.5, 0.6 + 0.18 * len);
+  return lift * (0.5 + arc * 4 * t * (1 - t));
+}
