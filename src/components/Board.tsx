@@ -594,6 +594,17 @@ export function Board({
             {/* Aro de precisión (1 m de diámetro): se puede tocar en todo el círculo. */}
             <circle r={0.5} fill={el.color ?? HOOP_COLORS[0].value} fillOpacity={0.14} stroke={el.color ?? HOOP_COLORS[0].value} strokeWidth={0.1} />
             <circle r={0.5} fill="none" stroke="#ffffff" strokeOpacity={0.55} strokeWidth={0.025} />
+            {/* Aro alto (de armado): el poste en el medio y la altura. */}
+            {el.height ? (
+              <>
+                <circle r={0.09} fill="#1c1915" stroke="#ffffff" strokeWidth={0.03} />
+                <g transform={up.trim() || undefined}>
+                  <text y={0.85} textAnchor="middle" fontSize={0.3} fontWeight={700} fill="#1c1915" stroke="#ffffff" strokeWidth={0.08} paintOrder="stroke">
+                    {el.height.toFixed(1).replace('.', ',')} m
+                  </text>
+                </g>
+              </>
+            ) : null}
           </g>
         );
     }
@@ -806,7 +817,7 @@ function StandingLayer({
 
   const items = elements.map((el) => {
     const foot = at(el.x, el.y);
-    const top = at(el.x, el.y, STAND_HEIGHT[el.kind] ?? 0);
+    const top = at(el.x, el.y, el.kind === 'hoop' ? el.height || SOLID_HEIGHT.hoop : (STAND_HEIGHT[el.kind] ?? 0));
     const right = at(el.x + 1, el.y);
     const down = at(el.x, el.y + 1);
     // Cuántos px de pantalla mide un metro ahí (más chico en el fondo).

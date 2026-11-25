@@ -51,7 +51,8 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    - **Inclinada**: la cancha en perspectiva, como desde la tribuna, con la red
      con su altura y las jugadoras, la pelota, los conos y los entrenadores
      paradas con su sombra; el carro de pelotas, el banquito, la máquina
-     lanzadora, los conos y los aros de precisión son volúmenes en su tamaño real, que se ven desde el
+     lanzadora, los conos y los aros de precisión (el de armado, alto en su
+     soporte; o en el piso) son volúmenes en su tamaño real, que se ven desde el
      ángulo de la cámara. Las flechas se despegan del piso según la
      inclinación (más cuanto más acostada está la cancha) y dejan su sombra:
      las de pelota hacen un arco por el aire y las de desplazamiento van un
@@ -74,8 +75,9 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
    - Tocar en cualquier lugar fuera de la pizarra cierra la tarjeta del
      elemento seleccionado.
    - *Agregar* suma jugadores, pelota, conos, entrenadores, carros de pelotas,
-     aros de precisión (en rojo, amarillo, azul o verde, para marcar a dónde
-     sacar o atacar), banquitos o cajones (para saltar o pararse arriba) y la
+     aros de precisión (en rojo, amarillo, azul o verde; altos en un soporte,
+     a la altura que elijas, como objetivo del armado, o en el piso para marcar
+     a dónde sacar o atacar), banquitos o cajones (para saltar o pararse arriba) y la
      máquina lanzadora de pelotas (su caño marca hacia dónde tira y se gira
      desde su tarjeta). Los
      aros y banquitos quedan en el piso, debajo de las jugadoras.

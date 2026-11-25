@@ -184,8 +184,41 @@ export function Solid3D({
         <circle cx={m1.x} cy={m1.y} r={Math.max(2, 0.11 * k)} fill="#E3C48B" stroke="#111111" strokeWidth={1} />
       </>
     );
+  } else if (el.kind === 'hoop' && el.height) {
+    // Aro de armado: en un soporte (base y poste), a la altura elegida, con el aro horizontal.
+    const place = placer(at, el.x, el.y);
+    const color = el.color ?? HOOP_COLORS[0].value;
+    const H = el.height;
+    size = [1, 1];
+    const ring = (radius: number, z: number) =>
+      Array.from({ length: 40 }, (_, i) => place(radius * Math.cos((i / 40) * 2 * Math.PI), radius * Math.sin((i / 40) * 2 * Math.PI), z));
+    const loop = (list: Pt[]) => `M${list.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L')}Z`;
+    const [foot, top] = [place(0, 0, 0), place(0, 0, H - 0.05)];
+    const tube = Math.max(2, 0.05 * k);
+    body = (
+      <>
+        {/* Sombra del aro en el piso y base del soporte (una cruz). */}
+        <path d={loop(ring(0.5, 0))} fill="none" stroke="#000000" strokeOpacity={0.25} strokeWidth={tube} pointerEvents="none" />
+        {[0, 90].map((a) => {
+          const r = (a * Math.PI) / 180;
+          const [p, q] = [place(0.35 * Math.cos(r), 0.35 * Math.sin(r)), place(-0.35 * Math.cos(r), -0.35 * Math.sin(r))];
+          return <line key={a} x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke="#1c1915" strokeWidth={Math.max(2, 0.06 * k)} strokeLinecap="round" />;
+        })}
+        <line x1={foot.x} y1={foot.y} x2={top.x} y2={top.y} stroke="#2b2925" strokeWidth={Math.max(2, 0.05 * k)} strokeLinecap="round" />
+        {/* Rayos que sostienen el aro. */}
+        {[0, 120, 240].map((a) => {
+          const r = (a * Math.PI) / 180;
+          const p = place(0.5 * Math.cos(r), 0.5 * Math.sin(r), H);
+          return <line key={a} x1={top.x} y1={top.y} x2={p.x} y2={p.y} stroke="#2b2925" strokeWidth={Math.max(1, 0.02 * k)} />;
+        })}
+        {/* El aro: lo de adentro también se toca, para agarrarlo. */}
+        <path d={loop(ring(0.5, H))} fill={color} fillOpacity={0.1} />
+        <path d={loop(ring(0.5, H))} fill="none" stroke={shade(color, 0.55)} strokeWidth={tube + 2} />
+        <path d={loop(ring(0.5, H))} fill="none" stroke={color} strokeWidth={tube} />
+      </>
+    );
   } else if (el.kind === 'hoop') {
-    // Aro de precisión: un aro de 1 m apoyado en el piso, con su grosor.
+    // Aro en el piso: un aro de 1 m apoyado en el piso, con su grosor.
     const place = placer(at, el.x, el.y);
     const color = el.color ?? HOOP_COLORS[0].value;
     const [R, r, h] = [0.5, 0.43, SOLID_HEIGHT.hoop];

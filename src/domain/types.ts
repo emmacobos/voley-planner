@@ -126,11 +126,16 @@ export interface TeamNames {
   hidden?: boolean;
 }
 
-/** Aro de precisión: objetivo en el piso (por ejemplo, para el saque o la recepción). */
+/**
+ * Aro de precisión: alto, en un soporte (objetivo para el armado), o en el
+ * piso (objetivo para el saque o la recepción).
+ */
 export interface HoopElement extends Positioned {
   kind: 'hoop';
   /** Color del aro (sin valor, rojo). */
   color?: string;
+  /** Altura del aro en metros (sin valor o 0: en el piso). */
+  height?: number;
 }
 
 export type ArrowStyle = 'move' | 'ball';

@@ -125,6 +125,9 @@ const DEFAULT_SPOT: Record<'ball' | 'cone' | 'coach' | 'cart' | 'hoop' | 'step' 
   machine: { x: NET_X + 7, y: 4.5 },
 };
 
+/** Altura (m) del aro de armado. */
+const HOOP_HEIGHT = { default: 2.8, min: 1.5, max: 4 };
+
 const ADD_BUTTONS: { kind: AddKind; label: string }[] = [
   { kind: 'playerA', label: '+ Jugador A' },
   { kind: 'playerB', label: '+ Jugador B' },
@@ -285,8 +288,8 @@ export function BoardEditor({
     } else {
       el = { id: newId(), kind, ...DEFAULT_SPOT[kind] };
       if (kind === 'cone') el.y += offset;
-      // Los aros miden 1 m: se separan más para que no se encimen.
-      if (kind === 'hoop') el.y += offset * 1.4;
+      // Los aros miden 1 m: se separan más para que no se encimen. Arrancan altos, cerca de la red (objetivo del armado).
+      if (kind === 'hoop') el = { ...el, x: NET_X - 1.2, y: 1.8 + offset * 1.4, height: HOOP_HEIGHT.default } as PointElement;
       if (kind === 'step') el.y -= offset;
       if (kind === 'machine') el = { ...el, rotation: 180 } as PointElement;
     }
@@ -1414,7 +1417,49 @@ function SelectedPanel({
             ))}
           </div>
         </div>
-        <p className="hint">Arrastralo a la zona que tienen que buscar con el saque, la recepción o el ataque. Podés poner varios.</p>
+        <div className="field">
+          Dónde está
+          <div className="segmented" role="group" aria-label="Altura del aro">
+            <button
+              className={element.height ? 'active' : ''}
+              aria-pressed={!!element.height}
+              onClick={() => onUpdate({ ...element, height: element.height || HOOP_HEIGHT.default })}
+              title="En un soporte: objetivo para el armado"
+            >
+              Alto (armado)
+            </button>
+            <button
+              className={!element.height ? 'active' : ''}
+              aria-pressed={!element.height}
+              onClick={() => {
+                const { height: _height, ...rest } = element;
+                onUpdate(rest);
+              }}
+              title="Apoyado en el piso: objetivo para el saque o la recepción"
+            >
+              En el piso
+            </button>
+          </div>
+        </div>
+        {element.height ? (
+          <label className="field">
+            Altura ({element.height.toFixed(1).replace('.', ',')} m · la red está a 2,24 / 2,43 m)
+            <input
+              type="range"
+              min={HOOP_HEIGHT.min}
+              max={HOOP_HEIGHT.max}
+              step={0.1}
+              value={element.height}
+              onChange={(e) => onUpdate({ ...element, height: Number(e.target.value) })}
+              aria-label="Altura del aro"
+            />
+          </label>
+        ) : null}
+        <p className="hint">
+          {element.height
+            ? 'Ponelo donde tiene que llegar el armado: la pelota tiene que pasar por adentro. Se ve alto en la vista inclinada.'
+            : 'Arrastralo a la zona que tienen que buscar con el saque, la recepción o el ataque. Podés poner varios.'}
+        </p>
       </div>
     );
   }
