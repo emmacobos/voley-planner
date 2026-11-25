@@ -24,7 +24,7 @@ import {
   wrapText,
 } from '../domain/shadows';
 import { isSegment } from '../domain/types';
-import { DEFAULT_CAMERA, boxMap, orbit, project, shrink, toCss, toMeters, toPx, unproject, viewMatrix, withCamera, zoomAt } from '../domain/perspective';
+import { DEFAULT_CAMERA, boxMap, liftFor, orbit, project, shrink, toCss, toMeters, toPx, unproject, viewMatrix, withCamera, zoomAt } from '../domain/perspective';
 import type { BoxMap, Camera, Mat4, View3D } from '../domain/perspective';
 import { DEFAULT_DRAW_WIDTH, DRAW_COLORS, drawPath, moveStroke, simplifyStroke, strokeBounds, strokeLength, strokeWidth } from '../domain/drawing';
 import type {
@@ -715,7 +715,7 @@ export function Board({
             elements={points.filter((el) => STANDING.has(el.kind))}
             arrows={arrows}
             shadows={shadows}
-            lift={Math.min(1, Math.max(0, (90 - view3d.tilt) / 80))}
+            lift={liftFor(view3d.tilt)}
             selectedEl={selectedEl}
             render={(el) => renderPoint(el, false)}
             buttons={(el) => (

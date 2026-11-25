@@ -106,8 +106,10 @@ describe('vista inclinada', () => {
     expect(s1.span).toBeCloseTo(s0.span, 0);
   });
 
-  it('con el clic derecho no hay topes: por arriba pasa al otro lado', () => {
-    expect(orbit({ tilt: 80, turn: 10 }, 0, 20)).toEqual({ tilt: 80, turn: -170 });
+  it('con el clic derecho no hay topes ni saltos: por arriba pasa de largo', () => {
+    // Pasa de largo por encima de la vista de arriba, sin saltos.
+    expect(orbit({ tilt: 80, turn: 10 }, 0, 20)).toEqual({ tilt: 100, turn: 10 });
+    expect(orbit({ tilt: 89, turn: 10 }, 0, 2)).toEqual({ tilt: 91, turn: 10 });
     expect(orbit({ tilt: 40, turn: 170 }, 30, 0)).toEqual({ tilt: 40, turn: -160 });
     expect(orbit({ tilt: 20, turn: 0 }, 0, -100).tilt).toBe(5);
   });

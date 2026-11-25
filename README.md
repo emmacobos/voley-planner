@@ -64,7 +64,8 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      clic derecho apretado y moviendo el mouse se cambia el ángulo sin topes:
      para los costados gira (da la vuelta completa), para arriba la cancha se
      acuesta y para abajo se ve más desde arriba; si se sigue, la cámara pasa
-     por encima y queda mirando desde el otro lado. Al girar, la cancha no
+     de largo por encima, sin saltos, y queda mirando desde el otro lado (solo
+     no baja del piso). Al girar, la cancha no
      cambia de tamaño ni se corre. Se edita
      igual: las fichas se arrastran por el piso y las flechas, sombras, textos
      y trazos se dibujan sobre el piso. Vale

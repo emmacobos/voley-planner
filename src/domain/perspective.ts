@@ -16,7 +16,8 @@ export interface View3D {
 }
 
 export const DEFAULT_VIEW_3D: View3D = { tilt: 40, turn: 40 };
-export const TILT_RANGE = { min: 5, max: 90 };
+/** Inclinación: de casi a ras del piso, pasando por arriba (90), hasta casi a ras del otro lado. */
+export const TILT_RANGE = { min: 5, max: 175 };
 /** El giro da la vuelta completa. */
 export const TURN_RANGE = { min: -180, max: 180 };
 
@@ -194,16 +195,16 @@ export function viewMatrix(view: View3D, w: number, h: number, keep: [number, nu
 }
 
 /**
- * La vista después de arrastrar con el clic derecho, sin topes: el giro da la
- * vuelta y, al subir la inclinación más allá de la vista de arriba, la cámara
- * pasa por encima y queda mirando desde el otro lado. Hacia abajo para un poco
- * antes del piso.
+ * La vista después de arrastrar con el clic derecho, sin topes ni saltos: el
+ * giro da la vuelta y la inclinación sigue de largo por encima de la vista de
+ * arriba (la cámara pasa al otro lado). Solo no baja del piso.
  */
 export function orbit(start: View3D, dTurn: number, dTilt: number): View3D {
-  const raw = Math.min(180 - TILT_RANGE.min, Math.max(TILT_RANGE.min, start.tilt + dTilt));
-  const over = raw > 90;
   return {
-    tilt: Math.round(over ? 180 - raw : raw),
-    turn: Math.round(normalizeTurn(start.turn + dTurn + (over ? 180 : 0))),
+    tilt: Math.round(Math.min(TILT_RANGE.max, Math.max(TILT_RANGE.min, start.tilt + dTilt))),
+    turn: Math.round(normalizeTurn(start.turn + dTurn)),
   };
 }
+
+/** Cuánto se despegan las flechas del piso (0 vista de arriba, 1 cancha bien acostada). */
+export const liftFor = (tilt: number) => Math.min(1, Math.abs(90 - tilt) / 80);
