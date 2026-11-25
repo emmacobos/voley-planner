@@ -1,4 +1,4 @@
-import { createContext, useContext, useLayoutEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, ReactNode, Ref } from 'react';
 import {
   ATTACK_LINE_DIST,
@@ -23,8 +23,8 @@ import {
   wrapText,
 } from '../domain/shadows';
 import { isSegment } from '../domain/types';
-import { boxMap, project, shrink, toCss, toMeters, toPx, unproject, viewMatrix } from '../domain/perspective';
-import type { BoxMap, Mat4, View3D } from '../domain/perspective';
+import { DEFAULT_CAMERA, boxMap, project, shrink, toCss, toMeters, toPx, unproject, viewMatrix, withCamera, zoomAt } from '../domain/perspective';
+import type { BoxMap, Camera, Mat4, View3D } from '../domain/perspective';
 import { DEFAULT_DRAW_WIDTH, DRAW_COLORS, drawPath, moveStroke, simplifyStroke, strokeBounds, strokeLength, strokeWidth } from '../domain/drawing';
 import type {
   ArrowElement,
@@ -41,6 +41,9 @@ import type {
   Zone,
 } from '../domain/types';
 import { positionShort } from '../domain/types';
+import { Solid3D } from './Solids3D';
+import { SOLID_HEIGHT, SOLID_KINDS } from './solids';
+import type { SolidElement } from './solids';
 import { COURT_COLORS, DISPLAY_FONT, HOOP_COLORS, LIBERO_COLORS, SELECTION_COLOR, TEAM_COLORS, boardViewBox } from './boardTheme';
 import type { Tool } from './boardTheme';
 
@@ -105,9 +108,9 @@ interface BoardProps {
 }
 
 /** En la vista inclinada, estos elementos se ven parados (con su sombra); el resto queda en el piso. */
-const STANDING = new Set<BoardElement['kind']>(['player', 'ball', 'cone', 'coach']);
+const STANDING = new Set<BoardElement['kind']>(['player', 'ball', 'cone', 'coach', 'cart', 'step', 'machine']);
 /** A qué altura (m) se dibuja cada uno parado. */
-const STAND_HEIGHT: Partial<Record<BoardElement['kind'], number>> = { player: 1, coach: 1, ball: 0.9, cone: 0.05 };
+const STAND_HEIGHT: Partial<Record<BoardElement['kind'], number>> = { player: 1, coach: 1, ball: 0.9, ...SOLID_HEIGHT };
 /** El piso inclinado se dibuja a esta escala (para que se vea nítido). */
 const FLOOR_SCALE = 2;
 /** Red: abajo y arriba de la faja (m). */
@@ -124,6 +127,8 @@ type Drag =
   | { type: 'element'; id: string; part: ArrowPart; ox: number; oy: number; dx: number; dy: number }
   | { type: 'shadow'; x1: number; y1: number; x2: number; y2: number }
   | { type: 'draw'; points: { x: number; y: number }[] }
+  /** Mover la cancha (vista inclinada): desde dónde se arrastra y dónde estaba la cámara. */
+  | { type: 'pan'; sx: number; sy: number; x0: number; y0: number; moved: boolean }
   | {
       type: 'arrow';
       style: ArrowStyle;
@@ -255,6 +260,8 @@ export function Board({
   // Vista inclinada: tamaño del recuadro y la transformación del piso.
   const wrapRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<{ w: number; h: number } | null>(null);
+  /** Zoom y corrimiento de la vista inclinada (con la ruedita y arrastrando la cancha). */
+  const [cam, setCam] = useState<Camera>(DEFAULT_CAMERA);
   useLayoutEffect(() => {
     const el = wrapRef.current;
     if (!view3d || !el) return;
@@ -282,8 +289,27 @@ export function Board({
       const p = toPx(bm, x, y);
       return [p.x, p.y, z * bm.scale];
     });
-    return viewMatrix(view3d, box.w, box.h, keep);
+    return withCamera(viewMatrix(view3d, box.w, box.h, keep), cam, box.w, box.h);
   })();
+
+  // La ruedita del mouse acerca y aleja (sin mover la página).
+  const camRef = useRef(cam);
+  useEffect(() => {
+    camRef.current = cam;
+  });
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!view3d || !el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const factor = Math.exp(-e.deltaY * 0.0015);
+      setCam(zoomAt(camRef.current, factor, e.clientX - r.left, e.clientY - r.top, r.width, r.height));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [view3d]);
+  const zoomBy = (factor: number) => box && setCam(zoomAt(cam, factor, box.w / 2, box.h / 2, box.w, box.h));
   /** Punto de la pantalla en metros: en la vista inclinada, el punto del piso que se ve ahí. */
   const toBoard = (clientX: number, clientY: number, fallback: SVGGraphicsElement) => {
     if (mat && bm && wrapRef.current) {
@@ -320,7 +346,19 @@ export function Board({
     setDrag(null);
   };
 
+  /** Vista inclinada: empieza a mover la cancha. */
+  const startPan = (e: ReactPointerEvent<Element>) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag({ type: 'pan', sx: e.clientX, sy: e.clientY, x0: cam.x, y0: cam.y, moved: false });
+  };
+
   const onBackgroundDown = (e: ReactPointerEvent<SVGSVGElement>) => {
+    // Vista inclinada: arrastrar el fondo (o con el botón del medio) mueve la cancha.
+    if (mat && (readOnly || tool === 'select' || e.button === 1)) {
+      startPan(e);
+      return;
+    }
     if (readOnly) return;
     if (tool === 'select') {
       onSelect(null);
@@ -353,8 +391,20 @@ export function Board({
     });
   };
 
+  const panMove = (e: ReactPointerEvent<Element>) => {
+    if (drag?.type !== 'pan') return;
+    const [dx, dy] = [e.clientX - drag.sx, e.clientY - drag.sy];
+    const moved = drag.moved || Math.hypot(dx, dy) > 3;
+    if (moved) setCam((c) => ({ ...c, x: drag.x0 + dx, y: drag.y0 + dy }));
+    if (moved !== drag.moved) setDrag({ ...drag, moved });
+  };
+
   const onPointerMove = (e: ReactPointerEvent<SVGSVGElement>) => {
     if (!drag) return;
+    if (drag.type === 'pan') {
+      panMove(e);
+      return;
+    }
     const p = point(e);
     if (drag.type === 'element') {
       setDrag({ ...drag, dx: p.x - drag.ox, dy: p.y - drag.oy });
@@ -367,7 +417,10 @@ export function Board({
 
   const onPointerUp = () => {
     if (!drag) return;
-    if (drag.type === 'element') {
+    if (drag.type === 'pan') {
+      // Un toque sin arrastrar, como en la vista de arriba, suelta lo seleccionado.
+      if (!drag.moved && !readOnly && tool === 'select') onSelect(null);
+    } else if (drag.type === 'element') {
       const el = elements.find((x) => x.id === drag.id);
       if (el && (drag.dx !== 0 || drag.dy !== 0)) onUpdate(applyDrag(el, drag, vertical));
     } else if (drag.type === 'draw') {
@@ -598,7 +651,21 @@ export function Board({
   const [, , vbW, vbH] = viewBox.split(' ').map(Number);
   return (
     <VerticalContext.Provider value={false}>
-      <div ref={wrapRef} className={`board board-3d tool-${tool}${readOnly ? ' read-only' : ''}${half ? ' half' : ''}`} style={{ aspectRatio: `${vbW} / ${vbH}` }}>
+      <div
+        ref={wrapRef}
+        className={`board board-3d tool-${tool}${readOnly ? ' read-only' : ''}${half ? ' half' : ''}`}
+        style={{ aspectRatio: `${vbW} / ${vbH}` }}
+        // Fuera del piso inclinado también se agarra la cancha para moverla (solo lo que llega directo acá).
+        onPointerDown={(e) => {
+          if (e.target === e.currentTarget && mat) {
+            startPan(e);
+            if (!readOnly && tool === 'select') onSelect(null);
+          }
+        }}
+        onPointerMove={(e) => e.target === e.currentTarget && drag?.type === 'pan' && panMove(e)}
+        onPointerUp={(e) => e.target === e.currentTarget && drag?.type === 'pan' && endDrag()}
+        onPointerCancel={(e) => e.target === e.currentTarget && endDrag()}
+      >
         {floor}
         {mat && bm && (
           <StandingLayer
@@ -613,11 +680,30 @@ export function Board({
                 {onComment && !readOnly && !drag && el.kind === 'player' && <CommentButton element={el} onComment={() => onComment(el.id)} />}
               </>
             )}
+            onElementDown={(e, id) => startElementDrag(e, id)}
             onPointerDown={onBackgroundDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={endDrag}
           />
+        )}
+        {mat && (
+          <div className="view3d-zoom" role="group" aria-label="Zoom de la cancha">
+            <button onClick={() => zoomBy(1.25)} aria-label="Acercar" title="Acercar (o la ruedita del mouse)">
+              +
+            </button>
+            <button onClick={() => zoomBy(0.8)} aria-label="Alejar" title="Alejar (o la ruedita del mouse)">
+              −
+            </button>
+            <button
+              onClick={() => setCam(DEFAULT_CAMERA)}
+              disabled={cam === DEFAULT_CAMERA}
+              aria-label="Centrar la cancha"
+              title="Volver a centrar la cancha (arrastrando el fondo la movés)"
+            >
+              ⌖
+            </button>
+          </div>
         )}
       </div>
     </VerticalContext.Provider>
@@ -636,6 +722,7 @@ function StandingLayer({
   selectedEl,
   render,
   buttons,
+  onElementDown,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -647,6 +734,8 @@ function StandingLayer({
   selectedEl: BoardElement | null;
   render: (el: PointElement) => ReactNode;
   buttons: (el: PointElement) => ReactNode;
+  /** Agarrar un objeto en 3D (carro, banquito…) para moverlo. */
+  onElementDown: (e: ReactPointerEvent<SVGElement>, id: string) => void;
   /** Tocar una ficha con una herramienta de dibujo empieza a dibujar desde ahí (como en la vista de arriba). */
   onPointerDown: (e: ReactPointerEvent<SVGSVGElement>) => void;
   onPointerMove: (e: ReactPointerEvent<SVGSVGElement>) => void;
@@ -714,6 +803,13 @@ function StandingLayer({
   );
   const draw = (it: (typeof items)[number]) => {
     const { el, foot, top, k, squash } = it;
+    if (SOLID_KINDS.has(el.kind)) {
+      return (
+        <Solid3D key={el.id} el={el as SolidElement} at={at} k={k} selected={selectedEl?.id === el.id} onPointerDown={(e) => onElementDown(e, el.id)}>
+          {selectedEl?.id === el.id && <g transform={`translate(${top.x} ${top.y}) scale(${k}) translate(${-el.x} ${-el.y})`}>{buttons(el)}</g>}
+        </Solid3D>
+      );
+    }
     const color = el.kind === 'player' ? TEAM_COLORS[el.team] : el.kind === 'ball' ? '#1e3a8a' : '#713f12';
     const selected = selectedEl?.id === el.id;
     return (

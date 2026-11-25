@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boxMap, project, toMeters, toPx, unproject, viewMatrix } from './perspective';
+import { boxMap, project, toMeters, toPx, turnLabel, unproject, viewMatrix, withCamera, zoomAt } from './perspective';
 
 const W = 960;
 const H = 600;
@@ -56,5 +56,29 @@ describe('vista inclinada', () => {
     const back = toMeters(b, px.x, px.y);
     expect(back.x).toBeCloseTo(9);
     expect(back.y).toBeCloseTo(4.5);
+  });
+
+  it('el zoom deja quieto el punto donde está el mouse, y se puede mover la cancha', () => {
+    const m = viewMatrix({ tilt: 40, turn: 40 }, W, H, keep);
+    const before = project(m, 300, 200);
+    const cam = zoomAt({ zoom: 1, x: 0, y: 0 }, 2, before.x, before.y, W, H);
+    expect(cam.zoom).toBe(2);
+    const after = project(withCamera(m, cam, W, H), 300, 200);
+    expect(after.x).toBeCloseTo(before.x, 6);
+    expect(after.y).toBeCloseTo(before.y, 6);
+    // Corrida 50 px a la derecha, todo se ve 50 px más a la derecha; y se toca igual.
+    const moved = withCamera(m, { zoom: 1, x: 50, y: 0 }, W, H);
+    expect(project(moved, 300, 200).x).toBeCloseTo(before.x + 50, 6);
+    const back = unproject(moved, before.x + 50, before.y);
+    expect(back.x).toBeCloseTo(300, 6);
+    // No se acerca ni se aleja de más.
+    expect(zoomAt(cam, 100, 0, 0, W, H).zoom).toBe(4);
+  });
+
+  it('nombra el giro de los dos lados', () => {
+    expect(turnLabel(0)).toBe('de costado');
+    expect(turnLabel(90)).toBe('desde atrás del equipo A');
+    expect(turnLabel(-90)).toBe('desde atrás del equipo B');
+    expect(turnLabel(-40)).toBe('en diagonal (lado B)');
   });
 });

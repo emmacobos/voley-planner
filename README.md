@@ -50,12 +50,18 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      navegador y vale también para *Presentar*.
    - **Inclinada**: la cancha en perspectiva, como desde la tribuna, con la red
      con su altura y las jugadoras, la pelota, los conos y los entrenadores
-     paradas con su sombra. Con *Inclinación* (de casi de arriba a bien de
-     costado) y *Giro* (de costado, en diagonal o desde atrás de nuestro
-     equipo) se elige el ángulo. Se edita igual: las fichas se arrastran por el
-     piso y las flechas, sombras, textos y trazos se dibujan sobre el piso. Vale
+     paradas con su sombra; el carro de pelotas, el banquito, la máquina
+     lanzadora y los conos son volúmenes en su tamaño real, que se ven desde el
+     ángulo de la cámara. Con *Inclinación* (de 10° a casi de arriba) y *Giro*
+     (de costado, en diagonal o desde atrás de cualquiera de los dos equipos)
+     se elige el ángulo. La ruedita del mouse (o + y −) acerca y aleja,
+     arrastrando el fondo se mueve la cancha y ⌖ la vuelve a centrar. Se edita
+     igual: las fichas se arrastran por el piso y las flechas, sombras, textos
+     y trazos se dibujan sobre el piso. Vale
      para *Presentar* y el link compartido se ve con el mismo ángulo; el PNG, el
      video y la impresión salen con la vista de arriba.
+   - Tocar en cualquier lugar fuera de la pizarra cierra la tarjeta del
+     elemento seleccionado.
    - *Agregar* suma jugadores, pelota, conos, entrenadores, carros de pelotas,
      aros de precisión (en rojo, amarillo, azul o verde, para marcar a dónde
      sacar o atacar), banquitos o cajones (para saltar o pararse arriba) y la

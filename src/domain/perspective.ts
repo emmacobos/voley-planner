@@ -11,13 +11,31 @@ export type Mat4 = number[];
 export interface View3D {
   /** Inclinación: 90 es la vista de arriba; menos, más de costado. */
   tilt: number;
-  /** Giro: 0 de costado (como en la tele), 90 desde atrás de nuestro equipo. */
+  /** Giro: 0 de costado (como en la tele), 90 desde atrás de nuestro equipo, −90 desde atrás del rival. */
   turn: number;
 }
 
 export const DEFAULT_VIEW_3D: View3D = { tilt: 40, turn: 40 };
-export const TILT_RANGE = { min: 25, max: 85 };
-export const TURN_RANGE = { min: 0, max: 90 };
+export const TILT_RANGE = { min: 10, max: 85 };
+export const TURN_RANGE = { min: -90, max: 90 };
+
+/** Cómo se llama cada giro. */
+export function turnLabel(turn: number): string {
+  if (turn > 75) return 'desde atrás del equipo A';
+  if (turn < -75) return 'desde atrás del equipo B';
+  if (Math.abs(turn) < 15) return 'de costado';
+  return turn > 0 ? 'en diagonal (lado A)' : 'en diagonal (lado B)';
+}
+
+/** Acercar y mover la cancha: el zoom es alrededor del centro y se corre `x`, `y` px. */
+export interface Camera {
+  zoom: number;
+  x: number;
+  y: number;
+}
+
+export const DEFAULT_CAMERA: Camera = { zoom: 1, x: 0, y: 0 };
+export const ZOOM_RANGE = { min: 0.5, max: 4 };
 
 const identity = (): Mat4 => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
@@ -93,6 +111,22 @@ export function unproject(m: Mat4, sx: number, sy: number): { x: number; y: numb
   const f = sy * m[15] - m[13];
   const det = a * d - b * c;
   return { x: (e * d - b * f) / det, y: (a * f - e * c) / det };
+}
+
+/** La transformación con el zoom y el corrimiento de la cámara aplicados encima. */
+export function withCamera(m: Mat4, cam: Camera, w: number, h: number): Mat4 {
+  if (cam.zoom === 1 && cam.x === 0 && cam.y === 0) return m;
+  return [translate(w / 2 + cam.x, h / 2 + cam.y), scale(cam.zoom), translate(-w / 2, -h / 2), m].reduce(multiply);
+}
+
+/** La cámara después de acercar o alejar `factor` veces, dejando quieto el punto (sx, sy) de la pantalla. */
+export function zoomAt(cam: Camera, factor: number, sx: number, sy: number, w: number, h: number): Camera {
+  const zoom = Math.min(ZOOM_RANGE.max, Math.max(ZOOM_RANGE.min, cam.zoom * factor));
+  const [cx, cy] = [w / 2, h / 2];
+  // Punto sin cámara que hoy se ve en (sx, sy).
+  const qx = cx + (sx - cx - cam.x) / cam.zoom;
+  const qy = cy + (sy - cy - cam.y) / cam.zoom;
+  return { zoom, x: sx - cx - zoom * (qx - cx), y: sy - cy - zoom * (qy - cy) };
 }
 
 /** La misma transformación para algo dibujado `s` veces más grande (se ve más nítido). */

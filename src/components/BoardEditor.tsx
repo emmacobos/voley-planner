@@ -40,7 +40,7 @@ import { downloadSvgAsPng, slugify } from '../utils/exportPng';
 import { exportPlayVideo, videoSupport } from '../utils/exportVideo';
 import { Board, DEFAULT_BEND } from './Board';
 import { useBoardOrientation, useView3d } from '../utils/boardOrientation';
-import { TILT_RANGE, TURN_RANGE } from '../domain/perspective';
+import { TILT_RANGE, TURN_RANGE, turnLabel } from '../domain/perspective';
 import { HOOP_COLORS } from './boardTheme';
 import { FloatingPanel } from './FloatingPanel';
 import { FloatingPanelReady } from './floatingPanelReady';
@@ -165,6 +165,17 @@ export function BoardEditor({
   const [current, setCurrent] = useState(0);
   const [tool, setTool] = useState<Tool>('select');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Tocar en cualquier lugar fuera de la pizarra y de su tarjeta cierra la tarjeta del elemento.
+  useEffect(() => {
+    if (!selectedId) return;
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as Element | null;
+      if (!target?.closest || target.closest('.floating-panel, .board-stage, .description-panel, [role="dialog"]')) return;
+      setSelectedId(null);
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [selectedId]);
   const [showZones, setShowZones] = useState(true);
   const view3d = useView3d();
   // La vista inclinada parte de la horizontal.
@@ -650,7 +661,7 @@ export function BoardEditor({
                     onChange={(e) => setView3d({ turn: Number(e.target.value) })}
                     aria-label="Giro"
                   />
-                  <output>{view3d.turn < 15 ? 'de costado' : view3d.turn > 75 ? 'desde atrás' : 'en diagonal'}</output>
+                  <output>{turnLabel(view3d.turn)}</output>
                 </label>
               </div>
             )}

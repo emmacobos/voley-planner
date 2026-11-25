@@ -384,6 +384,32 @@ test('vista inclinada: las fichas se arrastran por el piso y las flechas caen do
   const moved = (await saved()).find((e) => e.label === '3')!;
   expect(Math.hypot(moved.x - three.x, moved.y - three.y)).toBeGreaterThan(0.5);
 
+  // El carro de pelotas se ve en 3D y se mueve igual.
+  await page.locator('button', { hasText: '+ Carro de pelotas' }).click();
+  const cart = page.locator('.board-standing [data-id]').filter({ has: page.locator('polygon') }).last();
+  await expect(cart).toBeVisible();
+  // Tocar afuera de la pizarra cierra la tarjeta del elemento.
+  await expect(page.locator('.floating-panel')).toBeVisible();
+  await page.locator('.board-side h3').first().click();
+  await expect(page.locator('.floating-panel')).toHaveCount(0);
+
+  // La ruedita acerca la cancha; arrastrar el fondo la mueve; ⌖ la vuelve a centrar.
+  const transform = () => page.locator('.board-3d > svg.board').evaluate((s) => getComputedStyle(s).transform);
+  const start = await transform();
+  await page.evaluate(() => document.querySelector('.board-3d')!.scrollIntoView({ block: 'center' }));
+  const stage = (await page.locator('.board-3d').boundingBox())!;
+  await page.mouse.move(stage.x + stage.width / 2, stage.y + stage.height / 2);
+  await page.mouse.wheel(0, -400);
+  await expect.poll(transform).not.toBe(start);
+  const zoomed = await transform();
+  await page.mouse.move(stage.x + 30, stage.y + stage.height - 30);
+  await page.mouse.down();
+  await page.mouse.move(stage.x + 120, stage.y + stage.height - 60, { steps: 5 });
+  await page.mouse.up();
+  await expect.poll(transform).not.toBe(zoomed);
+  await page.locator('.view3d-zoom button[aria-label="Centrar la cancha"]').click();
+  await expect.poll(transform).toBe(start);
+
   // La presentación también se ve inclinada, y se puede volver a la vista de arriba.
   await page.locator('button.present-button').click();
   await expect(page.locator('.presentation .board-3d')).toBeVisible();

@@ -6629,7 +6629,48 @@ textarea.conclusions {
 }
 
 .view3d-controls output {
-  min-width: 5.5em;
+  min-width: 10.5em;
   color: var(--muted);
   font-weight: 500;
+}
+
+/* Zoom y centrar en la pizarra inclinada */
+.board-3d.tool-select:not(.read-only) > svg.board.tilted,
+.board-3d.read-only > svg.board.tilted {
+  cursor: grab;
+}
+
+.board-3d.tool-select > svg.board.tilted:active,
+.board-3d.read-only > svg.board.tilted:active {
+  cursor: grabbing;
+}
+
+.view3d-zoom {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.view3d-zoom button {
+  width: 34px;
+  height: 34px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  background: rgb(20 18 16 / 0.72);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.view3d-zoom button:hover:not(:disabled) {
+  background: rgb(20 18 16 / 0.92);
+}
+
+.view3d-zoom button:disabled {
+  opacity: 0.4;
 }
