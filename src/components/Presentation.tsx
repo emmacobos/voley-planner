@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { elementsAtProgress } from '../domain/animation';
 import type { Frame, Player, TeamNames } from '../domain/types';
-import { useBoardOrientation } from '../utils/boardOrientation';
+import { useBoardOrientation, useView3d } from '../utils/boardOrientation';
+import type { View3D } from '../domain/perspective';
 import { Board } from './Board';
 import { boardViewBox } from './boardTheme';
 
@@ -36,6 +37,7 @@ export function Presentation({
   teamNames,
   half = false,
   aside,
+  view3d: viewOverride,
 }: {
   title: string;
   frames: Frame[];
@@ -48,6 +50,8 @@ export function Presentation({
   footer?: ReactNode;
   teamNames?: TeamNames;
   half?: boolean;
+  /** Vista inclinada fija (por ejemplo, la de una jugada compartida); si falta, la elegida en este navegador. */
+  view3d?: View3D | null;
   /** Panel al costado de la cancha (por ejemplo, la descripción del ejercicio compartido). */
   aside?: (step: number, go: (step: number) => void) => ReactNode;
 }) {
@@ -64,7 +68,9 @@ export function Presentation({
   });
 
   const index = Math.round(progress);
-  const vertical = useBoardOrientation((s) => s.vertical);
+  const localView = useView3d();
+  const view3d = viewOverride === undefined ? localView : viewOverride;
+  const vertical = useBoardOrientation((s) => s.vertical) && !view3d;
 
   // Marcas a mano alzada: no se guardan; cada paso tiene las suyas.
   const [drawing, setDrawing] = useState(false);
@@ -231,6 +237,7 @@ export function Presentation({
           readOnly
           showZones
           vertical={vertical}
+          view3d={view3d}
           teamNames={teamNames}
           half={half}
           onSelect={noop}

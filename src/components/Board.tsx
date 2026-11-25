@@ -1,5 +1,5 @@
-import { createContext, useContext, useRef, useState } from 'react';
-import type { PointerEvent as ReactPointerEvent, Ref } from 'react';
+import { createContext, useContext, useLayoutEffect, useRef, useState } from 'react';
+import type { PointerEvent as ReactPointerEvent, ReactNode, Ref } from 'react';
 import {
   ATTACK_LINE_DIST,
   COURT_LENGTH,
@@ -23,6 +23,8 @@ import {
   wrapText,
 } from '../domain/shadows';
 import { isSegment } from '../domain/types';
+import { boxMap, project, shrink, toCss, toMeters, toPx, unproject, viewMatrix } from '../domain/perspective';
+import type { BoxMap, Mat4, View3D } from '../domain/perspective';
 import { DEFAULT_DRAW_WIDTH, DRAW_COLORS, drawPath, moveStroke, simplifyStroke, strokeBounds, strokeLength, strokeWidth } from '../domain/drawing';
 import type {
   ArrowElement,
@@ -98,7 +100,19 @@ interface BoardProps {
   teamNames?: TeamNames;
   /** Media cancha: solo el lado del equipo A y la red. */
   half?: boolean;
+  /** Vista inclinada (en perspectiva). Sin valor, la vista de arriba. */
+  view3d?: View3D | null;
 }
+
+/** En la vista inclinada, estos elementos se ven parados (con su sombra); el resto queda en el piso. */
+const STANDING = new Set<BoardElement['kind']>(['player', 'ball', 'cone', 'coach']);
+/** A qué altura (m) se dibuja cada uno parado. */
+const STAND_HEIGHT: Partial<Record<BoardElement['kind'], number>> = { player: 1, coach: 1, ball: 0.9, cone: 0.05 };
+/** El piso inclinado se dibuja a esta escala (para que se vea nítido). */
+const FLOOR_SCALE = 2;
+/** Red: abajo y arriba de la faja (m). */
+const NET_BOTTOM = 1.43;
+const NET_TOP = 2.43;
 
 /**
  * Qué parte se arrastra: el elemento entero, un extremo o el punto medio
@@ -225,16 +239,62 @@ export function Board({
   onDelete,
   onComment,
   onDraggingChange,
-  vertical = false,
+  vertical: verticalProp = false,
   teamNames,
   half = false,
   pen,
+  view3d = null,
 }: BoardProps) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const contentRef = useRef<SVGGElement>(null);
   const playersById = new Map(players.map((p) => [p.id, p]));
+  // La vista inclinada parte de la horizontal.
+  const vertical = view3d ? false : verticalProp;
+  const viewBox = boardViewBox(vertical, half);
 
-  const point = (e: ReactPointerEvent<SVGSVGElement>) => svgPoint(contentRef.current ?? e.currentTarget, e.clientX, e.clientY);
+  // Vista inclinada: tamaño del recuadro y la transformación del piso.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<{ w: number; h: number } | null>(null);
+  useLayoutEffect(() => {
+    const el = wrapRef.current;
+    if (!view3d || !el) return;
+    const measure = () => {
+      const r = el.getBoundingClientRect();
+      setBox((b) => (b && b.w === r.width && b.h === r.height ? b : { w: r.width, h: r.height }));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [view3d]);
+  const bm = view3d && box && box.w > 0 ? boxMap(viewBox, box.w, box.h) : null;
+  const mat = (() => {
+    if (!view3d || !bm || !box) return null;
+    const right = half ? NET_X + 1.5 : COURT_LENGTH + 1.5;
+    const keep = [
+      [-1.5, -1.5, 0],
+      [right, -1.5, 0],
+      [right, COURT_WIDTH + 1.5, 0],
+      [-1.5, COURT_WIDTH + 1.5, 0],
+      [NET_X, -0.5, NET_TOP + 0.4],
+      [NET_X, COURT_WIDTH + 0.5, NET_TOP + 0.4],
+    ].map(([x, y, z]): [number, number, number] => {
+      const p = toPx(bm, x, y);
+      return [p.x, p.y, z * bm.scale];
+    });
+    return viewMatrix(view3d, box.w, box.h, keep);
+  })();
+  /** Punto de la pantalla en metros: en la vista inclinada, el punto del piso que se ve ahí. */
+  const toBoard = (clientX: number, clientY: number, fallback: SVGGraphicsElement) => {
+    if (mat && bm && wrapRef.current) {
+      const r = wrapRef.current.getBoundingClientRect();
+      const f = unproject(mat, clientX - r.left, clientY - r.top);
+      return toMeters(bm, f.x, f.y);
+    }
+    return svgPoint(contentRef.current ?? fallback, clientX, clientY);
+  };
+
+  const point = (e: ReactPointerEvent<SVGSVGElement>) => toBoard(e.clientX, e.clientY, e.currentTarget);
 
   const startElementDrag = (
     e: ReactPointerEvent<SVGElement>,
@@ -249,7 +309,7 @@ export function Board({
     const svg = e.currentTarget.ownerSVGElement;
     if (!svg) return;
     svg.setPointerCapture(e.pointerId);
-    const p = svgPoint(contentRef.current ?? svg, e.clientX, e.clientY);
+    const p = toBoard(e.clientX, e.clientY, svg);
     onSelect(id);
     setDrag({ type: 'element', id, part, ox: p.x, oy: p.y, dx: 0, dy: 0 });
     onDraggingChange?.(true);
@@ -332,12 +392,140 @@ export function Board({
   const points = shown.filter((e): e is PointElement => !isSegment(e)).sort((a, b) => onFloor(b) - onFloor(a));
   const selectedEl = shown.find((e) => e.id === selectedId) ?? null;
 
-  return (
-    <VerticalContext.Provider value={vertical}>
+  /** Dibuja un elemento de un punto (ficha, pelota, cono…) en su lugar de la cancha, en metros. */
+  const renderPoint = (el: PointElement, upright = vertical) => {
+    const selected = el.id === selectedId;
+    const up = upright ? ' rotate(90)' : '';
+    const down = (e: ReactPointerEvent<SVGElement>) => startElementDrag(e, el.id);
+    switch (el.kind) {
+      case 'player':
+        return (
+          <PlayerMark
+            key={el.id}
+            token={el}
+            player={el.playerId ? playersById.get(el.playerId) : undefined}
+            selected={selected}
+            onPointerDown={down}
+          />
+        );
+      case 'ball':
+        return (
+          <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
+            {selected && <Halo r={0.4} />}
+            <BallShape />
+          </g>
+        );
+      case 'cone':
+        return (
+          <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
+            {selected && <Halo r={0.4} />}
+            <polygon points="0,-0.28 0.25,0.2 -0.25,0.2" fill="#fde047" stroke="#713f12" strokeWidth={0.04} />
+          </g>
+        );
+      case 'coach':
+        return (
+          <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
+            {selected && <Halo r={0.55} />}
+            <rect x={-0.38} y={-0.38} width={0.76} height={0.76} rx={0.12} fill="#111827" stroke="#ffffff" strokeWidth={0.05} />
+            <text textAnchor="middle" dominantBaseline="central" fontSize={0.4} fontWeight={700} fill="#ffffff">E</text>
+          </g>
+        );
+      case 'text':
+        return (
+          <TextMark
+            key={el.id}
+            element={el}
+            selected={selected}
+            onPointerDown={down}
+            onHandleDown={(e, part) => startElementDrag(e, el.id, part)}
+          />
+        );
+      case 'cart':
+        return (
+          <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up} scale(1.25)`} onPointerDown={down} data-id={el.id}>
+            {selected && <Halo r={0.75} />}
+            {/* Carro de pelotas visto desde arriba: canasto con pelotas, manija y ruedas. */}
+            <line x1={0.5} y1={0} x2={0.78} y2={0} stroke="#ffffff" strokeWidth={0.07} strokeLinecap="round" />
+            <line x1={0.78} y1={-0.22} x2={0.78} y2={0.22} stroke="#ffffff" strokeWidth={0.07} strokeLinecap="round" />
+            {[
+              [-0.42, -0.42],
+              [0.42, -0.42],
+              [-0.42, 0.42],
+              [0.42, 0.42],
+            ].map(([cx, cy]) => (
+              <circle key={`${cx}${cy}`} cx={cx} cy={cy} r={0.08} fill="#1c1915" stroke="#ffffff" strokeWidth={0.03} />
+            ))}
+            <rect x={-0.5} y={-0.38} width={1} height={0.76} rx={0.08} fill="#2b2925" stroke="#d8d2c4" strokeWidth={0.05} />
+            {[
+              [-0.27, -0.16, '#ffffff'],
+              [0, -0.16, '#F2C744'],
+              [0.27, -0.16, '#2F5DA8'],
+              [-0.27, 0.16, '#F2C744'],
+              [0, 0.16, '#2F5DA8'],
+              [0.27, 0.16, '#ffffff'],
+            ].map(([cx, cy, fill]) => (
+              <circle key={`${cx}${cy}`} cx={cx} cy={cy} r={0.13} fill={fill as string} stroke="#1c1915" strokeWidth={0.025} />
+            ))}
+          </g>
+        );
+      case 'step':
+        return (
+          // Gira con la cancha (es un objeto en el piso) y con su propio giro.
+          <g key={el.id} className="el" transform={`translate(${el.x} ${el.y}) rotate(${el.rotation ?? 0})`} onPointerDown={down} data-id={el.id}>
+            {selected && <Halo r={0.75} />}
+            {/* Banquito / cajón visto desde arriba: tapa de madera con borde y sombra. */}
+            <rect x={-0.42} y={-0.3} width={0.9} height={0.66} rx={0.08} fill="#000000" opacity={0.25} />
+            <rect x={-0.45} y={-0.33} width={0.9} height={0.66} rx={0.08} fill="#8B5A2B" stroke="#ffffff" strokeWidth={0.05} />
+            <rect x={-0.33} y={-0.21} width={0.66} height={0.42} rx={0.05} fill="#B07A3C" stroke="#5c3a1a" strokeWidth={0.025} />
+            <line x1={-0.33} y1={0} x2={0.33} y2={0} stroke="#5c3a1a" strokeWidth={0.02} opacity={0.6} />
+          </g>
+        );
+      case 'machine':
+        return (
+          // Gira con la cancha y apunta hacia donde tira.
+          <g key={el.id} className="el" transform={`translate(${el.x} ${el.y}) rotate(${el.rotation ?? 0}) scale(1.5)`} onPointerDown={down} data-id={el.id}>
+            {selected && <Halo r={0.85} />}
+            {/* Máquina lanzadora vista desde arriba: base, ruedas, tolva con pelotas y caño hacia adelante. */}
+            <rect x={-0.48} y={-0.4} width={0.9} height={0.8} rx={0.1} fill="#000000" opacity={0.25} />
+            {[-0.42, 0.42].map((y) => (
+              <rect key={y} x={-0.42} y={y - 0.07} width={0.26} height={0.14} rx={0.05} fill="#111111" />
+            ))}
+            <rect x={-0.5} y={-0.36} width={0.86} height={0.72} rx={0.12} fill="#3E4A5A" stroke="#ffffff" strokeWidth={0.05} />
+            <rect x={0.3} y={-0.11} width={0.52} height={0.22} rx={0.06} fill="#2b2925" stroke="#ffffff" strokeWidth={0.04} />
+            <circle cx={-0.12} cy={0} r={0.24} fill="#1c1915" stroke="#d8d2c4" strokeWidth={0.03} />
+            {[
+              [-0.2, -0.08, '#F2C744'],
+              [-0.04, -0.08, '#ffffff'],
+              [-0.12, 0.08, '#2F5DA8'],
+            ].map(([cx, cy, fill]) => (
+              <circle key={`${cx}${cy}`} cx={cx as number} cy={cy as number} r={0.075} fill={fill as string} />
+            ))}
+            <path d="M0.88 -0.1 L1.05 0 L0.88 0.1 Z" fill="#E3C48B" />
+          </g>
+        );
+      case 'hoop':
+        return (
+          <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})`} onPointerDown={down} data-id={el.id}>
+            {selected && <Halo r={0.75} />}
+            {/* Aro de precisión (1 m de diámetro): se puede tocar en todo el círculo. */}
+            <circle r={0.5} fill={el.color ?? HOOP_COLORS[0].value} fillOpacity={0.14} stroke={el.color ?? HOOP_COLORS[0].value} strokeWidth={0.1} />
+            <circle r={0.5} fill="none" stroke="#ffffff" strokeOpacity={0.55} strokeWidth={0.025} />
+          </g>
+        );
+    }
+  };
+
+  const floor = (
     <svg
       ref={svgRef}
-      className={`board tool-${tool}${readOnly ? ' read-only' : ''}${vertical ? ' vertical' : ''}${half ? ' half' : ''}`}
-      viewBox={boardViewBox(vertical, half)}
+      className={`board tool-${tool}${readOnly ? ' read-only' : ''}${vertical ? ' vertical' : ''}${half ? ' half' : ''}${view3d ? ' tilted' : ''}`}
+      viewBox={viewBox}
+      style={
+        mat
+          ? // Se dibuja al doble y se achica al inclinarlo: si no, el navegador lo agranda y se ve borroso.
+            { width: `${FLOOR_SCALE * 100}%`, height: `${FLOOR_SCALE * 100}%`, transform: toCss(shrink(mat, FLOOR_SCALE)), transformOrigin: '0 0' }
+          : undefined
+      }
       xmlns="http://www.w3.org/2000/svg"
       fontFamily="Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif"
       onPointerDown={onBackgroundDown}
@@ -395,136 +583,166 @@ export function Board({
         <Stroke stroke={{ id: 'preview', kind: 'draw', points: drag.points.flatMap((q) => [q.x, q.y]), ...currentPen }} selected={false} />
       )}
 
-      {points.map((el) => {
-        const selected = el.id === selectedId;
-        const up = vertical ? ' rotate(90)' : '';
-        const down = (e: ReactPointerEvent<SVGElement>) => startElementDrag(e, el.id);
-        switch (el.kind) {
-          case 'player':
-            return (
-              <PlayerMark
-                key={el.id}
-                token={el}
-                player={el.playerId ? playersById.get(el.playerId) : undefined}
-                selected={selected}
-                onPointerDown={down}
-              />
-            );
-          case 'ball':
-            return (
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
-                {selected && <Halo r={0.4} />}
-                <BallShape />
-              </g>
-            );
-          case 'cone':
-            return (
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
-                {selected && <Halo r={0.4} />}
-                <polygon points="0,-0.28 0.25,0.2 -0.25,0.2" fill="#fde047" stroke="#713f12" strokeWidth={0.04} />
-              </g>
-            );
-          case 'coach':
-            return (
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up}`} onPointerDown={down} data-id={el.id}>
-                {selected && <Halo r={0.55} />}
-                <rect x={-0.38} y={-0.38} width={0.76} height={0.76} rx={0.12} fill="#111827" stroke="#ffffff" strokeWidth={0.05} />
-                <text textAnchor="middle" dominantBaseline="central" fontSize={0.4} fontWeight={700} fill="#ffffff">E</text>
-              </g>
-            );
-          case 'text':
-            return (
-              <TextMark
-                key={el.id}
-                element={el}
-                selected={selected}
-                onPointerDown={down}
-                onHandleDown={(e, part) => startElementDrag(e, el.id, part)}
-              />
-            );
-          case 'cart':
-            return (
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})${up} scale(1.25)`} onPointerDown={down} data-id={el.id}>
-                {selected && <Halo r={0.75} />}
-                {/* Carro de pelotas visto desde arriba: canasto con pelotas, manija y ruedas. */}
-                <line x1={0.5} y1={0} x2={0.78} y2={0} stroke="#ffffff" strokeWidth={0.07} strokeLinecap="round" />
-                <line x1={0.78} y1={-0.22} x2={0.78} y2={0.22} stroke="#ffffff" strokeWidth={0.07} strokeLinecap="round" />
-                {[
-                  [-0.42, -0.42],
-                  [0.42, -0.42],
-                  [-0.42, 0.42],
-                  [0.42, 0.42],
-                ].map(([cx, cy]) => (
-                  <circle key={`${cx}${cy}`} cx={cx} cy={cy} r={0.08} fill="#1c1915" stroke="#ffffff" strokeWidth={0.03} />
-                ))}
-                <rect x={-0.5} y={-0.38} width={1} height={0.76} rx={0.08} fill="#2b2925" stroke="#d8d2c4" strokeWidth={0.05} />
-                {[
-                  [-0.27, -0.16, '#ffffff'],
-                  [0, -0.16, '#F2C744'],
-                  [0.27, -0.16, '#2F5DA8'],
-                  [-0.27, 0.16, '#F2C744'],
-                  [0, 0.16, '#2F5DA8'],
-                  [0.27, 0.16, '#ffffff'],
-                ].map(([cx, cy, fill]) => (
-                  <circle key={`${cx}${cy}`} cx={cx} cy={cy} r={0.13} fill={fill as string} stroke="#1c1915" strokeWidth={0.025} />
-                ))}
-              </g>
-            );
-          case 'step':
-            return (
-              // Gira con la cancha (es un objeto en el piso) y con su propio giro.
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y}) rotate(${el.rotation ?? 0})`} onPointerDown={down} data-id={el.id}>
-                {selected && <Halo r={0.75} />}
-                {/* Banquito / cajón visto desde arriba: tapa de madera con borde y sombra. */}
-                <rect x={-0.42} y={-0.3} width={0.9} height={0.66} rx={0.08} fill="#000000" opacity={0.25} />
-                <rect x={-0.45} y={-0.33} width={0.9} height={0.66} rx={0.08} fill="#8B5A2B" stroke="#ffffff" strokeWidth={0.05} />
-                <rect x={-0.33} y={-0.21} width={0.66} height={0.42} rx={0.05} fill="#B07A3C" stroke="#5c3a1a" strokeWidth={0.025} />
-                <line x1={-0.33} y1={0} x2={0.33} y2={0} stroke="#5c3a1a" strokeWidth={0.02} opacity={0.6} />
-              </g>
-            );
-          case 'machine':
-            return (
-              // Gira con la cancha y apunta hacia donde tira.
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y}) rotate(${el.rotation ?? 0}) scale(1.5)`} onPointerDown={down} data-id={el.id}>
-                {selected && <Halo r={0.85} />}
-                {/* Máquina lanzadora vista desde arriba: base, ruedas, tolva con pelotas y caño hacia adelante. */}
-                <rect x={-0.48} y={-0.4} width={0.9} height={0.8} rx={0.1} fill="#000000" opacity={0.25} />
-                {[-0.42, 0.42].map((y) => (
-                  <rect key={y} x={-0.42} y={y - 0.07} width={0.26} height={0.14} rx={0.05} fill="#111111" />
-                ))}
-                <rect x={-0.5} y={-0.36} width={0.86} height={0.72} rx={0.12} fill="#3E4A5A" stroke="#ffffff" strokeWidth={0.05} />
-                <rect x={0.3} y={-0.11} width={0.52} height={0.22} rx={0.06} fill="#2b2925" stroke="#ffffff" strokeWidth={0.04} />
-                <circle cx={-0.12} cy={0} r={0.24} fill="#1c1915" stroke="#d8d2c4" strokeWidth={0.03} />
-                {[
-                  [-0.2, -0.08, '#F2C744'],
-                  [-0.04, -0.08, '#ffffff'],
-                  [-0.12, 0.08, '#2F5DA8'],
-                ].map(([cx, cy, fill]) => (
-                  <circle key={`${cx}${cy}`} cx={cx as number} cy={cy as number} r={0.075} fill={fill as string} />
-                ))}
-                <path d="M0.88 -0.1 L1.05 0 L0.88 0.1 Z" fill="#E3C48B" />
-              </g>
-            );
-          case 'hoop':
-            return (
-              <g key={el.id} className="el" transform={`translate(${el.x} ${el.y})`} onPointerDown={down} data-id={el.id}>
-                {selected && <Halo r={0.75} />}
-                {/* Aro de precisión (1 m de diámetro): se puede tocar en todo el círculo. */}
-                <circle r={0.5} fill={el.color ?? HOOP_COLORS[0].value} fillOpacity={0.14} stroke={el.color ?? HOOP_COLORS[0].value} strokeWidth={0.1} />
-                <circle r={0.5} fill="none" stroke="#ffffff" strokeOpacity={0.55} strokeWidth={0.025} />
-              </g>
-            );
-        }
-      })}
-      {onDelete && !readOnly && !drag && selectedEl && (
+      {points.filter((el) => !(mat && STANDING.has(el.kind))).map((el) => renderPoint(el))}
+      {onDelete && !readOnly && !drag && selectedEl && !(mat && STANDING.has(selectedEl.kind)) && (
         <DeleteButton element={selectedEl} onDelete={() => onDelete(selectedEl.id)} />
       )}
-      {onComment && !readOnly && !drag && selectedEl?.kind === 'player' && (
+      {onComment && !readOnly && !drag && selectedEl?.kind === 'player' && !mat && (
         <CommentButton element={selectedEl} onComment={() => onComment(selectedEl.id)} />
       )}
       </g>
     </svg>
+  );
+
+  if (!view3d) return <VerticalContext.Provider value={vertical}>{floor}</VerticalContext.Provider>;
+  const [, , vbW, vbH] = viewBox.split(' ').map(Number);
+  return (
+    <VerticalContext.Provider value={false}>
+      <div ref={wrapRef} className={`board board-3d tool-${tool}${readOnly ? ' read-only' : ''}${half ? ' half' : ''}`} style={{ aspectRatio: `${vbW} / ${vbH}` }}>
+        {floor}
+        {mat && bm && (
+          <StandingLayer
+            mat={mat}
+            bm={bm}
+            elements={points.filter((el) => STANDING.has(el.kind))}
+            selectedEl={selectedEl}
+            render={(el) => renderPoint(el, false)}
+            buttons={(el) => (
+              <>
+                {onDelete && !readOnly && !drag && <DeleteButton element={el} onDelete={() => onDelete(el.id)} />}
+                {onComment && !readOnly && !drag && el.kind === 'player' && <CommentButton element={el} onComment={() => onComment(el.id)} />}
+              </>
+            )}
+            onPointerDown={onBackgroundDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={endDrag}
+          />
+        )}
+      </div>
     </VerticalContext.Provider>
+  );
+}
+
+/**
+ * Vista inclinada: lo que se ve parado (fichas, pelota, conos y la red), en px
+ * de la pantalla, encima del piso en perspectiva. Lo de atrás de la red se
+ * dibuja antes que la red, y lo de adelante después.
+ */
+function StandingLayer({
+  mat,
+  bm,
+  elements,
+  selectedEl,
+  render,
+  buttons,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
+}: {
+  mat: Mat4;
+  bm: BoxMap;
+  elements: PointElement[];
+  selectedEl: BoardElement | null;
+  render: (el: PointElement) => ReactNode;
+  buttons: (el: PointElement) => ReactNode;
+  /** Tocar una ficha con una herramienta de dibujo empieza a dibujar desde ahí (como en la vista de arriba). */
+  onPointerDown: (e: ReactPointerEvent<SVGSVGElement>) => void;
+  onPointerMove: (e: ReactPointerEvent<SVGSVGElement>) => void;
+  onPointerUp: () => void;
+  onPointerCancel: () => void;
+}) {
+  /** Dónde se ve en la pantalla un punto de la cancha (en metros), a cierta altura (en metros). */
+  const at = (x: number, y: number, z = 0) => {
+    const p = toPx(bm, x, y);
+    return project(mat, p.x, p.y, z * bm.scale);
+  };
+  const sideDepth = (x: number) => at(x, COURT_WIDTH / 2).depth;
+  // El lado de la red que queda más lejos se dibuja primero.
+  const farSide = sideDepth(NET_X - 3) > sideDepth(NET_X + 3) ? 'A' : 'B';
+  const sideOf = (x: number) => (x < NET_X ? 'A' : 'B');
+
+  const items = elements.map((el) => {
+    const foot = at(el.x, el.y);
+    const top = at(el.x, el.y, STAND_HEIGHT[el.kind] ?? 0);
+    const right = at(el.x + 1, el.y);
+    const down = at(el.x, el.y + 1);
+    // Cuántos px de pantalla mide un metro ahí (más chico en el fondo).
+    const k = (Math.hypot(right.x - foot.x, right.y - foot.y) + Math.hypot(down.x - foot.x, down.y - foot.y)) / 2;
+    // La sombra se ve más achatada cuanto más acostada está la cancha.
+    const [a, b] = [Math.hypot(right.x - foot.x, right.y - foot.y), Math.hypot(down.x - foot.x, down.y - foot.y)];
+    const squash = Math.max(0.3, Math.min(a, b) / Math.max(a, b));
+    return { el, foot, top, k, squash, depth: foot.depth };
+  });
+  const order = (side: 'A' | 'B') =>
+    items.filter((it) => sideOf(it.el.x) === side).sort((a, b) => b.depth - a.depth);
+  const near = farSide === 'A' ? 'B' : 'A';
+  const flat = (x: number, y: number, z: number) => {
+    const p = at(x, y, z);
+    return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+  };
+  const netEnd = COURT_WIDTH + 0.3;
+  const net = (
+    <g className="net-3d" pointerEvents="none">
+      <polygon
+        points={[flat(NET_X, -0.3, NET_BOTTOM), flat(NET_X, netEnd, NET_BOTTOM), flat(NET_X, netEnd, NET_TOP), flat(NET_X, -0.3, NET_TOP)].join(' ')}
+        fill="#111111"
+        fillOpacity={0.3}
+        stroke="#111111"
+        strokeOpacity={0.6}
+      />
+      {Array.from({ length: 16 }, (_, i) => {
+        const y = (i * COURT_WIDTH) / 15;
+        const [a, b] = [at(NET_X, y, NET_BOTTOM), at(NET_X, y, NET_TOP)];
+        return <line key={`v${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#ffffff" strokeOpacity={0.18} />;
+      })}
+      {[0.25, 0.5, 0.75].map((f) => {
+        const z = NET_BOTTOM + f * (NET_TOP - NET_BOTTOM);
+        const [a, b] = [at(NET_X, -0.3, z), at(NET_X, netEnd, z)];
+        return <line key={`h${f}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#ffffff" strokeOpacity={0.18} />;
+      })}
+      {(() => {
+        const [a, b] = [at(NET_X, -0.3, NET_TOP), at(NET_X, netEnd, NET_TOP)];
+        return <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#ffffff" strokeWidth={2.5} />;
+      })()}
+      {[-0.5, COURT_WIDTH + 0.5].map((y) => {
+        const [a, b] = [at(NET_X, y, 0), at(NET_X, y, NET_TOP + 0.15)];
+        return <line key={y} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={COURT_COLORS.net} strokeWidth={Math.max(2, 0.12 * bm.scale)} strokeLinecap="round" />;
+      })}
+    </g>
+  );
+  const draw = (it: (typeof items)[number]) => {
+    const { el, foot, top, k, squash } = it;
+    const color = el.kind === 'player' ? TEAM_COLORS[el.team] : el.kind === 'ball' ? '#1e3a8a' : '#713f12';
+    const selected = selectedEl?.id === el.id;
+    return (
+      <g key={el.id}>
+        <ellipse cx={foot.x} cy={foot.y} rx={0.5 * k} ry={0.5 * k * squash} fill="#000000" fillOpacity={0.28} pointerEvents="none" />
+        {STAND_HEIGHT[el.kind] && STAND_HEIGHT[el.kind]! > 0.2 ? (
+          <line x1={foot.x} y1={foot.y} x2={top.x} y2={top.y} stroke={color} strokeWidth={Math.max(1.5, 0.12 * k)} strokeLinecap="round" pointerEvents="none" />
+        ) : null}
+        <g transform={`translate(${top.x} ${top.y}) scale(${k}) translate(${-el.x} ${-el.y})`}>
+          {render(el)}
+          {selected && buttons(el)}
+        </g>
+      </g>
+    );
+  };
+  return (
+    <svg
+      className="board-standing"
+      xmlns="http://www.w3.org/2000/svg"
+      fontFamily="Barlow, system-ui, -apple-system, 'Segoe UI', sans-serif"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
+    >
+      {order(farSide).map(draw)}
+      {net}
+      {order(near).map(draw)}
+    </svg>
   );
 }
 

@@ -1,3 +1,4 @@
+import type { View3D } from '../domain/perspective';
 import type { Frame, Player, TeamNames } from '../domain/types';
 
 /**
@@ -14,6 +15,8 @@ export interface SharedPlay {
   half?: boolean;
   /** Datos del ejercicio que se muestran al costado de la cancha. */
   info?: SharedInfo;
+  /** Vista inclinada con la que la armó quien la compartió (sin valor, de arriba). */
+  view?: View3D;
 }
 
 export interface SharedInfo {
@@ -48,6 +51,7 @@ export function sharedPlayData(
   teamNames?: TeamNames,
   half = false,
   info?: SharedInfo,
+  view?: View3D | null,
 ): SharedPlay {
   const cleanInfo: SharedInfo = {
     ...(info?.objective?.trim() ? { objective: info.objective.trim() } : {}),
@@ -63,6 +67,7 @@ export function sharedPlayData(
     ...(teamNames?.A || teamNames?.B || teamNames?.hidden ? { teamNames } : {}),
     ...(half ? { half } : {}),
     ...(cleanInfo.objective || cleanInfo.description ? { info: cleanInfo } : {}),
+    ...(view ? { view } : {}),
   };
 }
 

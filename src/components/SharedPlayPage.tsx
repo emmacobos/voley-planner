@@ -43,6 +43,7 @@ export function SharedPlayPage({ code, short = false }: { code: string; short?: 
       players={players}
       teamNames={play.teamNames}
       half={play.half}
+      view3d={play.view ?? null}
       fullscreen={false}
       aside={
         play.info

@@ -39,7 +39,8 @@ import { POSITIONS, SITUATIONS } from '../domain/types';
 import { downloadSvgAsPng, slugify } from '../utils/exportPng';
 import { exportPlayVideo, videoSupport } from '../utils/exportVideo';
 import { Board, DEFAULT_BEND } from './Board';
-import { useBoardOrientation } from '../utils/boardOrientation';
+import { useBoardOrientation, useView3d } from '../utils/boardOrientation';
+import { TILT_RANGE, TURN_RANGE } from '../domain/perspective';
 import { HOOP_COLORS } from './boardTheme';
 import { FloatingPanel } from './FloatingPanel';
 import { FloatingPanelReady } from './floatingPanelReady';
@@ -165,7 +166,11 @@ export function BoardEditor({
   const [tool, setTool] = useState<Tool>('select');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showZones, setShowZones] = useState(true);
-  const vertical = useBoardOrientation((s) => s.vertical);
+  const view3d = useView3d();
+  // La vista inclinada parte de la horizontal.
+  const vertical = useBoardOrientation((s) => s.vertical) && !view3d;
+  const setTilted = useBoardOrientation((s) => s.setTilted);
+  const setView3d = useBoardOrientation((s) => s.setView3d);
   const setVertical = useBoardOrientation((s) => s.setVertical);
   const [rotationTeam, setRotationTeam] = useState<Team>('A');
   const [rotation, setRotation] = useState<Zone>(1);
@@ -440,6 +445,7 @@ export function BoardEditor({
       readOnly={playing}
       showZones={showZones}
       vertical={vertical}
+      view3d={view3d}
       teamNames={teamNames}
       half={half}
       onSelect={setSelectedId}
@@ -593,8 +599,8 @@ export function BoardEditor({
             </button>
             <div className="segmented orientation-switch" role="group" aria-label="Orientación de la pizarra">
               <button
-                className={!vertical ? 'active' : ''}
-                aria-pressed={!vertical}
+                className={!vertical && !view3d ? 'active' : ''}
+                aria-pressed={!vertical && !view3d}
                 onClick={() => setVertical(false)}
                 title="Pizarra horizontal: la red de arriba a abajo"
               >
@@ -610,7 +616,44 @@ export function BoardEditor({
                 <Icon d="M7 3h10v18H7zM7 12h10" />
                 <span className="orientation-label">Vertical</span>
               </button>
+              <button
+                className={view3d ? 'active' : ''}
+                aria-pressed={!!view3d}
+                onClick={() => setTilted(true)}
+                title="Pizarra inclinada: la cancha en perspectiva, con la red y las jugadoras paradas"
+              >
+                <Icon d="M2 15 8 7h14l-6 8zM12 7v8" />
+                <span className="orientation-label">Inclinada</span>
+              </button>
             </div>
+            {view3d && (
+              <div className="view3d-controls" role="group" aria-label="Ángulo de la vista inclinada">
+                <label>
+                  Inclinación
+                  <input
+                    type="range"
+                    min={TILT_RANGE.min}
+                    max={TILT_RANGE.max}
+                    value={view3d.tilt}
+                    onChange={(e) => setView3d({ tilt: Number(e.target.value) })}
+                    aria-label="Inclinación"
+                  />
+                  <output>{view3d.tilt}°</output>
+                </label>
+                <label>
+                  Giro
+                  <input
+                    type="range"
+                    min={TURN_RANGE.min}
+                    max={TURN_RANGE.max}
+                    value={view3d.turn}
+                    onChange={(e) => setView3d({ turn: Number(e.target.value) })}
+                    aria-label="Giro"
+                  />
+                  <output>{view3d.turn < 15 ? 'de costado' : view3d.turn > 75 ? 'desde atrás' : 'en diagonal'}</output>
+                </label>
+              </div>
+            )}
             <label className="check">
               <input type="checkbox" checked={showZones} onChange={(e) => setShowZones(e.target.checked)} /> Zonas
             </label>
@@ -727,6 +770,7 @@ export function BoardEditor({
                         readOnly
                         showZones={showZones}
                         vertical={vertical}
+                        view3d={view3d}
                         teamNames={(c as OtherCourt).teamNames}
                         half={(c as OtherCourt).half}
                         onSelect={noop}

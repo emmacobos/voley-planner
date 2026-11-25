@@ -3,6 +3,7 @@ import type { Frame, Player, TeamNames } from '../domain/types';
 import { saveSharedPlay } from '../cloud/client';
 import { encodePlay, sharedPlayData, sharedPlayUrl, shortPlayUrl } from '../utils/sharePlay';
 import type { SharedInfo } from '../utils/sharePlay';
+import { useView3d } from '../utils/boardOrientation';
 
 /** Ids cortos ya guardados en esta visita, para no guardar dos veces la misma jugada. */
 const savedIds = new Map<string, Promise<string>>();
@@ -39,13 +40,16 @@ export function ShareLinkDialog({
   const [url, setUrl] = useState<string | null>(null);
   // Mientras el cuadro está abierto no cambian (se toman al abrirlo).
   const [shared] = useState(info);
+  // Se ve con el mismo ángulo con el que se armó (si la pizarra está inclinada).
+  const currentView = useView3d();
+  const [view] = useState(currentView);
   const [copied, setCopied] = useState(false);
   /** El link largo (la jugada dentro del link) se usa solo si no se pudo guardar en la nube. */
   const [long, setLong] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    encodePlay(sharedPlayData(title, frames, players, teamNames, half, shared)).then(async (code) => {
+    encodePlay(sharedPlayData(title, frames, players, teamNames, half, shared, view)).then(async (code) => {
       try {
         const id = await shortId(code);
         if (alive) setUrl(shortPlayUrl(id));
@@ -58,7 +62,7 @@ export function ShareLinkDialog({
     return () => {
       alive = false;
     };
-  }, [title, frames, players, teamNames, half, shared]);
+  }, [title, frames, players, teamNames, half, shared, view]);
 
   const copy = async () => {
     if (!url) return;

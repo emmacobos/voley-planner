@@ -6564,3 +6564,72 @@ textarea.conclusions {
     overflow: visible;
   }
 }
+
+/* Pizarra inclinada (en perspectiva): el piso transformado y encima lo que está parado */
+.board-3d {
+  position: relative;
+  height: auto;
+  background: radial-gradient(120% 100% at 50% 0%, #1d1a16 0%, #0b0a08 70%);
+}
+
+.board-3d > svg.board.tilted {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-height: none !important;
+  margin: 0 !important;
+  border-radius: 0;
+  box-shadow: none;
+  /* Con overflow visible, Chrome dibuja el piso inclinado borroso. */
+  overflow: hidden;
+}
+
+.board-standing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.board-standing .el,
+.board-standing .delete-button,
+.board-standing .comment-button {
+  pointer-events: auto;
+}
+
+.board-3d.tool-select:not(.read-only) .board-standing .el {
+  cursor: grab;
+}
+
+.view3d-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--surface);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.view3d-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.view3d-controls input[type='range'] {
+  width: 110px;
+  accent-color: var(--accent);
+}
+
+.view3d-controls output {
+  min-width: 5.5em;
+  color: var(--muted);
+  font-weight: 500;
+}

@@ -21,6 +21,13 @@ describe('compartir una jugada por link', () => {
     expect(code.length).toBeLessThan(JSON.stringify(data).length);
   });
 
+  it('lleva la vista inclinada con la que se armó, si la había', async () => {
+    const flat = sharedPlayData(play.name, play.frames, demo.players);
+    expect(flat).not.toHaveProperty('view');
+    const tilted = sharedPlayData(play.name, play.frames, demo.players, undefined, false, undefined, { tilt: 40, turn: 40 });
+    expect((await decodePlay(await encodePlay(tilted))).view).toEqual({ tilt: 40, turn: 40 });
+  });
+
   it('un link roto da error', async () => {
     await expect(decodePlay('esto-no-es-una-jugada')).rejects.toThrow();
   });

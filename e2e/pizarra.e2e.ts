@@ -340,3 +340,54 @@ test('la descripción se escribe en el panel del costado y se ve al lado de la c
   await info.locator('.shared-steps button').nth(1).click();
   await expect(info.locator('.shared-steps button').nth(1)).toHaveAttribute('aria-current', 'step');
 });
+
+test('vista inclinada: las fichas se arrastran por el piso y las flechas caen donde se dibujan', async ({ page }) => {
+  await page.locator('.orientation-switch button', { hasText: 'Inclinada' }).click();
+  await expect(page.locator('.board-3d .board-standing')).toBeVisible();
+  await expect(page.locator('.view3d-controls')).toBeVisible();
+  await page.evaluate(() => document.querySelector('.board-3d')!.scrollIntoView({ block: 'center' }));
+  // Dónde está el pie de una ficha en la pantalla (el centro de su sombra).
+  const foot = (label: string) =>
+    page.evaluate((l) => {
+      const g = [...document.querySelectorAll('.board-standing > g')].find((x) => x.querySelector('text')?.textContent === l)!;
+      const e = g.querySelector('ellipse')!;
+      const r = document.querySelector('.board-3d')!.getBoundingClientRect();
+      return [r.left + Number(e.getAttribute('cx')), r.top + Number(e.getAttribute('cy'))] as [number, number];
+    }, label);
+  const saved = async () => (await savedElements(page)) as { kind: string; label?: string; x: number; y: number; x1: number; y1: number; x2: number; y2: number }[];
+  const one = (await saved()).find((e) => e.label === '1')!;
+  const arrowsBefore = (await saved()).filter((e) => e.kind === 'arrow').length;
+  const three = (await saved()).find((e) => e.label === '3')!;
+
+  // Flecha de desplazamiento del pie de la 1 al pie de la 3.
+  await chooseTool(page, 'desplazamiento');
+  const [ax, ay] = await foot('1');
+  const [bx, by] = await foot('3');
+  await page.mouse.move(ax, ay);
+  await page.mouse.down();
+  await page.mouse.move(bx, by, { steps: 6 });
+  await page.mouse.up();
+  const arrows = (await saved()).filter((e) => e.kind === 'arrow');
+  const arrow = arrows.at(-1)!;
+  expect(arrows).toHaveLength(arrowsBefore + 1);
+  expect(Math.hypot(arrow.x1 - one.x, arrow.y1 - one.y)).toBeLessThan(0.3);
+  expect(Math.hypot(arrow.x2 - three.x, arrow.y2 - three.y)).toBeLessThan(0.3);
+
+  // Arrastrar la ficha 3 un poco: se mueve en la cancha.
+  await chooseTool(page, 'Mover');
+  const token = page.locator('.board-standing [data-id]', { hasText: '3' }).first();
+  const box = (await token.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 60, box.y + box.height / 2, { steps: 6 });
+  await page.mouse.up();
+  const moved = (await saved()).find((e) => e.label === '3')!;
+  expect(Math.hypot(moved.x - three.x, moved.y - three.y)).toBeGreaterThan(0.5);
+
+  // La presentación también se ve inclinada, y se puede volver a la vista de arriba.
+  await page.locator('button.present-button').click();
+  await expect(page.locator('.presentation .board-3d')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.locator('.orientation-switch button', { hasText: 'Horizontal' }).click();
+  await expect(page.locator('.board-3d')).toHaveCount(0);
+});

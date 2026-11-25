@@ -4,7 +4,7 @@ import { elementsAtProgress } from '../domain/animation';
 import { courtLabel, courtProgress, sharedStepCount } from '../domain/courts';
 import type { Court } from '../domain/courts';
 import type { Player } from '../domain/types';
-import { useBoardOrientation } from '../utils/boardOrientation';
+import { useBoardOrientation, useView3d } from '../utils/boardOrientation';
 import { Board } from './Board';
 
 const TRANSITION_MS = 1200;
@@ -30,7 +30,8 @@ export function CourtsOverview({
   /** Controles extra en la barra (por ejemplo, rotar grupos). */
   controls?: ReactNode;
 }) {
-  const vertical = useBoardOrientation((s) => s.vertical);
+  const view3d = useView3d();
+  const vertical = useBoardOrientation((s) => s.vertical) && !view3d;
   const steps = sharedStepCount(courts);
   const last = steps - 1;
   const [progress, setProgress] = useState(0);
@@ -121,6 +122,7 @@ export function CourtsOverview({
                 readOnly
                 showZones
                 vertical={vertical}
+                view3d={view3d}
                 half={court.half}
                 teamNames={court.teamNames}
                 onSelect={noop}

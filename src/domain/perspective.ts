@@ -1,0 +1,141 @@
+/**
+ * Vista inclinada de la pizarra: la cancha se ve en perspectiva, como desde
+ * una tribuna. Es una transformación 3D (la misma que se le da a la pizarra
+ * con CSS) y su inversa, para saber en qué punto del piso cae un toque.
+ *
+ * Las matrices son de 4 × 4 por columnas, como `matrix3d` de CSS.
+ */
+
+export type Mat4 = number[];
+
+export interface View3D {
+  /** Inclinación: 90 es la vista de arriba; menos, más de costado. */
+  tilt: number;
+  /** Giro: 0 de costado (como en la tele), 90 desde atrás de nuestro equipo. */
+  turn: number;
+}
+
+export const DEFAULT_VIEW_3D: View3D = { tilt: 40, turn: 40 };
+export const TILT_RANGE = { min: 25, max: 85 };
+export const TURN_RANGE = { min: 0, max: 90 };
+
+const identity = (): Mat4 => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
+export function multiply(a: Mat4, b: Mat4): Mat4 {
+  const out = new Array<number>(16).fill(0);
+  for (let col = 0; col < 4; col++)
+    for (let row = 0; row < 4; row++) {
+      let sum = 0;
+      for (let k = 0; k < 4; k++) sum += a[k * 4 + row] * b[col * 4 + k];
+      out[col * 4 + row] = sum;
+    }
+  return out;
+}
+
+const translate = (x: number, y: number, z = 0): Mat4 => {
+  const m = identity();
+  m[12] = x;
+  m[13] = y;
+  m[14] = z;
+  return m;
+};
+
+const scale = (s: number): Mat4 => {
+  const m = identity();
+  m[0] = s;
+  m[5] = s;
+  return m;
+};
+
+const perspective = (d: number): Mat4 => {
+  const m = identity();
+  m[11] = -1 / d;
+  return m;
+};
+
+const rad = (deg: number) => (deg * Math.PI) / 180;
+
+/** Como `rotateX` de CSS: con un ángulo positivo, la parte de arriba se aleja. */
+const rotateX = (deg: number): Mat4 => {
+  const c = Math.cos(rad(deg));
+  const s = Math.sin(rad(deg));
+  return [1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, 0, 0, 1];
+};
+
+/** Como `rotateZ` de CSS (positivo: en el sentido de las agujas del reloj). */
+const rotateZ = (deg: number): Mat4 => {
+  const c = Math.cos(rad(deg));
+  const s = Math.sin(rad(deg));
+  return [c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+};
+
+export interface Projected {
+  x: number;
+  y: number;
+  /** Profundidad: más grande, más lejos. */
+  depth: number;
+}
+
+export function project(m: Mat4, x: number, y: number, z = 0): Projected {
+  const X = m[0] * x + m[4] * y + m[8] * z + m[12];
+  const Y = m[1] * x + m[5] * y + m[9] * z + m[13];
+  const W = m[3] * x + m[7] * y + m[11] * z + m[15];
+  return { x: X / W, y: Y / W, depth: W };
+}
+
+/** El punto del piso (z = 0) que se ve en (sx, sy). */
+export function unproject(m: Mat4, sx: number, sy: number): { x: number; y: number } {
+  const a = m[0] - sx * m[3];
+  const b = m[4] - sx * m[7];
+  const c = m[1] - sy * m[3];
+  const d = m[5] - sy * m[7];
+  const e = sx * m[15] - m[12];
+  const f = sy * m[15] - m[13];
+  const det = a * d - b * c;
+  return { x: (e * d - b * f) / det, y: (a * f - e * c) / det };
+}
+
+/** La misma transformación para algo dibujado `s` veces más grande (se ve más nítido). */
+export const shrink = (m: Mat4, s: number): Mat4 => multiply(m, scale(1 / s));
+
+export const toCss = (m: Mat4) => `matrix3d(${m.map((v) => +v.toFixed(8)).join(',')})`;
+
+/** Cómo el `viewBox` (en metros) se acomoda en un recuadro de w × h px (centrado, sin deformar). */
+export interface BoxMap {
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+  minX: number;
+  minY: number;
+}
+
+export function boxMap(viewBox: string, w: number, h: number): BoxMap {
+  const [minX, minY, vw, vh] = viewBox.split(' ').map(Number);
+  const s = Math.min(w / vw, h / vh);
+  return { scale: s, offsetX: (w - vw * s) / 2, offsetY: (h - vh * s) / 2, minX, minY };
+}
+
+export const toPx = (b: BoxMap, x: number, y: number) => ({ x: (x - b.minX) * b.scale + b.offsetX, y: (y - b.minY) * b.scale + b.offsetY });
+export const toMeters = (b: BoxMap, px: number, py: number) => ({ x: (px - b.offsetX) / b.scale + b.minX, y: (py - b.offsetY) / b.scale + b.minY });
+
+/**
+ * La transformación de la pizarra (en px, dentro de su recuadro de w × h):
+ * gira la cancha, la inclina con perspectiva y la agranda para que lo que
+ * importa (`keep`, en px del piso, con su altura) entre justo en el recuadro.
+ */
+export function viewMatrix(view: View3D, w: number, h: number, keep: [number, number, number][], padding = 10): Mat4 {
+  const base = [
+    translate(w / 2, h / 2),
+    perspective(Math.max(w, h) * 1.3),
+    rotateX(90 - view.tilt),
+    rotateZ(-view.turn),
+    translate(-w / 2, -h / 2),
+  ].reduce(multiply);
+  const pts = keep.map(([x, y, z]) => project(base, x, y, z));
+  const xs = pts.map((p) => p.x);
+  const ys = pts.map((p) => p.y);
+  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  const k = Math.min((w - 2 * padding) / (x1 - x0), (h - 2 * padding) / (y1 - y0));
+  const fit = multiply(translate(w / 2 - (k * (x0 + x1)) / 2, h / 2 - (k * (y0 + y1)) / 2), scale(k));
+  return multiply(fit, base);
+}
