@@ -30,6 +30,7 @@ export function CourtsOverview({
   /** Controles extra en la barra (por ejemplo, rotar grupos). */
   controls?: ReactNode;
 }) {
+  const setView3d = useBoardOrientation((s) => s.setView3d);
   const view3d = useView3d();
   const vertical = useBoardOrientation((s) => s.vertical) && !view3d;
   const steps = sharedStepCount(courts);
@@ -123,6 +124,7 @@ export function CourtsOverview({
                 showZones
                 vertical={vertical}
                 view3d={view3d}
+                onView3dChange={setView3d}
                 half={court.half}
                 teamNames={court.teamNames}
                 onSelect={noop}

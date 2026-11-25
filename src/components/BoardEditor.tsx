@@ -457,6 +457,7 @@ export function BoardEditor({
       showZones={showZones}
       vertical={vertical}
       view3d={view3d}
+      onView3dChange={setView3d}
       teamNames={teamNames}
       half={half}
       onSelect={setSelectedId}
@@ -782,6 +783,7 @@ export function BoardEditor({
                         showZones={showZones}
                         vertical={vertical}
                         view3d={view3d}
+                        onView3dChange={setView3d}
                         teamNames={(c as OtherCourt).teamNames}
                         half={(c as OtherCourt).half}
                         onSelect={noop}

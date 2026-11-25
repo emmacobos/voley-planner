@@ -69,6 +69,7 @@ export function Presentation({
 
   const index = Math.round(progress);
   const localView = useView3d();
+  const setView3d = useBoardOrientation((s) => s.setView3d);
   const view3d = viewOverride === undefined ? localView : viewOverride;
   const vertical = useBoardOrientation((s) => s.vertical) && !view3d;
 
@@ -238,6 +239,8 @@ export function Presentation({
           showZones
           vertical={vertical}
           view3d={view3d}
+          // Una jugada compartida se ve con el ángulo con que la armaron.
+          onView3dChange={viewOverride === undefined ? setView3d : undefined}
           teamNames={teamNames}
           half={half}
           onSelect={noop}

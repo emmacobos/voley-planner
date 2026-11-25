@@ -55,7 +55,9 @@ sus bloques y accesos rápidos), lo que hay en tu biblioteca y un tip.
      ángulo de la cámara. Con *Inclinación* (de 10° a casi de arriba) y *Giro*
      (de costado, en diagonal o desde atrás de cualquiera de los dos equipos)
      se elige el ángulo. La ruedita del mouse (o + y −) acerca y aleja,
-     arrastrando el fondo se mueve la cancha y ⌖ la vuelve a centrar. Se edita
+     arrastrando el fondo se mueve la cancha y ⌖ la vuelve a centrar. Con el
+     clic derecho apretado y moviendo el mouse se cambia el ángulo: para los
+     costados gira y para arriba o abajo inclina. Se edita
      igual: las fichas se arrastran por el piso y las flechas, sombras, textos
      y trazos se dibujan sobre el piso. Vale
      para *Presentar* y el link compartido se ve con el mismo ángulo; el PNG, el

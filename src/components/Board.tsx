@@ -23,7 +23,7 @@ import {
   wrapText,
 } from '../domain/shadows';
 import { isSegment } from '../domain/types';
-import { DEFAULT_CAMERA, boxMap, project, shrink, toCss, toMeters, toPx, unproject, viewMatrix, withCamera, zoomAt } from '../domain/perspective';
+import { DEFAULT_CAMERA, TILT_RANGE, TURN_RANGE, boxMap, project, shrink, toCss, toMeters, toPx, unproject, viewMatrix, withCamera, zoomAt } from '../domain/perspective';
 import type { BoxMap, Camera, Mat4, View3D } from '../domain/perspective';
 import { DEFAULT_DRAW_WIDTH, DRAW_COLORS, drawPath, moveStroke, simplifyStroke, strokeBounds, strokeLength, strokeWidth } from '../domain/drawing';
 import type {
@@ -105,6 +105,8 @@ interface BoardProps {
   half?: boolean;
   /** Vista inclinada (en perspectiva). Sin valor, la vista de arriba. */
   view3d?: View3D | null;
+  /** Si está, arrastrar con el clic derecho cambia la inclinación y el giro. */
+  onView3dChange?: (patch: Partial<View3D>) => void;
 }
 
 /** En la vista inclinada, estos elementos se ven parados (con su sombra); el resto queda en el piso. */
@@ -129,6 +131,8 @@ type Drag =
   | { type: 'draw'; points: { x: number; y: number }[] }
   /** Mover la cancha (vista inclinada): desde dónde se arrastra y dónde estaba la cámara. */
   | { type: 'pan'; sx: number; sy: number; x0: number; y0: number; moved: boolean }
+  /** Girar e inclinar la cámara con el clic derecho (vista inclinada). */
+  | { type: 'orbit'; sx: number; sy: number; tilt0: number; turn0: number }
   | {
       type: 'arrow';
       style: ArrowStyle;
@@ -249,6 +253,7 @@ export function Board({
   half = false,
   pen,
   view3d = null,
+  onView3dChange,
 }: BoardProps) {
   const [drag, setDrag] = useState<Drag | null>(null);
   const contentRef = useRef<SVGGElement>(null);
@@ -327,7 +332,8 @@ export function Board({
     id: string,
     part: ArrowPart = 'whole',
   ) => {
-    if (readOnly) return;
+    // El clic derecho no agarra elementos: gira la cámara (lo maneja el fondo).
+    if (readOnly || e.button === 2) return;
     // Los puntos de agarre del elemento seleccionado (curva, extremos, borde
     // del texto) se arrastran aunque esté activa una herramienta de dibujo.
     if (tool !== 'select' && (part === 'whole' || id !== selectedId)) return;
@@ -353,7 +359,28 @@ export function Board({
     setDrag({ type: 'pan', sx: e.clientX, sy: e.clientY, x0: cam.x, y0: cam.y, moved: false });
   };
 
+  /** Vista inclinada: empieza a girar e inclinar la cámara (clic derecho). */
+  const startOrbit = (e: ReactPointerEvent<Element>) => {
+    if (!view3d) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDrag({ type: 'orbit', sx: e.clientX, sy: e.clientY, tilt0: view3d.tilt, turn0: view3d.turn });
+  };
+  const orbitMove = (e: ReactPointerEvent<Element>) => {
+    if (drag?.type !== 'orbit' || !onView3dChange) return;
+    const clamp = (v: number, r: { min: number; max: number }) => Math.round(Math.min(r.max, Math.max(r.min, v)));
+    // Para los costados gira; para arriba y abajo inclina (arrastrar hacia abajo la acuesta más).
+    onView3dChange({
+      turn: clamp(drag.turn0 + (e.clientX - drag.sx) * 0.3, TURN_RANGE),
+      tilt: clamp(drag.tilt0 - (e.clientY - drag.sy) * 0.25, TILT_RANGE),
+    });
+  };
+
   const onBackgroundDown = (e: ReactPointerEvent<SVGSVGElement>) => {
+    if (mat && e.button === 2 && onView3dChange) {
+      startOrbit(e);
+      return;
+    }
     // Vista inclinada: arrastrar el fondo (o con el botón del medio) mueve la cancha.
     if (mat && (readOnly || tool === 'select' || e.button === 1)) {
       startPan(e);
@@ -405,6 +432,10 @@ export function Board({
       panMove(e);
       return;
     }
+    if (drag.type === 'orbit') {
+      orbitMove(e);
+      return;
+    }
     const p = point(e);
     if (drag.type === 'element') {
       setDrag({ ...drag, dx: p.x - drag.ox, dy: p.y - drag.oy });
@@ -417,7 +448,9 @@ export function Board({
 
   const onPointerUp = () => {
     if (!drag) return;
-    if (drag.type === 'pan') {
+    if (drag.type === 'orbit') {
+      // Ya quedó el ángulo nuevo.
+    } else if (drag.type === 'pan') {
       // Un toque sin arrastrar, como en la vista de arriba, suelta lo seleccionado.
       if (!drag.moved && !readOnly && tool === 'select') onSelect(null);
     } else if (drag.type === 'element') {
@@ -657,13 +690,22 @@ export function Board({
         style={{ aspectRatio: `${vbW} / ${vbH}` }}
         // Fuera del piso inclinado también se agarra la cancha para moverla (solo lo que llega directo acá).
         onPointerDown={(e) => {
-          if (e.target === e.currentTarget && mat) {
-            startPan(e);
-            if (!readOnly && tool === 'select') onSelect(null);
+          if (e.target !== e.currentTarget || !mat) return;
+          if (e.button === 2) {
+            if (onView3dChange) startOrbit(e);
+            return;
           }
+          startPan(e);
+          if (!readOnly && tool === 'select') onSelect(null);
         }}
-        onPointerMove={(e) => e.target === e.currentTarget && drag?.type === 'pan' && panMove(e)}
-        onPointerUp={(e) => e.target === e.currentTarget && drag?.type === 'pan' && endDrag()}
+        onPointerMove={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (drag?.type === 'pan') panMove(e);
+          if (drag?.type === 'orbit') orbitMove(e);
+        }}
+        onPointerUp={(e) => e.target === e.currentTarget && (drag?.type === 'pan' || drag?.type === 'orbit') && endDrag()}
+        // El clic derecho gira la cámara: sin el menú del navegador.
+        onContextMenu={(e) => onView3dChange && e.preventDefault()}
         onPointerCancel={(e) => e.target === e.currentTarget && endDrag()}
       >
         {floor}
